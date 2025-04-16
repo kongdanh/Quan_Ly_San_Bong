@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Quản lý Sân</title>
+    <style>
+        /* Giữ nguyên CSS từ phiên bản trước */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn {
+            padding: 5px 10px;
+            margin: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Danh sách Sân bóng</h1>
+
+    <!-- Form thêm sân -->
+    <form method="POST" action="/them-san">
+        <label>Có sân:
+            <select name="coSan" required>
+                <option value="Có">Có</option>
+                <option value="Không">Không</option>
+            </select>
+        </label>
+
+        <label>Địa chỉ:
+            <input type="text" name="diaChi" required>
+        </label>
+
+        <button type="submit">Thêm sân</button>
+    </form>
+
+    <!-- Bảng hiển thị dữ liệu -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Có sân</th>
+                <th>Địa chỉ</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for san in danh_sach_san %}
+            <tr>
+                <td>{{ san.idSan }}</td>
+                <td>{{ san.coSan }}</td>
+                <td>{{ san.diaChi }}</td>
+                <td>
+                    <a href="/xoa-san/{{ san.idSan }}" class="btn" onclick="return confirm('Bạn chắc chắn muốn xóa?')">
+                        Xóa
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+
+</html>
