@@ -1,3 +1,4 @@
+from typing import Dict
 from DAO import taikhoanDAO,nguoidungDAO
 
 class taikhoanBUS:
@@ -5,7 +6,7 @@ class taikhoanBUS:
         self.userDao = nguoidungDAO()
         self.accDao = taikhoanDAO()
         
-    def taoTaiKhoan(self,signUpData:dict) -> dict:
+    def taoTaiKhoan(self,signUpData:Dict) -> Dict:
         for x in signUpData.values():
             if not x:
                 return {"success": False, "error": "Thiếu thông tin bắt buộc"}
@@ -20,3 +21,9 @@ class taikhoanBUS:
     
     def danhSachTaiKhoan(self):
         return self.accDao.getListTaiKhoan()
+    
+    def dangNhapTaiKhoan(self,signInData:Dict)->Dict:
+        result = self.timTaiKhoan(signInData.values()[0])
+        if result.get("success"):
+            return self.accDao.dangNhapTaiKhoan(signInData)
+        return result
