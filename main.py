@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for
-from BUS.datsan_bus import SanBus
-from DAO.datsan_dao import SanDAO
+from flask import Flask, jsonify, render_template, request, redirect, url_for
+from BUS.san_bus import SanBus
+from DAO.san_dao import SanDAO
 from DAO.db_config import get_connection
 
 # Khởi tạo Flask app
@@ -39,6 +39,18 @@ def them_san():
 def xoa_san(id_san):
     san_bus.xoa_san(id_san)
     return redirect(url_for('quan_ly_san'))
+
+@app.route('/sua-san/<int:id>', methods=['POST'])
+def sua_san(id):
+    co_san = request.form.get('coSan')
+    dia_chi = request.form.get('diaChi')
+    du_lieu_moi = {
+        'coSan': co_san,
+        'diaChi': dia_chi
+    }
+    ket_qua = san_bus.sua_san(id, du_lieu_moi)
+    return jsonify(ket_qua)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

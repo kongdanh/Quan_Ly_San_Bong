@@ -134,6 +134,20 @@
             background-color: #3498db;
             color: white;
         }
+
+        .menu-item a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .menu-item:hover a,
+        .menu-item.active a {
+            color: inherit;
+        }
+
     </style>
 </head>
 
@@ -145,9 +159,9 @@
                 <h2>QUẢN LÝ SÂN BÓNG</h2>
             </div>
             <div class="menu-item active">Dashboard</div>
-            <a href="{{ url_for('quan_ly_san') }}">
-                <div class="menu-item">Quản lý Đặt sân</div>
-            </a>
+            <div class="menu-item">
+                <a href="{{ url_for('quan_ly_san') }}">Quản lý sân</a>
+            </div>
             <div class="menu-item">Quản lý Khách hàng</div>
             <div class="menu-item">Quản lý Tài chính</div>
             <div class="menu-item">Quản lý Nhân viên</div>
