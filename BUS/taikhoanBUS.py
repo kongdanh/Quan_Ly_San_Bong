@@ -11,7 +11,7 @@ class taikhoanBUS:
         for x in signUpData.values():
             if not x:
                 return {"success": False, "error": "Thiếu thông tin bắt buộc"}
-        result = []
+        result = [] 
         result.append(self.accDao.them_TaiKhoan(dict(list(signUpData.items())[:4])))
         if not result[0].get("success"):
             return result
@@ -24,6 +24,7 @@ class taikhoanBUS:
         return self.accDao.getListTaiKhoan()
     
     def dangNhapTaiKhoan(self,signInData:Dict)->Dict:
+        #dictionary đưa vào chỉ có 2 values là tên và mật khẩu
         result = self.timTaiKhoan(signInData.values()[0])
         if result.get("success"):
             return self.accDao.dangNhapTaiKhoan(signInData)
