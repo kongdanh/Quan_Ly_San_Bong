@@ -1,77 +1,350 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 
 <head>
-    <title>Quản lý Sân</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sân bóng</title>
     <style>
-        /* Giữ nguyên CSS từ phiên bản trước */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .form-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         th,
         td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
         }
 
         th {
             background-color: #3498db;
             color: white;
+            font-weight: 600;
         }
 
-        .btn {
-            padding: 5px 10px;
-            margin: 2px;
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+            }
+
+            th,
+            td {
+                padding: 8px 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            button {
+                padding: 8px 15px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <h1>Danh sách Sân bóng</h1>
+    <h1>Quản lý Sân bóng</h1>
 
     <!-- Form thêm sân -->
-    <form method="POST" action="/them-san">
-        <label>Có sân:
-            <select name="coSan" required>
-                <option value="Có">Có</option>
-                <option value="Không">Không</option>
-            </select>
-        </label>
+    <div class="form-container">
+        <h2>Thêm sân mới</h2>
+        <form method="POST" action="/them-san">
+            <div class="form-group">
+                <label for="coSan">Cỡ sân:</label>
+                <select id="coSan" name="coSan" required>
+                    <option value="" disabled selected>Chọn cỡ sân</option>
+                    <option value="5 vs 5">5 vs 5</option>
+                    <option value="7 vs 7">7 vs 7</option>
+                    <option value="9 vs 9">9 vs 9</option>
+                    <option value="11 vs 11">11 vs 11</option>
+                </select>
+            </div>
 
-        <label>Địa chỉ:
-            <input type="text" name="diaChi" required>
-        </label>
+            <div class="form-group">
+                <label for="diaChi">Địa chỉ:</label>
+                <input type="text" id="diaChi" name="diaChi" required placeholder="Nhập địa chỉ sân">
+            </div>
 
-        <button type="submit">Thêm sân</button>
-    </form>
+            <button type="submit" class="btn-primary">Thêm sân</button>
+        </form>
+    </div>
 
     <!-- Bảng hiển thị dữ liệu -->
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Có sân</th>
-                <th>Địa chỉ</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for san in danh_sach_san %}
-            <tr>
-                <td>{{ san.idSan }}</td>
-                <td>{{ san.coSan }}</td>
-                <td>{{ san.diaChi }}</td>
-                <td>
-                    <a href="/xoa-san/{{ san.idSan }}" class="btn" onclick="return confirm('Bạn chắc chắn muốn xóa?')">
-                        Xóa
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-container">
+        <h2>Danh sách sân bóng</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cỡ sân</th>
+                    <th>Địa chỉ</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for san in danh_sach_san %}
+                <tr>
+                    <td>{{ san.idSan }}</td>
+                    <td>{{ san.coSan }}</td>
+                    <td>{{ san.diaChi }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-warning"
+                                onclick="moFormSua('{{ san.idSan }}', '{{ san.coSan }}', '{{ san.diaChi }}')">Sửa</button>
+                            <button class="btn btn-danger" onclick="xoaSan('{{ san.idSan }}')">Xóa</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Sửa -->
+    <div class="modal" id="formSua">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Sửa thông tin sân</h3>
+            </div>
+            <form id="suaForm" method="POST">
+                <input type="hidden" name="idSan" id="suaId">
+
+                <div class="form-group">
+                    <label for="suaCoSan">Cỡ sân:</label>
+                    <select id="suaCoSan" name="coSan" required>
+                        <option value="5 vs 5">5 vs 5</option>
+                        <option value="7 vs 7">7 vs 7</option>
+                        <option value="9 vs 9">9 vs 9</option>
+                        <option value="11 vs 11">11 vs 11</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="suaDiaChi">Địa chỉ:</label>
+                    <input type="text" id="suaDiaChi" name="diaChi" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="dongForm()">Hủy</button>
+                    <button type="submit" class="btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // Mở form sửa và đặt giá trị hiện tại
+        function moFormSua(id, coSan, diaChi) {
+            document.getElementById('suaId').value = id;               // Gán ID sân
+            document.getElementById('suaDiaChi').value = diaChi;       // Gán địa chỉ sân
+
+            // Gán giá trị cỡ sân vào select của form sửa
+            document.getElementById('suaCoSan').value = coSan;
+
+            document.getElementById('formSua').style.display = 'flex';  // Hiển thị form sửa
+        }
+
+        // Đóng form sửa
+        function dongForm() {
+            document.getElementById('formSua').style.display = 'none';
+        }
+
+        // Xác nhận xóa sân
+        function xoaSan(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa sân này?')) {
+                window.location.href = `/xoa-san/${id}`;
+            }
+        }
+
+        // Gửi form sửa bằng fetch
+        document.getElementById('suaForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = document.getElementById('suaId').value;
+            const data = new FormData(this);
+
+            fetch(`/sua-san/${id}`, {
+                method: 'POST',
+                body: data
+            }).then(res => res.json())
+                .then(json => {
+                    if (json.success) {
+                        window.location.reload();
+                    } else {
+                        alert("Lỗi khi cập nhật sân: " + (json.error || "Không rõ"));
+                    }
+                })
+                .catch(error => {
+                    alert("Lỗi kết nối: " + error.message);
+                });
+        });
+
+        // Đóng modal khi click bên ngoài
+        window.addEventListener('click', function (event) {
+            const modal = document.getElementById('formSua');
+            if (event.target === modal) {
+                dongForm();
+            }
+        });
+    </script>
+
 </body>
 
 </html>
