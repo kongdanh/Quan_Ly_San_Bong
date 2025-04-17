@@ -3,22 +3,22 @@ from mysql.connector import Error
 from typing import List, Dict
 from DAO.db_config import get_connection
 
-class TaiKhoanDAO:
+class NguoiDungDAO:
     def __init__(self, conn=None):
         """Khởi tạo DAO với kết nối database tùy chọn"""
         self.conn = conn if conn is not None else get_connection()
 
-    def getListTaiKhoan(self) -> List[Dict]:
-        """Lấy toàn bộ danh sách tài khoản (phù hợp với bus)"""
+    def getListNguoiDung(self) -> List[Dict]:
+        """Lấy toàn bộ danh sách sân (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM taikhoan")
+            cursor.execute("SELECT * FROM nguoidung")
             return cursor.fetchall()
         except Error as e:
             print(f"[DAO ERROR] Lỗi khi lấy danh sách: {e}")
             return []
 
-    def them_TaiKhoan(self, signUpData: Dict) -> Dict:
+    def them_nguoiDung(self, signUpData: Dict) -> Dict:
         for x in signUpData.values():
             if not x:
                 return {"success": False, "error": "Thiếu thông tin bắt buộc"}
@@ -26,14 +26,14 @@ class TaiKhoanDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                """INSERT INTO taikhoan (TenTaiKhoan, MatKhau, NgayTao, AccType) 
-                    VALUES (%s, %s, %s, %s)
+                """INSERT INTO nguoidung (HoTen, NamSinh, SDT, DiaChi, IdTaiKhoan) 
+                    VALUES (%s, %s, %s, %s, %s)
                 """,
-                (signUpData.values()[0:])
+                (signUpData[0:])
             )
             
             self.conn.commit()
-            return {"success": True, "idTaiKhoan": cursor.lastrowid}
+            return {"success": True, "idNguoiDung": cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
@@ -41,13 +41,13 @@ class TaiKhoanDAO:
         finally:
             cursor.close()
 
-    def sua_TaiKhoan(self, accID: int, userData: Dict) -> Dict:
+    def sua_NguoiDung(self, userID: int, userData: Dict) -> Dict:
         """Sửa thông tin người dùng (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "UPDATE taikhoan SET TenTaiKhoan=%s, MatKhau=%s, NgayTao=%s, AccType=%s WHERE idTaiKhoan = %s",
-                (userData.values()[0:],accID)
+                "UPDATE nguoidung SET HoTen=%s, NamSinh=%s, SDT=%s, DiaChi=%s WHERE idNguoiDung = %s",
+                (userData.values()[0:],userID)
             )
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
@@ -58,11 +58,11 @@ class TaiKhoanDAO:
         finally:
             cursor.close()
 
-    def xoa_TaiKhoan(self, accID: int) -> Dict:
+    def xoa_NguoiDung(self, userID: int) -> Dict:
         """Xóa người dùng (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM taikhoan WHERE idTaiKhoan = %s", (accID,))
+            cursor.execute("DELETE FROM nguoidung WHERE idNguoiDung = %s", (userID,))
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
         except Error as e:
