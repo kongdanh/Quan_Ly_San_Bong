@@ -7,6 +7,7 @@ class taikhoanBUS:
         self.accDao = taikhoanDAO()
         
     def taoTaiKhoan(self,signUpData:Dict) -> Dict:
+        # dictionary sẽ có 4 dữ liệu đầu là data tài khoản các dữ liệu sau nó là thông tin người dùng
         for x in signUpData.values():
             if not x:
                 return {"success": False, "error": "Thiếu thông tin bắt buộc"}
