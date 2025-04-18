@@ -31,7 +31,6 @@ def them_san():
     if isinstance(result, dict) and 'idSan' in result:  # Sử dụng 'idSan' thay vì 'id'
         danh_sach_san = san_bus.lay_danh_sach_san()
         print(f"Danh sách sân sau khi thêm: {danh_sach_san}")
-        return render_template('san.html', danh_sach_san=danh_sach_san, success=True, idSan=result['idSan'])
     print(f"Thêm sân thất bại, result: {result}")
     return redirect(url_for('quan_ly_san'))
 
