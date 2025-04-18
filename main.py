@@ -64,6 +64,7 @@ def dangNhap():
 def xuLiDangNhap():
     name = request.form.get('username')
     pwd = request.form.get('password')
+    print(request.form.to_dict())
     result = taikhoan.dangNhapTaiKhoan(request.form.to_dict())
     if result.get('success'):
         # dẫn vào trang người dùng
