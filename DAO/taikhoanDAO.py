@@ -4,7 +4,7 @@ from typing import List, Dict
 from DAO.db_config import get_connection
 
 class TaiKhoanDAO:
-    def __init__(self, conn=None):
+    def __init__(self,conn = None):
         self.conn = conn if conn is not None else get_connection()
 
     def getListTaiKhoan(self) -> List[Dict]:
@@ -74,14 +74,18 @@ class TaiKhoanDAO:
             query = """
                 SELECT * FROM taikhoan WHERE TenTaiKhoan=%s AND MatKhau=%s
             """
-            values=(signInData.values()[0:])
+            values=(list(signInData.values())[0:])
             cursor.execute(query,values)
-            self.conn.commit()
             data = cursor.fetchone()
-            return {"success": True if data else False}.update(data if data else {"error":"tài khoản không đúng mật khẩu"})
+            result={}
+            if data:
+                result = {"success": True,'IdTaiKhoan':data[0],'AccType':data[4]}
+            else:
+                result = {"success": False,"error":"tài khoản không tồn tại"}
+            return result
         except Error as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
+            print(f"[DAO ERROR] Lỗi khi đăng nhập tài khoản: {e}")
             return {"success": False, "error": str(e)}
         finally:
             cursor.close()
@@ -94,12 +98,17 @@ class TaiKhoanDAO:
             """
             values=(accName,)
             cursor.execute(query,values)
-            self.conn.commit()
             data = cursor.fetchone()
-            return {"success": True if data else False}.update(data if data else {"error":"tài khoản không tồn tại"})
+            print(data)
+            result={}
+            if data:
+                result = {"success": True}
+            else:
+                result = {"success": False,"error":"tài khoản không tồn tại"}
+            return result
         except Error as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
+            print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")
             return {"success": False, "error": str(e)}
         finally:
             cursor.close()

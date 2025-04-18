@@ -1,10 +1,11 @@
 from typing import Dict
-from DAO import taikhoanDAO,nguoidungDAO
+from DAO.nguoidungDAO import NguoiDungDAO
+from DAO.taikhoanDAO import TaiKhoanDAO
 
-class taikhoanBUS:
+class TaiKhoanBUS:
     def __init__(self):
-        self.userDao = nguoidungDAO()
-        self.accDao = taikhoanDAO()
+        self.userDao = NguoiDungDAO()
+        self.accDao = TaiKhoanDAO()
         
     def taoTaiKhoanND(self,signUpData:Dict) -> Dict:
         # dictionary sẽ có 4 dữ liệu đầu là data tài khoản các dữ liệu sau nó là thông tin người dùng
@@ -42,7 +43,8 @@ class taikhoanBUS:
     
     def dangNhapTaiKhoan(self,signInData:Dict)->Dict:
         #dictionary đưa vào chỉ có 2 values là tên và mật khẩu
-        result = self.accDao.timTaiKhoan(signInData.values()[0])
+        # ví dụ: {'username': 'user1', 'password': 'pass1'}
+        result = self.accDao.timKiemTaiKhoan(signInData['username'])
         if result.get("success"):
             return self.accDao.dangNhapTaiKhoan(signInData)
         return result

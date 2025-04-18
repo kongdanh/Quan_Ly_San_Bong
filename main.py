@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
+from BUS.taikhoanBUS import TaiKhoanBUS
 from DAO.db_config import get_connection
 
 # Khởi tạo Flask app
@@ -10,6 +11,7 @@ app = Flask(__name__, template_folder='GUI')
 conn = get_connection()
 dao = SanDAO(conn)  # Truyền conn từ get_connection()
 san_bus = SanBus(dao)
+taikhoan = TaiKhoanBUS()
 
 @app.route('/')
 def index():
@@ -50,6 +52,29 @@ def sua_san(id):
     ket_qua = san_bus.sua_san(id, du_lieu_moi)
     return jsonify(ket_qua)
 
+@app.route('/user<userID>')
+def nguoidung(userID):
+    return render_template('user.html',userID=userID)
+
+@app.route('/login')
+def dangNhap():
+    return render_template('login.html')
+
+@app.route('/processing', methods=['POST'])
+def xuLiDangNhap():
+    name = request.form.get('username')
+    pwd = request.form.get('password')
+    result = taikhoan.dangNhapTaiKhoan(request.form.to_dict())
+    if result.get('success'):
+        # dẫn vào trang người dùng
+        if result.get('AccType') == "user":
+            return redirect(url_for('nguoidung',userID = result.get('IdTaiKhoan')))    
+        # dẫn tới quản lí sân
+        else:
+            return redirect(url_for('index'))   
+    else:
+        return redirect('login')
+        
 
 if __name__ == '__main__':
     app.run(debug=True)
