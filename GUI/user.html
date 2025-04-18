@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sân Bóng - Đặt Sân Online</title>
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* Header */
+        header {
+            background-color: #2ecc71;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        nav ul li a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Banner */
+        .banner {
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://via.placeholder.com/1200x300');
+            background-size: cover;
+            color: white;
+            padding: 3rem;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .banner h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .banner button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .banner button:hover {
+            background-color: #c0392b;
+        }
+
+        /* Booking Section */
+        .booking-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter select, .filter input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* Booking Table */
+        .booking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .booking-table th, .booking-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .booking-table th {
+            background-color: #f2f2f2;
+        }
+
+        .booking-btn {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .available {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .available:hover {
+            background-color: #27ae60;
+        }
+
+        .booked {
+            background-color: #e74c3c;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            nav ul {
+                margin-top: 1rem;
+            }
+            
+            .filter {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>QUẢN LÝ SÂN BÓNG</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">Trang chủ</a></li>
+                <li><a href="#dat-san">Đặt sân</a></li>
+                <li><a href="#">Lịch sử</a></li>
+                <li><a href="#">Đăng nhập</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="banner">
+            <h2>Giảm 10% cho đặt sân buổi sáng!</h2>
+            <button onclick="scrollToBooking()">Đặt sân ngay</button>
+        </section>
+
+        <section id="dat-san" class="booking-section">
+            <h2>Đặt sân bóng</h2>
+            <div class="filter">
+                <select id="loai-san">
+                    <option value="5">Sân 5 người</option>
+                    <option value="7">Sân 7 người</option>
+                    <option value="11">Sân 11 người</option>
+                </select>
+                <input type="date" id="ngay-dat">
+            </div>
+
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Sân 1 (VIP)</th>
+                        <th>Sân 2</th>
+                        <th>Sân 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>8h-10h</td>
+                        <td><button class="booking-btn available" data-san="1" data-gio="8-10">500k</button></td>
+                        <td><button class="booking-btn available" data-san="2" data-gio="8-10">300k</button></td>
+                        <td><button class="booking-btn booked">Đã đặt</button></td>
+                    </tr>
+                    <tr>
+                        <td>10h-12h</td>
+                        <td><button class="booking-btn available" data-san="1" data-gio="10-12">500k</button></td>
+                        <td><button class="booking-btn booked">Đã đặt</button></td>
+                        <td><button class="booking-btn available" data-san="3" data-gio="10-12">400k</button></td>
+                    </tr>
+                    <tr>
+                        <td>14h-16h</td>
+                        <td><button class="booking-btn booked">Đã đặt</button></td>
+                        <td><button class="booking-btn available" data-san="2" data-gio="14-16">300k</button></td>
+                        <td><button class="booking-btn available" data-san="3" data-gio="14-16">400k</button></td>
+                    </tr>
+                    <tr>
+                        <td>16h-18h</td>
+                        <td><button class="booking-btn available" data-san="1" data-gio="16-18">500k</button></td>
+                        <td><button class="booking-btn available" data-san="2" data-gio="16-18">300k</button></td>
+                        <td><button class="booking-btn booked">Đã đặt</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Quản lý sân bóng. Liên hệ: 0123.456.789</p>
+    </footer>
+
+    <script>
+        // Cuộn đến phần đặt sân
+        function scrollToBooking() {
+            document.getElementById('dat-san').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        // Xử lý đặt sân
+        document.querySelectorAll('.available').forEach(button => {
+            button.addEventListener('click', function() {
+                const san = this.getAttribute('data-san');
+                const gio = this.getAttribute('data-gio');
+                const loaiSan = document.getElementById('loai-san').value;
+                const ngayDat = document.getElementById('ngay-dat').value || 'hôm nay';
+                
+                if (confirm(`Bạn có chắc muốn đặt Sân ${san} (${loaiSan} người) từ ${gio} vào ${ngayDat}?`)) {
+                    this.classList.remove('available');
+                    this.classList.add('booked');
+                    this.textContent = 'Đã đặt';
+                    alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
+                }
+            });
+        });
+
+        // Đặt ngày mặc định là hôm nay
+        document.getElementById('ngay-dat').valueAsDate = new Date();
+    </script>
+</body>
+</html>
