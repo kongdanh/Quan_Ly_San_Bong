@@ -58,7 +58,7 @@ def nguoidung(userID):
 
 @app.route('/login')
 def dangNhap():
-    return render_template('login.html')
+    return render_template('dangnhap_dangki.html')
 
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
