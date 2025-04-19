@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
@@ -76,6 +77,13 @@ def xuLiDangNhap():
     else:
         return redirect('login')
         
+@app.route('/signUp', methods=['POST'])
+def xuliDangKi():
+    birth = request.form.to_dict()['date']
+    date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
+    adjDatas = request.form.to_dict()
+    adjDatas['date'] = date_obj
+    return taikhoan.dangKiTaiKhoan(adjDatas)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -220,30 +220,36 @@
 
                 <form id="registerForm">
                     <div class="form-group">
-                        <label for="register-name">Họ và tên</label>
-                        <input type="text" id="register-name" placeholder="Nhập họ tên" required>
+                        <label for="name">Họ và tên</label>
+                        <input type="text" id="name" name="name" placeholder="Nhập họ tên" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="register-phone">Số điện thoại</label>
-                        <input type="tel" id="register-phone" placeholder="Nhập số điện thoại" required>
+                        <label for="phone">Số điện thoại</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Nhập số điện thoại" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Ngày sinh</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Địa chỉ</label>
+                        <input type="text" id="address" name="address" placeholder="Nhập địa chỉ" required>
+                    </div>
+                    <input type="text" id="AccType" name="AccType" value="user" hidden>
+                    <div class="form-group">
+                        <label for="username">Tên tài khoản</label>
+                        <input type="text" id="username" name="username" placeholder="Nhập tên tài khoản" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Mật khẩu</label>
+                        <input type="password" id="register-password" name="password" placeholder="Nhập mật khẩu" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="register-email">Email</label>
-                        <input type="email" id="register-email" placeholder="Nhập email" required>
+                        <label for="rePassword">Xác nhận mật khẩu</label>
+                        <input type="password" id="rePassword" placeholder="Nhập lại mật khẩu" required>
                     </div>
-
-                    <div class="form-group">
-                        <label for="register-password">Mật khẩu</label>
-                        <input type="password" id="register-password" placeholder="Nhập mật khẩu" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="register-confirm-password">Xác nhận mật khẩu</label>
-                        <input type="password" id="register-confirm-password" placeholder="Nhập lại mật khẩu" required>
-                    </div>
-
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Đăng ký</button>
                         <button type="button" class="btn btn-secondary" onclick="showLoginForm()">Đã có tài khoản? Đăng nhập</button>
@@ -265,7 +271,7 @@
             document.getElementById('login-form').style.display = 'block';
         }
 
-        // Form validation and submission
+        // // Form validation and submission
         // document.getElementById('loginForm').addEventListener('submit', function(e) {
         //     e.preventDefault();
         //     const email = document.getElementById('login-email').value;
@@ -279,22 +285,31 @@
 
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const name = document.getElementById('register-name').value;
-            const phone = document.getElementById('register-phone').value;
-            const email = document.getElementById('register-email').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const username = document.getElementById('username').value;
             const password = document.getElementById('register-password').value;
-            const confirmPassword = document.getElementById('register-confirm-password').value;
-            
+            const confirmPassword = document.getElementById('rePassword').value;
+            console.log(password,confirmPassword);
             if (password !== confirmPassword) {
                 alert('Mật khẩu xác nhận không khớp!');
                 return;
             }
             
             // Simulate registration (in a real app, this would call an API)
-            alert(`Đăng ký thành công cho: ${name}\nEmail: ${email}\nSĐT: ${phone}`);
-            
-            // Switch back to login form
-            showLoginForm();
+            const signUp = new FormData(document.querySelector('#registerForm'))
+            fetch('/signUp',{
+                method:'POST',
+                body:signUp
+            }).then(response=>response.json()).then(data=>{
+                if(data['success']){
+                    alert(`Đăng ký thành công cho: ${name}\nTên tài khoản: ${username}\nSĐT: ${phone}`);
+                    showLoginForm()
+                }
+                else{
+                    alert(`Lỗi: ${data['message']}, không thể tạo tài khoản`)
+                }
+            })
         });
     </script>
 </body>
