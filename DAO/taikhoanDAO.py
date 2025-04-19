@@ -1,3 +1,4 @@
+from datetime import date
 import mysql.connector
 from mysql.connector import Error
 from typing import List, Dict
@@ -19,7 +20,7 @@ class TaiKhoanDAO:
     def them_TaiKhoan(self, signUpData: Dict) -> Dict:
         for x in signUpData.values():
             if not x:
-                return {"success": False, "error": "Thiếu thông tin bắt buộc"}
+                return {"success": False, "message": "Thiếu thông tin bắt buộc"}
 
         try:
             cursor = self.conn.cursor()
@@ -27,15 +28,14 @@ class TaiKhoanDAO:
                 """INSERT INTO taikhoan (TenTaiKhoan, MatKhau, NgayTao, AccType) 
                     VALUES (%s, %s, %s, %s)
                 """,
-                (signUpData.values()[0:])
+                (signUpData['username'],signUpData['password'],date.today(),signUpData['AccType'])
             )
-            
             self.conn.commit()
             return {"success": True, "idTaiKhoan": cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -51,7 +51,7 @@ class TaiKhoanDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi sửa người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -64,7 +64,7 @@ class TaiKhoanDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi xóa người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -81,12 +81,12 @@ class TaiKhoanDAO:
             if data:
                 result = {"success": True,'IdTaiKhoan':data[0],'AccType':data[4]}
             else:
-                result = {"success": False,"error":"tài khoản không tồn tại"}
+                result = {"success": False,"message":"tài khoản không tồn tại"}
             return result
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi đăng nhập tài khoản: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
     
@@ -99,17 +99,14 @@ class TaiKhoanDAO:
             values=(accName,)
             cursor.execute(query,values)
             data = cursor.fetchone()
-            print(data)
-            result={}
             if data:
-                result = {"success": True}
+                return {"success": True,'idTaiKhoan': cursor.lastrowid}
             else:
-                result = {"success": False,"error":"tài khoản không tồn tại"}
-            return result
+                return {"success": False,"message":"tài khoản không tồn tại"}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
     

@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
@@ -125,10 +126,12 @@ def sua_nhan_vien(id):
 def nguoidung(userID):
     return render_template('user.html',userID=userID)
 
+#thiết lập route cho login page
 @app.route('/login')
 def dangNhap():
     return render_template('dangnhap_dangki.html')
 
+#đăng nhập
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
     name = request.form.get('username')
@@ -145,10 +148,6 @@ def xuLiDangNhap():
     else:
         return redirect('login')
         
-@app.route('/quanlikhachhang')
-def quan_li_khach_hang():
-#    danh_sach_nhan_vien = NhanVienBus.lay_danh_sach_nhan_vien()
-    return render_template('quanlikhachhang.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
