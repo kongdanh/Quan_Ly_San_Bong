@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhân viên</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .form-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        input[type="tel"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+            }
+
+            th,
+            td {
+                padding: 8px 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            button {
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Quản lý Nhân viên</h1>
+
+    <!-- Form thêm nhân viên -->
+    <div class="form-container">
+        <h2>Thêm nhân viên mới</h2>
+        <form id="themForm" action="/them-nhanvien" method="POST">
+            <div class="form-group">
+                <label for="hoTen">Họ tên:</label>
+                <input type="text" id="hoTen" name="HoTen" required placeholder="Nhập họ tên">
+            </div>
+            <div class="form-group">
+                <label for="ngaySinh">Ngày sinh:</label>
+                <input type="date" id="ngaySinh" name="NgaySinh">
+            </div>
+            <div class="form-group">
+                <label for="sdt">Số điện thoại:</label>
+                <input type="tel" id="sdt" name="SDT" required placeholder="Nhập số điện thoại">
+            </div>
+            <div class="form-group">
+                <label for="diaChi">Địa chỉ:</label>
+                <input type="text" id="diaChi" name="DiaChi" placeholder="Nhập địa chỉ">
+            </div>
+            <div class="form-group">
+                <label for="idTaiKhoan">ID Tài khoản:</label>
+                <input type="text" id="idTaiKhoan" name="IdTaiKhoan" placeholder="Nhập ID tài khoản">
+            </div>
+            <button type="submit" class="btn-primary">Thêm nhân viên</button>
+        </form>
+    </div>
+
+    <!-- Bảng hiển thị dữ liệu -->
+    <div class="table-container">
+        <h2>Danh sách nhân viên</h2>
+        <table id="nhanVienTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Ngày sinh</th>
+                    <th>SĐT</th>
+                    <th>Địa chỉ</th>
+                    <th>ID Tài khoản</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="nhanVienBody">
+                {% for nhanvien in danh_sach_nhan_vien %}
+                <tr>
+                    <td>{{ nhanvien.IdNhanVien }}</td>
+                    <td>{{ nhanvien.HoTen }}</td>
+                    <td>{{ nhanvien.NgaySinh }}</td>
+                    <td>{{ nhanvien.SDT }}</td>
+                    <td>{{ nhanvien.DiaChi }}</td>
+                    <td>{{ nhanvien.IdTaiKhoan }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-warning"
+                                onclick="moFormSua('{{ nhanvien.IdNhanVien }}', '{{ nhanvien.HoTen }}', '{{ nhanvien.NgaySinh }}', '{{ nhanvien.SDT }}', '{{ nhanvien.DiaChi }}', '{{ nhanvien.IdTaiKhoan }}')">Sửa</button>
+                            <button class="btn-danger" onclick="xoaNhanVien('{{ nhanvien.IdNhanVien }}')">Xóa</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Sửa -->
+    <div class="modal" id="formSua">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Sửa thông tin nhân viên</h3>
+            </div>
+            <div id="suaForm">
+                <input type="hidden" id="suaId">
+                <div class="form-group">
+                    <label for="suaHoTen">Họ tên:</label>
+                    <input type="text" id="suaHoTen" required>
+                </div>
+                <div class="form-group">
+                    <label for="suaNgaySinh">Ngày sinh:</label>
+                    <input type="date" id="suaNgaySinh">
+                </div>
+                <div class="form-group">
+                    <label for="suaSdt">Số điện thoại:</label>
+                    <input type="tel" id="suaSdt" required>
+                </div>
+                <div class="form-group">
+                    <label for="suaDiaChi">Địa chỉ:</label>
+                    <input type="text" id="suaDiaChi">
+                </div>
+                <div class="form-group">
+                    <label for="suaIdTaiKhoan">ID Tài khoản:</label>
+                    <input type="text" id="suaIdTaiKhoan">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="dongForm()">Hủy</button>
+                    <button type="submit" class="btn-primary" onclick="suaNhanVien()">Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mở form sửa và đặt giá trị hiện tại
+        function moFormSua(id, hoTen, ngaySinh, sdt, diaChi, idTaiKhoan) {
+            document.getElementById('suaId').value = id;
+            document.getElementById('suaHoTen').value = hoTen;
+            document.getElementById('suaNgaySinh').value = ngaySinh || '';
+            document.getElementById('suaSdt').value = sdt;
+            document.getElementById('suaDiaChi').value = diaChi || '';
+            document.getElementById('suaIdTaiKhoan').value = idTaiKhoan || '';
+            document.getElementById('formSua').style.display = 'flex';
+        }
+
+        // Đóng form sửa
+        function dongForm() {
+            document.getElementById('formSua').style.display = 'none';
+        }
+
+        // Sửa nhân viên
+        function suaNhanVien() {
+            const id = document.getElementById('suaId').value;
+            const hoTen = document.getElementById('suaHoTen').value;
+            const ngaySinh = document.getElementById('suaNgaySinh').value;
+            const sdt = document.getElementById('suaSdt').value;
+            const diaChi = document.getElementById('suaDiaChi').value;
+            const idTaiKhoan = document.getElementById('suaIdTaiKhoan').value;
+
+            if (!hoTen || !sdt) {
+                alert('Vui lòng nhập đầy đủ họ tên và số điện thoại');
+                return;
+            }
+
+            const nhanVienData = new FormData();
+            nhanVienData.append('HoTen', hoTen);
+            nhanVienData.append('NgaySinh', ngaySinh);
+            nhanVienData.append('SDT', sdt);
+            nhanVienData.append('DiaChi', diaChi);
+            nhanVienData.append('IdTaiKhoan', idTaiKhoan);
+
+            fetch(`/sua-nhanvien/${id}`, {
+                method: 'POST',
+                body: nhanVienData
+            })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Cập nhật thất bại: ' + (json.error || 'Không rõ'));
+                    }
+                })
+                .catch(error => {
+                    alert('Lỗi kết nối: ' + error.message);
+                });
+        }
+
+        // Xóa nhân viên
+        function xoaNhanVien(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
+                window.location.href = `/xoa-nhanvien/${id}`;
+            }
+        }
+
+        // Đóng modal khi click bên ngoài
+        window.addEventListener('click', function (event) {
+            const modal = document.getElementById('formSua');
+            if (event.target === modal) {
+                dongForm();
+            }
+        });
+    </script>
+</body>
+
+</html>
