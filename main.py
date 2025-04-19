@@ -57,10 +57,12 @@ def sua_san(id):
 def nguoidung(userID):
     return render_template('user.html',userID=userID)
 
+#thiết lập route cho login page
 @app.route('/login')
 def dangNhap():
     return render_template('dangnhap_dangki.html')
 
+#đăng nhập
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
     name = request.form.get('username')
@@ -76,7 +78,8 @@ def xuLiDangNhap():
             return redirect(url_for('index'))   
     else:
         return redirect('login')
-        
+
+# đăng kí người dùng
 @app.route('/signUp', methods=['POST'])
 def xuliDangKi():
     birth = request.form.to_dict()['date']
