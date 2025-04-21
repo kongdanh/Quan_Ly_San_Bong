@@ -20,65 +20,81 @@ san_bus = SanBus(dao)
 taikhoan = TaiKhoanBUS()
 
 
+# trang mở đầu ====================================================================================
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# sân
+# khi nhấn quản lý sân ( chức năng của quản lý or nhân viên) ======================================
 @app.route('/san')
 def quan_ly_san():
-    # Lấy danh sách sân từ SanBus
+    # Lấy danh sách sân
     danh_sach_san = san_bus.lay_danh_sach_san()
     # Truyền danh sách sân vào template san.html
     return render_template('san.html', danh_sach_san=danh_sach_san)
 
-# Định nghĩa route
+# route thêm sân
 @app.route('/them-san', methods=['POST'])
 def them_san():
+    # lấy thông tin sân từ from thêm sân
     co_san = request.form.get('coSan')
     dia_chi = request.form.get('diaChi')
+    # gọi bus
     result = san_bus.them_san({'coSan': co_san, 'diaChi': dia_chi})
-    if isinstance(result, dict) and 'idSan' in result:  # Sử dụng 'idSan' thay vì 'id'
+    if isinstance(result, dict) and 'idSan' in result:
         danh_sach_san = san_bus.lay_danh_sach_san()
         print(f"Danh sách sân sau khi thêm: {danh_sach_san}")
     else :
         print(f"Thêm sân thất bại, result: {result}")
     return redirect(url_for('quan_ly_san'))
 
+# route xóa sân ( sử dụng id san ) ==================================================================
 @app.route('/xoa-san/<int:id_san>')
 def xoa_san(id_san):
+    # gọi bus
     san_bus.xoa_san(id_san)
     return redirect(url_for('quan_ly_san'))
 
+# sửa sân ( thông qua id lấy tại bảng sân )
 @app.route('/sua-san/<int:id>', methods=['POST'])
 def sua_san(id):
+    # lấy dữ liệu mới từ from
     co_san = request.form.get('coSan')
     dia_chi = request.form.get('diaChi')
     du_lieu_moi = {
         'coSan': co_san,
         'diaChi': dia_chi
     }
+    # gọi bus
     ket_qua = san_bus.sua_san(id, du_lieu_moi)
     return jsonify(ket_qua)
 
+
+# nhân viên
+# tạo bus dao của nhân viên
 nhanvien_dao = NhanVienDAO(conn)
 nhanvien_bus = NhanVienBus(nhanvien_dao)
 
+# khi nhấn quản lý nhân viên ( quyền của quản lý hoặc chủ sân ) ========================================
 @app.route('/nhanvien')
 def quan_ly_nhan_vien():
-    # Lấy danh sách nhân viên từ NhanVienBus
+    # Lấy danh sách nhân viên
     danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
     # Truyền danh sách nhân viên vào template nhanvien.html
     return render_template('nhanvien.html', danh_sach_nhan_vien=danh_sach_nhan_vien)
 
-# Route để thêm nhân viên mới
+# route thêm nhân viên
 @app.route('/them-nhan-vien', methods=['POST'])
 def them_nhan_vien():
+    # lấy thông tin từ from
     ho_ten = request.form.get('hoTen')
     ngay_sinh = request.form.get('ngaySinh')
     sdt = request.form.get('sdt')
     dia_chi = request.form.get('diaChi')
     id_tai_khoan = request.form.get('idTaiKhoan')
     
+    # tạo Dict từ thông tin
     du_lieu_nhan_vien = {
         'hoTen': ho_ten,
         'ngaySinh': ngay_sinh,
@@ -87,6 +103,7 @@ def them_nhan_vien():
         'idTaiKhoan': id_tai_khoan
     }
     
+    # gọi bus
     result = nhanvien_bus.them_nhan_vien(du_lieu_nhan_vien)
     if isinstance(result, dict) and 'idNhanVien' in result:  # Kiểm tra thêm thành công
         danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
@@ -96,13 +113,14 @@ def them_nhan_vien():
     
     return redirect(url_for('nhanvien.quan_ly_nhan_vien'))
 
-# Route để xóa nhân viên
+# Route xóa nhân viên ( thông qua id nhân viên )
 @app.route('/xoa-nhan-vien/<int:id_nhan_vien>')
 def xoa_nhan_vien(id_nhan_vien):
+    # gọi bus
     nhanvien_bus.xoa_nhan_vien(id_nhan_vien)
     return redirect(url_for('nhanvien.quan_ly_nhan_vien'))
 
-# Route để sửa thông tin nhân viên
+# Route sửa thông tin nhân viên ( lấy id nhân viên tại bảng )
 @app.route('/sua-nhan-vien/<int:id>', methods=['POST'])
 def sua_nhan_vien(id):
     ho_ten = request.form.get('hoTen')
@@ -111,6 +129,7 @@ def sua_nhan_vien(id):
     dia_chi = request.form.get('diaChi')
     id_tai_khoan = request.form.get('idTaiKhoan')
     
+    # tạo Dict từ dữ liệu trên
     du_lieu_moi = {
         'hoTen': ho_ten,
         'ngaySinh': ngay_sinh,
@@ -119,9 +138,11 @@ def sua_nhan_vien(id):
         'idTaiKhoan': id_tai_khoan
     }
     
+    # gọi bus
     ket_qua = NhanVienBus.sua_nhan_vien(id, du_lieu_moi)
     return jsonify(ket_qua)
 
+# trang người dùng
 @app.route('/user<userID>')
 def nguoidung(userID):
     return render_template('user.html',userID=userID)
