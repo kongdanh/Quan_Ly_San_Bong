@@ -8,6 +8,7 @@ from BUS.nhanvien_bus import NhanVienBus
 from DAO.nhanvien_dao import NhanVienDAO
 from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
+from datetime import datetime
 import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -83,8 +84,22 @@ nhanvien_bus = NhanVienBus(nhanvien_dao)
 def quan_ly_nhan_vien():
     # Lấy danh sách nhân viên
     danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
+    tong_nhan_vien = len(danh_sach_nhan_vien)
+    so_luong_hd = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Hoạt động')
+    so_luong_np = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Nghỉ phép')
+
+    now = datetime.now()
+    thang_hien_tai = now.month
+    nam_hien_tai = now.year
+    so_nv_moi = sum(
+    1 for nv in danh_sach_nhan_vien
+    if 'ngayvaolam' in nv
+    and isinstance(nv['ngayvaolam'], str)
+    and datetime.strptime(nv['ngayvaolam'], '%Y-%m-%d').month == thang_hien_tai
+    and datetime.strptime(nv['ngayvaolam'], '%Y-%m-%d').year == nam_hien_tai
+)
     # Truyền danh sách nhân viên vào template nhanvien.html
-    return render_template('nhanvien.html', danh_sach_nhan_vien=danh_sach_nhan_vien)
+    return render_template('quanlinhanvien.html', danh_sach_nhan_vien=danh_sach_nhan_vien, soluongnv = tong_nhan_vien, slhd = so_luong_hd, nvm = so_nv_moi, nvnp = so_luong_np)
 
 # route thêm nhân viên
 @app.route('/them-nhan-vien', methods=['POST'])
@@ -238,6 +253,10 @@ def sua_hoa_don(id):
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Không thể sửa hóa đơn'})
+
+@app.route('/khachhang')
+def quanlikhachhang():
+    return render_template('quanlikhachhang.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

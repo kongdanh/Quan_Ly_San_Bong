@@ -14,7 +14,6 @@ class NhanVienBus:
 
     def lay_danh_sach_nhan_vien(self):
         danh_sach = self.dao.lay_danh_sach_nhan_vien()
-        print("Danh sách nhân viên từ DAO:", danh_sach)  # Debug
         return danh_sach
 
     def them_nhan_vien_to_list(self, nhan_vien_data):
