@@ -6,6 +6,8 @@ from BUS.taikhoanBUS import TaiKhoanBUS
 from DAO.db_config import get_connection
 from BUS.nhanvien_bus import NhanVienBus
 from DAO.nhanvien_dao import NhanVienDAO
+from DAO.hoadon_dao import HoaDonDAO
+from BUS.hoadon_bus import HoaDonBUS
 import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -169,6 +171,73 @@ def xuLiDangNhap():
     else:
         return redirect('login')
         
+# Khởi tạo DAO và BUS cho hóa đơn
+hoa_don_dao = HoaDonDAO(conn)  # conn là kết nối database đã được thiết lập
+hoa_don_bus = HoaDonBUS(hoa_don_dao)
+
+# Route hiển thị danh sách hóa đơn
+@app.route('/hoa-don')
+def quan_ly_hoa_don():
+    # Lấy danh sách hóa đơn
+    danh_sach_hoa_don = hoa_don_bus.lay_danh_sach_hoa_don()
+    # Truyền danh sách hóa đơn vào template hoa_don.html
+    return render_template('hoadon.html', danh_sach_hoa_don=danh_sach_hoa_don)
+
+# Route thêm hóa đơn
+@app.route('/them-hoa-don', methods=['POST'])
+def them_hoa_don():
+    # Lấy thông tin hóa đơn từ request
+    data = request.get_json()
+    ngay = data.get('Ngay')
+    tong_tien = data.get('TongTien')
+    id_nhan_vien = data.get('IdNhanVien')
+
+    # Tạo dict từ thông tin
+    du_lieu_hoa_don = {
+        'Ngay': ngay,
+        'TongTien': tong_tien,
+        'IdNhanVien': id_nhan_vien
+    }
+
+    # Gọi bus để thêm hóa đơn
+    result = hoa_don_bus.them_hoa_don(du_lieu_hoa_don)
+    if isinstance(result, dict) and 'IdHoaDon' in result:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': str(result)})
+
+# Route xóa hóa đơn
+@app.route('/xoa-hoa-don/<int:id_hoa_don>', methods=['POST'])
+def xoa_hoa_don(id_hoa_don):
+    # Gọi bus để xóa hóa đơn
+    result = hoa_don_bus.xoa_hoa_don(id_hoa_don)
+    if result:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Không thể xóa hóa đơn'})
+
+# Route sửa hóa đơn
+@app.route('/sua-hoa-don/<int:id>', methods=['POST'])
+def sua_hoa_don(id):
+    # Lấy dữ liệu mới từ request
+    data = request.get_json()
+    ngay = data.get('Ngay')
+    tong_tien = data.get('TongTien')
+    id_nhan_vien = data.get('IdNhanVien')
+
+    # Tạo dict từ dữ liệu mới
+    du_lieu_moi = {
+        'Ngay': ngay,
+        'TongTien': tong_tien,
+        'IdNhanVien': id_nhan_vien
+    }
+
+    # Gọi bus để sửa hóa đơn
+    ket_qua = hoa_don_bus.sua_hoa_don(id, du_lieu_moi)
+    if ket_qua:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Không thể sửa hóa đơn'})
 
 if __name__ == '__main__':
     app.run(debug=True)
