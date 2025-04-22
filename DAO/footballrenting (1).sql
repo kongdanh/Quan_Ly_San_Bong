@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th4 16, 2025 lúc 07:03 PM
+-- Thời gian đã tạo: Th4 22, 2025 lúc 10:01 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -117,15 +117,37 @@ CREATE TABLE `nhanvien` (
   `NgaySinh` date DEFAULT NULL,
   `SDT` varchar(15) DEFAULT NULL,
   `DiaChi` varchar(255) DEFAULT NULL,
-  `IdTaiKhoan` int(11) DEFAULT NULL
+  `IdTaiKhoan` int(11) DEFAULT NULL,
+  `luong` bigint(20) DEFAULT NULL,
+  `chuc_vu` varchar(100) DEFAULT NULL,
+  `vi_tri` varchar(100) DEFAULT NULL,
+  `ngayvaolam` date DEFAULT NULL,
+  `mota` varchar(1000) DEFAULT NULL,
+  `hopdong` varchar(100) DEFAULT NULL,
+  `phucap` bigint(20) DEFAULT NULL,
+  `cccd` varchar(12) DEFAULT NULL,
+  `gioitinh` varchar(10) DEFAULT NULL,
+  `nganhang` varchar(100) DEFAULT NULL,
+  `hoatdong` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `nhanvien`
 --
 
-INSERT INTO `nhanvien` (`IdNhanVien`, `HoTen`, `NgaySinh`, `SDT`, `DiaChi`, `IdTaiKhoan`) VALUES
-(1, 'Tran Thi B', '1995-08-08', '0912345678', 'Da Nang', 2);
+INSERT INTO `nhanvien` (`IdNhanVien`, `HoTen`, `NgaySinh`, `SDT`, `DiaChi`, `IdTaiKhoan`, `luong`, `chuc_vu`, `vi_tri`, `ngayvaolam`, `mota`, `hopdong`, `phucap`, `cccd`, `gioitinh`, `nganhang`, `hoatdong`) VALUES
+(1, 'Tran Thi B', '1995-10-08', '0912345678', 'Da Nang', 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(6, 'nv1', '1111-11-11', '1111', '111', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 'Nguyen Van A', '1990-05-15', '0901234567', '123 Đường Láng, Hà Nội', 1, 15000000, 'Quản lý', 'Quản lý sân', '2020-01-10', NULL, 'Dài hạn', 2000000, '123456789', 'Nam', 'Vietcombank-1234567890', 'Hoạt động'),
+(18, 'Tran Thi B', '1995-08-22', '0912345678', '45 Nguyễn Huệ, TP.HCM', 2, 10000000, 'Nhân viên', 'Thu ngân', '2021-03-15', NULL, 'Trung hạn', 1000000, '987654321', 'Nữ', 'Techcombank-9876543210', 'Nghỉ phép'),
+(19, 'Le Van C', '1992-11-30', '0923456789', '78 Lê Lợi, Đà Nẵng', 3, 12000000, 'Nhân viên', 'Trọng tài', '2022-06-20', NULL, 'Ngắn hạn', 1500000, '456789123', 'Nam', 'BIDV-4567891234', 'Hoạt động'),
+(20, 'Pham Thi D', '1988-02-14', '0934567890', '56 Trần Phú, Nha Trang', 4, 13000000, 'Nhân viên', 'Hậu cần', '2019-09-05', NULL, 'Dài hạn', 1800000, '789123456', 'Nữ', 'MB Bank-7891234567', 'Nghỉ việc'),
+(21, 'Hoang Van E', '1993-07-25', '0945678901', '89 Nguyễn Trãi, Huế', 5, 11000000, 'Nhân viên', 'Trọng tài', '2021-11-11', NULL, 'Trung hạn', 1200000, '321654987', 'Nam', 'Vietinbank-3216549870', 'Hoạt động'),
+(22, 'Bui Thi F', '1996-04-18', '0956789012', '12 Phạm Văn Đồng, Hà Nội', 6, 9000000, 'Nhân viên', 'Thu ngân', '2023-02-25', NULL, 'Ngắn hạn', 800000, '654987321', 'Nữ', 'Agribank-6549873210', 'Nghỉ phép'),
+(23, 'Nguyen Van G', '1991-09-09', '0967890123', '34 Hùng Vương, Hải Phòng', 7, 16000000, 'Quản lý', 'Quản lý sân', '2018-07-30', NULL, 'Dài hạn', 2500000, '147258369', 'Nam', 'Sacombank-1472583690', 'Hoạt động'),
+(24, 'Tran Van H', '1989-12-12', '0978901234', '67 Lê Đại Hành, Đà Lạt', 8, 14000000, 'Nhân viên', 'Hậu cần', '2020-04-10', NULL, 'Trung hạn', 1700000, '258369147', 'Nam', 'VPBank-2583691470', 'Nghỉ việc'),
+(25, 'Le Thi I', '1997-03-03', '0989012345', '90 Nguyễn Văn Cừ, Cần Thơ', 9, 9500000, 'Nhân viên', 'Thu ngân', '2022-08-15', NULL, 'Ngắn hạn', 900000, '369147258', 'Nữ', 'ACB-3691472580', 'Hoạt động'),
+(26, 'Pham Van K', '1994-06-06', '0990123456', '23 Điện Biên Phủ, Vinh', 10, 15500000, 'Quản lý', 'Quản lý sân', '2019-12-01', NULL, 'Dài hạn', 2200000, '741852963', 'Nam', 'TPBank-7418529630', 'Nghỉ phép');
 
 -- --------------------------------------------------------
 
@@ -167,8 +189,9 @@ CREATE TABLE `san` (
 --
 
 INSERT INTO `san` (`IdSan`, `CoSan`, `DiaChi`) VALUES
-(1, '5 vs 5', '123 Le Loi'),
-(2, '7 vs 7', '456 Tran Phu');
+(1, '7 vs 7', '123 Le Loi'),
+(2, '7 vs 7', '456 Tran Phu'),
+(9, '5 vs 5', 'bbbb');
 
 -- --------------------------------------------------------
 
@@ -190,7 +213,17 @@ CREATE TABLE `taikhoan` (
 
 INSERT INTO `taikhoan` (`IdTaiKhoan`, `TenTaiKhoan`, `MatKhau`, `NgayTao`, `AccType`) VALUES
 (1, 'user1', 'pass1', '2024-01-01', 'user'),
-(2, 'admin1', 'pass2', '2024-01-02', 'admin');
+(2, 'admin1', 'pass2', '2024-01-02', 'admin'),
+(3, 'staff1', 'password1', '2025-04-21', 'staff'),
+(4, 'staff2', 'password2', '2025-04-21', 'staff'),
+(5, 'staff3', 'password3', '2025-04-21', 'staff'),
+(6, 'staff4', 'password4', '2025-04-21', 'staff'),
+(7, 'staff5', 'password5', '2025-04-21', 'staff'),
+(8, 'staff6', 'password6', '2025-04-21', 'staff'),
+(9, 'staff7', 'password7', '2025-04-21', 'staff'),
+(10, 'staff8', 'password8', '2025-04-21', 'staff'),
+(11, 'staff9', 'password9', '2025-04-21', 'staff'),
+(12, 'staff10', 'password10', '2025-04-21', 'staff');
 
 -- --------------------------------------------------------
 
@@ -300,7 +333,7 @@ ALTER TABLE `nguoidung`
 -- AUTO_INCREMENT cho bảng `nhanvien`
 --
 ALTER TABLE `nhanvien`
-  MODIFY `IdNhanVien` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `IdNhanVien` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT cho bảng `phieughi`
@@ -312,13 +345,13 @@ ALTER TABLE `phieughi`
 -- AUTO_INCREMENT cho bảng `san`
 --
 ALTER TABLE `san`
-  MODIFY `IdSan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `IdSan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT cho bảng `taikhoan`
 --
 ALTER TABLE `taikhoan`
-  MODIFY `IdTaiKhoan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `IdTaiKhoan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT cho bảng `thanhtoan`
