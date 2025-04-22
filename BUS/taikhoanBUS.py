@@ -1,48 +1,48 @@
 from typing import Dict
-from DAO import taikhoanDAO,nguoidungDAO
+from DAO.nguoidungDAO import NguoiDungDAO
+from DAO.taikhoanDAO import TaiKhoanDAO
 
-class taikhoanBUS:
+class TaiKhoanBUS:
     def __init__(self):
-        self.userDao = nguoidungDAO()
-        self.accDao = taikhoanDAO()
+        self.userDao = NguoiDungDAO()
+        self.accDao = TaiKhoanDAO()
         
     def taoTaiKhoanND(self,signUpData:Dict) -> Dict:
         # dictionary sẽ có 4 dữ liệu đầu là data tài khoản các dữ liệu sau nó là thông tin người dùng
         for x in signUpData.values():
             if not x:
-                return {"success": False, "error": "Thiếu thông tin bắt buộc"}
-        result = [] 
-        result.append(self.accDao.them_TaiKhoan(dict(list(signUpData.items())[:4])))
-        if not result[0].get("success"):
+                return {"success": False, "message": "Thiếu thông tin bắt buộc"}
+        accDatas = dict(list(signUpData.items())[4:7])
+        result = self.accDao.them_TaiKhoan(accDatas)
+        if not result.get("success"):
             return result
-        result.append(self.userDao.them_NguoiDung(dict(list(signUpData.items())[4:])))
-        if not result[1].get("success"):
-            result.append(self.accDao.xoa_TaiKhoan(result.get("idTaiKhoan")))
-        return result[len(result)-1]
-    
-    def taoTaiKhoanNV(self,signUpData:Dict) -> Dict:
-        # dictionary sẽ có 4 dữ liệu đầu là data tài khoản các dữ liệu sau nó là thông tin người dùng
-        for x in signUpData.values():
-            if not x:
-                return {"success": False, "error": "Thiếu thông tin bắt buộc"}
-        result = [] 
-        result.append(self.accDao.timTaiKhoan(signUpData.values()[0]))
-        if not result[0].get("success"):
-            return result
-        result.append(self.accDao.them_TaiKhoan(dict(list(signUpData.items())[:4])))
-        if not result[0].get("success"):
-            return result
-        result.append(self.userDao.them_NguoiDung(dict(list(signUpData.items())[4:])))
-        if not result[1].get("success"):
-            result.append(self.accDao.xoa_TaiKhoan(result.get("idTaiKhoan")))
-        return result[len(result)-1]
+        accid = result['idTaiKhoan']
+        userDatas = dict(list(signUpData.items())[0:4])
+        userDatas['idTaiKhoan'] = accid
+        result = self.userDao.them_nguoiDung(userDatas)
+        if not result.get("success"):
+            result = self.accDao.xoa_TaiKhoan(accid)
+        return result
     
     def danhSachTaiKhoan(self):
         return self.accDao.getListTaiKhoan()
     
     def dangNhapTaiKhoan(self,signInData:Dict)->Dict:
         #dictionary đưa vào chỉ có 2 values là tên và mật khẩu
-        result = self.accDao.timTaiKhoan(signInData.values()[0])
+        # ví dụ: {'username': 'user1', 'password': 'pass1'}
+        result = self.accDao.timKiemTaiKhoan(signInData['username'])
         if result.get("success"):
             return self.accDao.dangNhapTaiKhoan(signInData)
+        return result
+    
+    def dangKiTaiKhoan(self,signUpData:Dict)->Dict:
+        #dictionary đưa vào chỉ có 2 values là tên và mật khẩu
+        # ví dụ: {'username': 'user1', 'password': 'pass1'}
+        result = self.accDao.timKiemTaiKhoan(signUpData['username'])
+        if result.get("success"):
+            return {'success':False,'message':'Tên người dùng đã tồn tại'}
+        result = self.userDao.timKiemNguoiDung(signUpData['phone'])
+        if result.get("success"):
+            return {'success':False,'message':'Số điện thoại này đã được sử dụng'}
+        result = self.taoTaiKhoanND(signUpData)
         return result

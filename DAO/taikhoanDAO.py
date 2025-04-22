@@ -1,10 +1,11 @@
+from datetime import date
 import mysql.connector
 from mysql.connector import Error
 from typing import List, Dict
 from DAO.db_config import get_connection
 
 class TaiKhoanDAO:
-    def __init__(self, conn=None):
+    def __init__(self,conn = None):
         self.conn = conn if conn is not None else get_connection()
 
     def getListTaiKhoan(self) -> List[Dict]:
@@ -19,7 +20,7 @@ class TaiKhoanDAO:
     def them_TaiKhoan(self, signUpData: Dict) -> Dict:
         for x in signUpData.values():
             if not x:
-                return {"success": False, "error": "Thiếu thông tin bắt buộc"}
+                return {"success": False, "message": "Thiếu thông tin bắt buộc"}
 
         try:
             cursor = self.conn.cursor()
@@ -27,15 +28,14 @@ class TaiKhoanDAO:
                 """INSERT INTO taikhoan (TenTaiKhoan, MatKhau, NgayTao, AccType) 
                     VALUES (%s, %s, %s, %s)
                 """,
-                (signUpData.values()[0:])
+                (signUpData['username'],signUpData['password'],date.today(),signUpData['AccType'])
             )
-            
             self.conn.commit()
             return {"success": True, "idTaiKhoan": cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -51,7 +51,7 @@ class TaiKhoanDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi sửa người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -64,7 +64,7 @@ class TaiKhoanDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi xóa người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -74,15 +74,19 @@ class TaiKhoanDAO:
             query = """
                 SELECT * FROM taikhoan WHERE TenTaiKhoan=%s AND MatKhau=%s
             """
-            values=(signInData.values()[0:])
+            values=(list(signInData.values())[0:])
             cursor.execute(query,values)
-            self.conn.commit()
             data = cursor.fetchone()
-            return {"success": True if data else False}.update(data if data else {"error":"tài khoản không đúng mật khẩu"})
+            result={}
+            if data:
+                result = {"success": True,'IdTaiKhoan':data[0],'AccType':data[4]}
+            else:
+                result = {"success": False,"message":"tài khoản không tồn tại"}
+            return result
         except Error as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            print(f"[DAO ERROR] Lỗi khi đăng nhập tài khoản: {e}")
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
     
@@ -94,13 +98,15 @@ class TaiKhoanDAO:
             """
             values=(accName,)
             cursor.execute(query,values)
-            self.conn.commit()
             data = cursor.fetchone()
-            return {"success": True if data else False}.update(data if data else {"error":"tài khoản không tồn tại"})
+            if data:
+                return {"success": True,'idTaiKhoan': cursor.lastrowid}
+            else:
+                return {"success": False,"message":"tài khoản không tồn tại"}
         except Error as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
     

@@ -21,15 +21,15 @@ class NguoiDungDAO:
     def them_nguoiDung(self, signUpData: Dict) -> Dict:
         for x in signUpData.values():
             if not x:
-                return {"success": False, "error": "Thiếu thông tin bắt buộc"}
-
+                return {"success": False, "message": "Thiếu thông tin bắt buộc"}
+        values = list(signUpData.values())    
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                """INSERT INTO nguoidung (HoTen, NamSinh, SDT, DiaChi, IdTaiKhoan) 
+                """INSERT INTO nguoidung (HoTen, SDT, NgaySinh, DiaChi, IdTaiKhoan) 
                     VALUES (%s, %s, %s, %s, %s)
-                """,
-                (signUpData[0:])
+                """,    
+                (values[0:])
             )
             
             self.conn.commit()
@@ -37,7 +37,7 @@ class NguoiDungDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -54,7 +54,7 @@ class NguoiDungDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi sửa người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
@@ -68,10 +68,25 @@ class NguoiDungDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi xóa người dùng: {e}")
-            return {"success": False, "error": str(e)}
+            return {"success": False, "message": str(e)}
         finally:
             cursor.close()
 
+    def timKiemNguoiDung(self, phone: int) -> Dict:
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM nguoidung WHERE SDT = %s", (phone,))
+            data = cursor.fetchone()
+            if( data is None):
+                return {"success": False,"message":"Không có người dùng tồn tại"}
+            return {"success": True,'idNguoiDung':cursor.lastrowid}
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+    
     def __del__(self):
         """Đóng kết nối khi hủy (nếu tồn tại)"""
         if hasattr(self, 'conn') and self.conn is not None and self.conn.is_connected():

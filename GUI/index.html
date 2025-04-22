@@ -142,12 +142,11 @@
             width: 100%;
             height: 100%;
         }
-        
+
         .menu-item:hover a,
         .menu-item.active a {
             color: inherit;
         }
-
     </style>
 </head>
 
@@ -158,13 +157,17 @@
             <div class="logo">
                 <h2>QUẢN LÝ SÂN BÓNG</h2>
             </div>
-            <div class="menu-item active">Dashboard</div>
+            <div class="menu-item active"><a href="index.html">Dashboard</a></div>
             <div class="menu-item">
-                <a href="{{ url_for('quan_ly_san') }}">Quản lý sân</a>
+                <a href="/san">Quản lý sân</a>
             </div>
-            <div class="menu-item">Quản lý Khách hàng</div>
-            <div class="menu-item">Quản lý Tài chính</div>
-            <div class="menu-item">Quản lý Nhân viên</div>
+            <div class="menu-item"><a href="/khachhang">Quản lý Khách hàng</a></div>
+            <div class="menu-item">
+                <a href="/hoadon">Quản lý tài chính</a>
+            </div>
+            <div class="menu-item">
+                <a href="/nhanvien">Quản lý nhân viên</a>
+            </div>
             <div class="menu-item">Báo cáo & Thống kê</div>
             <div class="menu-item">Cài đặt</div>
         </div>
@@ -175,7 +178,8 @@
                 <h1>Dashboard</h1>
                 <div>
                     <span>Xin chào, Quản trị viên</span>
-                    <button class="btn btn-primary">Đăng xuất</button>
+                    <button class="btn btn-primary">
+                        <a href="/user"> Đăng xuất</a></button>
                 </div>
             </div>
 
