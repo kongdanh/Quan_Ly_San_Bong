@@ -30,6 +30,7 @@ def index():
 
 # sân
 # khi nhấn quản lý sân ( chức năng của quản lý or nhân viên) ======================================
+# region sân
 @app.route('/san')
 def quan_ly_san():
     # Lấy danh sách sân
@@ -73,13 +74,16 @@ def sua_san(id):
     ket_qua = san_bus.sua_san(id, du_lieu_moi)
     return jsonify(ket_qua)
 
-
+# endregion
+###################################################################################
+# region nhân viên
 # nhân viên
 # tạo bus dao của nhân viên
 nhanvien_dao = NhanVienDAO(conn)
 nhanvien_bus = NhanVienBus(nhanvien_dao)
 
 # khi nhấn quản lý nhân viên ( quyền của quản lý hoặc chủ sân ) ========================================
+
 @app.route('/nhanvien')
 def quan_ly_nhan_vien():
     # Lấy danh sách nhân viên
@@ -158,12 +162,17 @@ def sua_nhan_vien(id):
     # gọi bus
     ket_qua = NhanVienBus.sua_nhan_vien(id, du_lieu_moi)
     return jsonify(ket_qua)
-
+# endregion
+###################################################################################
+# region người dùng
 # trang người dùng
 @app.route('/user<userID>')
 def nguoidung(userID):
     return render_template('user.html',userID=userID)
 
+# endregion
+############################################################################################
+# region đăng nhập
 #thiết lập route cho login page
 @app.route('/login')
 def dangNhap():
@@ -186,6 +195,9 @@ def xuLiDangNhap():
     else:
         return redirect('login')
         
+# endregion 
+########################################################################################       
+# region Hóa Đơn
 # Khởi tạo DAO và BUS cho hóa đơn
 hoa_don_dao = HoaDonDAO(conn)  # conn là kết nối database đã được thiết lập
 hoa_don_bus = HoaDonBUS(hoa_don_dao)
@@ -253,10 +265,27 @@ def sua_hoa_don(id):
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Không thể sửa hóa đơn'})
-
+# endregion
+########################################################################################
+# region quản lí khách hàng
 @app.route('/khachhang')
 def quanlikhachhang():
     return render_template('quanlikhachhang.html')
+# endregion
+########################################################################################
+# region báo cáo & thống kê
+@app.route("/baocao")
+def baocao():
+    return render_template("baocao.html")
+# endregion
+########################################################################################
+# region quản lý tài chính
+@app.route('/quanlitaichinh')
+def quanlitaichinh():
+    return render_template('quanlitaichinh.html')
+# endregion 
+########################################################################################
 
 if __name__ == '__main__':
     app.run(debug=True)
+
