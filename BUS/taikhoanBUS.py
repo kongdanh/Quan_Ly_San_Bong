@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Dict
 from DAO.nguoidungDAO import NguoiDungDAO
 from DAO.taikhoanDAO import TaiKhoanDAO
@@ -46,3 +47,9 @@ class TaiKhoanBUS:
             return {'success':False,'message':'Số điện thoại này đã được sử dụng'}
         result = self.taoTaiKhoanND(signUpData)
         return result
+
+    def xoaTaiKhoan(self, idTaiKhoan: int) -> Dict:
+        return  self.accDao.xoa_TaiKhoan(idTaiKhoan)
+    
+    def getListByDate(self, date: date, type:str = None) -> Dict:
+        return self.accDao.getListByDate(date,type)

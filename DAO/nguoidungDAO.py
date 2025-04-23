@@ -72,7 +72,7 @@ class NguoiDungDAO:
         finally:
             cursor.close()
 
-    def timKiemNguoiDung(self, phone: int) -> Dict:
+    def timKiemNguoiDungByPhone(self, phone: int) -> Dict:
         try:
             cursor = self.conn.cursor()
             cursor.execute("SELECT * FROM nguoidung WHERE SDT = %s", (phone,))
@@ -87,8 +87,22 @@ class NguoiDungDAO:
         finally:
             cursor.close()
     
+    def timKiemNguoiDung(self, userID:int) -> Dict:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM nguoidung WHERE SDT = %s", (userID,))
+            data = cursor.fetchone()
+            if( data is None):
+                return {"success": False,"message":"Không có người dùng tồn tại"}
+            return data.update({"success": True})
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+    
     def __del__(self):
-        """Đóng kết nối khi hủy (nếu tồn tại)"""
         if hasattr(self, 'conn') and self.conn is not None and self.conn.is_connected():
             try:
                 self.conn.close()

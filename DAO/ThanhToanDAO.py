@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from db_config import get_connection
 from mysql.connector import Error  
 from typing import List, Dict, Optional

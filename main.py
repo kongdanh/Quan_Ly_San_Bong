@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
@@ -8,6 +8,8 @@ from BUS.nhanvien_bus import NhanVienBus
 from DAO.nhanvien_dao import NhanVienDAO
 from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
+from BUS.NguoiDungBUS import NguoiDungBUS
+from BUS.ThanhToanBUS import ThanhToanBUS
 from datetime import datetime
 import sys
 import io
@@ -21,8 +23,8 @@ conn = get_connection()
 dao = SanDAO(conn)  # Truyền conn từ get_connection()
 san_bus = SanBus(dao)
 taikhoan = TaiKhoanBUS()
-
-
+khachhang = NguoiDungBUS()
+thanhtoan = ThanhToanBUS()
 # trang mở đầu ====================================================================================
 @app.route('/')
 def index():
@@ -270,7 +272,16 @@ def sua_hoa_don(id):
 # region quản lí khách hàng
 @app.route('/khachhang')
 def quanlikhachhang():
-    return render_template('quanlikhachhang.html')
+    NguoiDungBUS.list = khachhang.getListNguoiDung()
+    date = datetime.now().date()
+    datas = {'Tong':len(NguoiDungBUS.list),
+             'newByWeek': len(taikhoan.getListByDate(date - timedelta(days=7),'user')),
+             'newByMonth': len(taikhoan.getListByDate(date - timedelta(days=30),'user')),
+             'comeBack':30}
+    for x in NguoiDungBUS.list:
+        x['SoLuong'] = len(thanhtoan.getListThanhToan(x['IdNguoiDung']))
+        x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
+    return render_template('quanlikhachhang.html',danhsachkhachhang = NguoiDungBUS.list, data=datas)
 # endregion
 ########################################################################################
 # region báo cáo & thống kê

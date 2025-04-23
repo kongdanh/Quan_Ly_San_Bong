@@ -288,19 +288,19 @@
             <!-- Stats Cards -->
             <div class="stats-cards">
                 <div class="stats-card">
-                    <div class="stats-value">125</div>
+                    <div class="stats-value">{{ data.Tong }}</div>
                     <div class="stats-label">Tổng khách hàng</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">32</div>
+                    <div class="stats-value">{{ data.newByMonth }}</div>
                     <div class="stats-label">Khách hàng mới (tháng)</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">5</div>
+                    <div class="stats-value">{{ data.newByWeek }}</div>
                     <div class="stats-label">Khách hàng mới (tuần)</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">78%</div>
+                    <div class="stats-value">{{ data.comeBack}}%</div>
                     <div class="stats-label">Khách hàng quay lại</div>
                 </div>
             </div>
@@ -333,7 +333,25 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {% for x in danhsachkhachhang %}
                         <tr>
+                            <td>{{ x.IdNguoiDung }}</td>
+                            <td>{{ x.HoTen }}</td>
+                            <td>{{ x.SDT }}</td>
+                            <td>{{ x.NgaySinh }}</td>
+                            <td>{{ x.SoLuong }}</td>
+                            <td>{{ x.TongTien }} VNĐ</td>
+                            <td class="status-active">Hoạt động</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
+                                    <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <!-- <tr>
                             <td>#KH001</td>
                             <td>Nguyễn Văn A</td>
                             <td>0912345678</td>
@@ -412,7 +430,7 @@
                                     <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
                                 </div>
                             </td>
-                        </tr>
+                        </tr> -->
                     </tbody>
                 </table>
                 

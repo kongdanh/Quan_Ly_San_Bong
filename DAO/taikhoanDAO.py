@@ -118,3 +118,15 @@ class TaiKhoanDAO:
                 print("Kết nối database đã được đóng.")
             except Error as e:
                 print(f"Lỗi khi đóng kết nối: {e}")
+                
+    def getListByDate(self, date: date, type:str = None) -> List[Dict]:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            if type is not None:
+                cursor.execute("SELECT * FROM taikhoan WHERE NgayTao >= %s AND AccType = %s", (date, type))
+            else:
+                cursor.execute("SELECT * FROM taikhoan WHERE NgayTao >= %s", (date,))
+            return cursor.fetchall()
+        except Error as e:
+            print(f"[DAO ERROR] Lỗi khi lấy danh sách theo ngày: {e}")
+            return []
