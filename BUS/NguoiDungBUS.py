@@ -1,6 +1,7 @@
 from DAO.nguoidungDAO import NguoiDungDAO
 from BUS.taikhoanBUS import TaiKhoanBUS
 from BUS.ThanhToanBUS import ThanhToanBUS
+from BUS.phieughiBUS import PhieuGhiBUS
 from typing import List, Dict
 
 class NguoiDungBUS:
@@ -9,16 +10,31 @@ class NguoiDungBUS:
         self.nguoidungDAO = NguoiDungDAO()
         self.taiKhoanBUS = TaiKhoanBUS()
         self.thanhToanBUS = ThanhToanBUS()
+        self.phieuGhiBUS = PhieuGhiBUS()
+        
         
     def getListNguoiDung(self) -> List[Dict]:
         return self.nguoidungDAO.getListNguoiDung()
     
     def xoaNguoiDung(self, idNguoiDung: int) -> Dict:
         result = self.nguoidungDAO.timKiemNguoiDung(idNguoiDung)
+        acc = self.taiKhoanBUS.timKiemTaiKhoan(idNguoiDung)
+        ListPhieuGhi = self.phieuGhiBUS.getListPhieuGhi(idNguoiDung)
+        ListThanhToan = self.thanhToanBUS.getListThanhToan(idNguoiDung)
+        for x in ListPhieuGhi:
+            x['IdNguoiDung'] = None
+            result = self.phieuGhiBUS.updatePhieuGhi(x)
+            if not result['success']:
+                return result
+        for x in ListThanhToan:
+            x['IdNguoiDung'] = None
+            result = self.thanhToanBUS.updateThanhToan(x)
+            if not result['success']:
+                return result
         if result['success']:
-            result = self.taiKhoanBUS.xoaTaiKhoan(result['IdTaiKhoan'])
+            result = self.nguoidungDAO.xoa_NguoiDung(idNguoiDung)
         if result['success']:
-            return self.nguoidungDAO.xoa_NguoiDung(idNguoiDung)
+            return self.taiKhoanBUS.xoaTaiKhoan(acc['IdTaiKhoan'])
         return result
     
     def getTongTien(self, idNguoiDung:int) -> int:
@@ -28,5 +44,4 @@ class NguoiDungBUS:
             if x['TrangThai'] == "Da thanh toan":
                 sum+= x['TongTien'] 
         return sum
-    
     

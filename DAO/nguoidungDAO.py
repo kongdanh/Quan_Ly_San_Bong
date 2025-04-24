@@ -26,7 +26,7 @@ class NguoiDungDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                """INSERT INTO nguoidung (HoTen, SDT, NgaySinh, DiaChi, IdTaiKhoan) 
+                """INSERT INTO nguoidung (HoTen, SDT, NgaySinh, Email, IdTaiKhoan) 
                     VALUES (%s, %s, %s, %s, %s)
                 """,    
                 (values[0:])
@@ -46,7 +46,7 @@ class NguoiDungDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "UPDATE nguoidung SET HoTen=%s, NamSinh=%s, SDT=%s, DiaChi=%s WHERE idNguoiDung = %s",
+                "UPDATE nguoidung SET HoTen=%s, NamSinh=%s, SDT=%s, Email=%s WHERE idNguoiDung = %s",
                 (userData.values()[0:],userID)
             )
             self.conn.commit()
@@ -90,11 +90,12 @@ class NguoiDungDAO:
     def timKiemNguoiDung(self, userID:int) -> Dict:
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM nguoidung WHERE SDT = %s", (userID,))
+            cursor.execute("SELECT * FROM nguoidung WHERE IdNguoiDung = %s", (userID,))
             data = cursor.fetchone()
             if( data is None):
                 return {"success": False,"message":"Không có người dùng tồn tại"}
-            return data.update({"success": True})
+            data['success'] = True
+            return data
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")

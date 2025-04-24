@@ -53,3 +53,6 @@ class TaiKhoanBUS:
     
     def getListByDate(self, date: date, type:str = None) -> Dict:
         return self.accDao.getListByDate(date,type)
+    
+    def timKiemTaiKhoan(self, idTaiKhoan: int) -> Dict:
+        return self.accDao.timKiemTaiKhoan(idTaiKhoan)

@@ -47,14 +47,15 @@ class ThanhToanDAO:
             cursor = self.conn.cursor()
             cursor.execute(
                 """UPDATE thanhtoan 
-                    SET  NgayLap = %s, TongTien = %s, PhuongThuc = %s, TrangThai = %s 
+                    SET  Ngay = %s, TongTien = %s, PhuongThuc = %s, TrangThai = %s, IdNguoiDung = %s 
                     WHERE idThanhToan = %s
                 """,
-                (data['NgayLap'],
+                (data['Ngay'],
                  data['TongTien'],
                  data['PhuongThuc'],
                  data['TrangThai'],
-                 data['idThanhToan'],)
+                 data['IdNguoiDung'],
+                 data['IdThanhToan'],)
             )
             self.conn.commit()
             return {"success": True}
