@@ -94,7 +94,7 @@ class TaiKhoanDAO:
     
     def timKiemTaiKhoan(self,accName:str)->Dict:
         try:
-            cursor = self.conn.cursor()
+            cursor = self.conn.cursor(dictionary=True)
             query = """
                 SELECT * FROM taikhoan WHERE TenTaiKhoan=%s
             """
@@ -105,6 +105,28 @@ class TaiKhoanDAO:
                 return {"success": True,'idTaiKhoan': cursor.lastrowid}
             else:
                 return {"success": False,"message":"tài khoản không tồn tại"}
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+    
+    def timKiemTaiKhoan(self,accID:int)->Dict:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            query = """
+                SELECT * FROM taikhoan WHERE IdTaiKhoan=%s
+            """
+            values=(accID,)
+            cursor.execute(query,values)
+            data = cursor.fetchone()
+            if data:
+                data.update({'success':True})
+                return data
+            else:
+                data = {"success": False,"message":"tài khoản không tồn tại"}
+                return data
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")

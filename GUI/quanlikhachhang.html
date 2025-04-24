@@ -300,7 +300,7 @@
                     <div class="stats-label">Khách hàng mới (tuần)</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">{{ data.comeBack}}%</div>
+                    <div class="stats-value">{{ data.comeBack }}%</div>
                     <div class="stats-label">Khách hàng quay lại</div>
                 </div>
             </div>
@@ -346,7 +346,7 @@
                                 <div class="action-btns">
                                     <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
                                     <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                    <button class="btn btn-danger btn-sm" onclick="xoaKhachHang(`{{x.IdNguoiDung}}`)"><i class="fas fa-trash"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -358,70 +358,6 @@
                             <td>nguyenvana@gmail.com</td>
                             <td>15</td>
                             <td>12,450,000đ</td>
-                            <td class="status-active">Hoạt động</td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#KH002</td>
-                            <td>Trần Thị B</td>
-                            <td>0987654321</td>
-                            <td>tranthib@gmail.com</td>
-                            <td>8</td>
-                            <td>6,800,000đ</td>
-                            <td class="status-active">Hoạt động</td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#KH003</td>
-                            <td>Lê Văn C</td>
-                            <td>0905123456</td>
-                            <td>levanc@gmail.com</td>
-                            <td>3</td>
-                            <td>2,100,000đ</td>
-                            <td class="status-active">Hoạt động</td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#KH004</td>
-                            <td>Phạm Thị D</td>
-                            <td>0978123456</td>
-                            <td>phamthid@gmail.com</td>
-                            <td>1</td>
-                            <td>500,000đ</td>
-                            <td class="status-inactive">Không hoạt động</td>
-                            <td>
-                                <div class="action-btns">
-                                    <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#KH005</td>
-                            <td>Hoàng Văn E</td>
-                            <td>0967123456</td>
-                            <td>hoangvane@gmail.com</td>
-                            <td>5</td>
-                            <td>3,750,000đ</td>
                             <td class="status-active">Hoạt động</td>
                             <td>
                                 <div class="action-btns">
@@ -446,5 +382,21 @@
             </div>
         </div>
     </div>
+    <script>
+        function xoaKhachHang(idNguoiDung){
+            obj = {'IdNguoiDung':idNguoiDung}
+            if( confirm(`Bạn có chắc rằng muốn xóa người dùng có PID: ${idNguoiDung}`))
+            fetch(`/khachhang/xoa_id/${idNguoiDung}`,{method:'POST'}).
+            then(response => response.json()).then(data=>{
+                    if (data['success']){
+                        alert("Đã thành công xóa người dùng!")
+                        window.location.href = "/khachhang"
+                    }
+                    else{
+                        alert(`Việc xóa người dùng đã xảy ra lỗi!\nError: ${data['message']}`)
+                    }
+                })
+        }
+    </script>
 </body>
 </html>

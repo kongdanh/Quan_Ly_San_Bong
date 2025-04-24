@@ -6,16 +6,13 @@
 -- Thời gian đã tạo: Th4 22, 2025 lúc 10:01 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
-
+create database footballrenting;
+use footballrenting;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
 
 --
 -- Cơ sở dữ liệu: `footballrenting`
@@ -40,7 +37,7 @@ CREATE TABLE `chitiethoadon` (
 --
 
 INSERT INTO `chitiethoadon` (`IdHoaDon`, `IdPhieuGhi`, `ThoiDiemDat`, `KhungGio`, `Tien`) VALUES
-(1, 1, '2024-04-15 10:00:00', '08:00 - 09:00', 200000.00);
+(1, 1, '2024-04-15 10:00:00', '8-10', 200000.00);
 
 -- --------------------------------------------------------
 
@@ -94,7 +91,7 @@ CREATE TABLE `nguoidung` (
   `HoTen` varchar(100) DEFAULT NULL,
   `NgaySinh` date DEFAULT NULL,
   `SDT` varchar(15) DEFAULT NULL,
-  `DiaChi` varchar(255) DEFAULT NULL,
+  `Email` varchar(255) DEFAULT NULL,
   `IdTaiKhoan` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -102,8 +99,8 @@ CREATE TABLE `nguoidung` (
 -- Đang đổ dữ liệu cho bảng `nguoidung`
 --
 
-INSERT INTO `nguoidung` (`IdNguoiDung`, `HoTen`, `NgaySinh`, `SDT`, `DiaChi`, `IdTaiKhoan`) VALUES
-(1, 'Nguyen Van A', '2000-05-05', '0901234567', 'Ha Noi', 1);
+INSERT INTO `nguoidung` (`IdNguoiDung`, `HoTen`, `NgaySinh`, `SDT`, `Email`, `IdTaiKhoan`) VALUES
+(1, 'Nguyen Van A', '2000-05-05', 'nguyenvanA@gmail.com', 'Ha Noi', 1);
 
 -- --------------------------------------------------------
 
@@ -137,8 +134,8 @@ CREATE TABLE `nhanvien` (
 
 INSERT INTO `nhanvien` (`IdNhanVien`, `HoTen`, `NgaySinh`, `SDT`, `DiaChi`, `IdTaiKhoan`, `luong`, `chuc_vu`, `vi_tri`, `ngayvaolam`, `mota`, `hopdong`, `phucap`, `cccd`, `gioitinh`, `nganhang`, `hoatdong`) VALUES
 (1, 'Tran Thi B', '1995-10-08', '0912345678', 'Da Nang', 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(6, 'nv1', '1111-11-11', '1111', '111', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(17, 'Nguyen Van A', '1990-05-15', '0901234567', '123 Đường Láng, Hà Nội', 1, 15000000, 'Quản lý', 'Quản lý sân', '2020-01-10', NULL, 'Dài hạn', 2000000, '123456789', 'Nam', 'Vietcombank-1234567890', 'Hoạt động'),
+(6, 'nv1', '1111-11-11', '1111', '111', 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 'Nguyen Van A', '1990-05-15', '0901234567', '123 Đường Láng, Hà Nội', 3, 15000000, 'Quản lý', 'Quản lý sân', '2020-01-10', NULL, 'Dài hạn', 2000000, '123456789', 'Nam', 'Vietcombank-1234567890', 'Hoạt động'),
 (18, 'Tran Thi B', '1995-08-22', '0912345678', '45 Nguyễn Huệ, TP.HCM', 2, 10000000, 'Nhân viên', 'Thu ngân', '2021-03-15', NULL, 'Trung hạn', 1000000, '987654321', 'Nữ', 'Techcombank-9876543210', 'Nghỉ phép'),
 (19, 'Le Van C', '1992-11-30', '0923456789', '78 Lê Lợi, Đà Nẵng', 3, 12000000, 'Nhân viên', 'Trọng tài', '2022-06-20', NULL, 'Ngắn hạn', 1500000, '456789123', 'Nam', 'BIDV-4567891234', 'Hoạt động'),
 (20, 'Pham Thi D', '1988-02-14', '0934567890', '56 Trần Phú, Nha Trang', 4, 13000000, 'Nhân viên', 'Hậu cần', '2019-09-05', NULL, 'Dài hạn', 1800000, '789123456', 'Nữ', 'MB Bank-7891234567', 'Nghỉ việc'),
@@ -157,8 +154,8 @@ INSERT INTO `nhanvien` (`IdNhanVien`, `HoTen`, `NgaySinh`, `SDT`, `DiaChi`, `IdT
 
 CREATE TABLE `phieughi` (
   `IdPhieuGhi` int(11) NOT NULL,
-  `BatDau` datetime DEFAULT NULL,
-  `KetThuc` datetime DEFAULT NULL,
+  `Ngay` datetime DEFAULT NULL,
+  `KhungGio` varchar(20) DEFAULT NULL,
   `TrangThai` varchar(20) DEFAULT NULL,
   `GiaTien` decimal(10,2) DEFAULT NULL,
   `IdSan` int(11) DEFAULT NULL,
@@ -169,8 +166,8 @@ CREATE TABLE `phieughi` (
 -- Đang đổ dữ liệu cho bảng `phieughi`
 --
 
-INSERT INTO `phieughi` (`IdPhieuGhi`, `BatDau`, `KetThuc`, `TrangThai`, `GiaTien`, `IdSan`, `IdNguoiDung`) VALUES
-(1, '2024-04-16 08:00:00', '2024-04-16 09:00:00', 'Dat', 200000.00, 1, 1);
+INSERT INTO `phieughi` (`IdPhieuGhi`, `Ngay`, `KhungGio`, `TrangThai`, `GiaTien`, `IdSan`, `IdNguoiDung`) VALUES
+(1, '2024-04-16', '8:00 - 9:00', 'Dat', 200000.00, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -409,6 +406,3 @@ ALTER TABLE `thanhtoan`
   ADD CONSTRAINT `thanhtoan_ibfk_1` FOREIGN KEY (`IdNguoiDung`) REFERENCES `nguoidung` (`IdNguoiDung`);
 COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

@@ -19,9 +19,6 @@ class ThanhToanBUS:
         return self.dao.addThanhToan(data)
 
     def updateThanhToan(self, data: Dict) -> Dict:
-        for x in data.values():
-            if x is None:
-                return {"success": False, "message": "Thiếu dữ liệu"}
         return self.dao.updateThanhToan(data)
     
     def deleteThanhToan(self, idThanhToan: int) -> Dict:

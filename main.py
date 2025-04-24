@@ -210,7 +210,7 @@ def nguoidung(userID):
 
 # endregion
 ############################################################################################
-# region đăng nhập
+# region đăng nhập & đăng ký
 #thiết lập route cho login page
 @app.route('/login')
 def dangNhap():
@@ -233,6 +233,13 @@ def xuLiDangNhap():
     else:
         return redirect('login')
         
+@app.route('/signUp', methods=['POST'])
+def xuliDangKi():
+    birth = request.form.to_dict()['date']
+    date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
+    adjDatas = request.form.to_dict()
+    adjDatas['date'] = date_obj
+    return taikhoan.dangKiTaiKhoan(adjDatas)
 # endregion 
 ########################################################################################       
 # region Hóa Đơn
@@ -318,6 +325,13 @@ def quanlikhachhang():
         x['SoLuong'] = len(thanhtoan.getListThanhToan(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
     return render_template('quanlikhachhang.html',danhsachkhachhang = NguoiDungBUS.list, data=datas)
+
+@app.route('/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
+def xoa_khachhang(IdNguoiDung: int):
+    print("HELLO", flush=True)
+    result = khachhang.xoaNguoiDung(IdNguoiDung)
+    print(result, flush=True)
+    return jsonify(result)
 # endregion
 ########################################################################################
 # region báo cáo & thống kê
