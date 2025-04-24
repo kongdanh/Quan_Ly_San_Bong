@@ -53,3 +53,43 @@ class TaiKhoanBUS:
     
     def getListByDate(self, date: date, type:str = None) -> Dict:
         return self.accDao.getListByDate(date,type)
+    
+    def them_tknv(self, datanv: Dict) -> Dict:
+        """Thêm tài khoản nhân viên mới thông qua DAO"""
+        # Danh sách các trường bắt buộc
+        required_fields = ['TenTaiKhoan', 'MatKhau', 'NgayTao', 'AccType']
+        
+        # Kiểm tra các trường bắt buộc
+        missing_fields = [field for field in required_fields if not datanv.get(field)]
+        if missing_fields:
+            return {"success": False, "error": f"Thiếu thông tin bắt buộc: {', '.join(missing_fields)}"}
+
+        # Gọi DAO để thêm tài khoản 
+        result = self.accDao.them_TaiKhoan(datanv)
+        
+        # Kiểm tra kết quả từ DAO
+        if result.get("success") and "insert_id" in result:
+            try:
+                # Ép kiểu insert_id thành int để đảm bảo idTaiKhoan là số nguyên
+                id_tai_khoan = int(result["insert_id"])
+                return {
+                    "success": True,
+                    "idTaiKhoan": id_tai_khoan
+                }
+            except (ValueError, TypeError):
+                return {
+                    "success": False,
+                    "error": "ID tài khoản không hợp lệ, không phải số nguyên"
+                }
+        else:
+            return {
+                "success": False,
+                "error": result.get("error", "Lỗi không xác định khi thêm tài khoản nhân viên")
+            }
+            
+    def get_max_id_taikhoan(self) -> int:
+        try:
+            max_id = self.accDao.get_max_id_taikhoan()
+            return int(max_id) if max_id is not None else 0
+        except Exception as e:
+            raise Exception(f"Lỗi khi lấy ID lớn nhất: {str(e)}")

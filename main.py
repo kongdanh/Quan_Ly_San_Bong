@@ -5,7 +5,6 @@ from DAO.san_dao import SanDAO
 from BUS.taikhoanBUS import TaiKhoanBUS
 from DAO.db_config import get_connection
 from BUS.nhanvien_bus import NhanVienBus
-from DAO.nhanvien_dao import NhanVienDAO
 from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
 from BUS.NguoiDungBUS import NguoiDungBUS
@@ -81,8 +80,7 @@ def sua_san(id):
 # region nhân viên
 # nhân viên
 # tạo bus dao của nhân viên
-nhanvien_dao = NhanVienDAO(conn)
-nhanvien_bus = NhanVienBus(nhanvien_dao)
+nhanvien_bus = NhanVienBus()
 
 # khi nhấn quản lý nhân viên ( quyền của quản lý hoặc chủ sân ) ========================================
 
@@ -110,38 +108,76 @@ def quan_ly_nhan_vien():
 # route thêm nhân viên
 @app.route('/them-nhan-vien', methods=['POST'])
 def them_nhan_vien():
-    # lấy thông tin từ from
-    ho_ten = request.form.get('hoTen')
-    ngay_sinh = request.form.get('ngaySinh')
-    sdt = request.form.get('sdt')
-    dia_chi = request.form.get('diaChi')
-    id_tai_khoan = request.form.get('idTaiKhoan')
-    
-    # tạo Dict từ thông tin
-    du_lieu_nhan_vien = {
-        'hoTen': ho_ten,
-        'ngaySinh': ngay_sinh,
-        'sdt': sdt,
-        'diaChi': dia_chi,
-        'idTaiKhoan': id_tai_khoan
+    # Lấy thông tin từ form
+    ho_ten = request.form.get('HoTen')
+    ngay_sinh = request.form.get('NgaySinh')
+    sdt = request.form.get('SDT')
+    dia_chi = request.form.get('DiaChi')
+    cccd = request.form.get('cccd')
+    gioitinh = request.form.get('gioitinh')
+    chuc_vu = request.form.get('chuc_vu')
+    vi_tri = request.form.get('vi_tri')
+    ngay_vao_lam = request.form.get('ngayvaolam')
+    hop_dong = request.form.get('hopdong')
+    hoat_dong = request.form.get('hoatdong')
+    mo_ta = request.form.get('mota')
+    luong = request.form.get('luong')
+    phu_cap = request.form.get('phucap')
+    ngan_hang = request.form.get('nganhang')
+    ten_tai_khoan = request.form.get('ten_tai_khoan')
+    mat_khau = request.form.get('mat_khau')
+    ngay_tao = request.form.get('ngay_tao')
+    acc_type = request.form.get('nhom_quyen')
+
+    # Tạo dictionary cho tài khoản
+    du_lieu_tai_khoan = {
+        'TenTaiKhoan': ten_tai_khoan,
+        'MatKhau': mat_khau,
+        'NgayTao': ngay_tao,
+        'AccType': acc_type
     }
-    
-    # gọi bus
-    result = nhanvien_bus.them_nhan_vien(du_lieu_nhan_vien)
-    if isinstance(result, dict) and 'idNhanVien' in result:  # Kiểm tra thêm thành công
+
+    result_taikhoan = taikhoan.them_tknv(du_lieu_tai_khoan)
+    id_tai_khoan = taikhoan.get_max_id_taikhoan()    
+
+    # Tạo dictionary cho nhân viên
+    du_lieu_nhan_vien = {
+        'HoTen': ho_ten,
+        'NgaySinh': ngay_sinh,
+        'SDT': sdt,
+        'DiaChi': dia_chi,
+        'IdTaiKhoan': id_tai_khoan,
+        'cccd': cccd,
+        'gioitinh': gioitinh,
+        'chuc_vu': chuc_vu,
+        'vi_tri': vi_tri,
+        'ngayvaolam': ngay_vao_lam,
+        'hopdong': hop_dong,
+        'hoatdong': hoat_dong,
+        'mota': mo_ta,
+        'luong': luong,
+        'phucap': phu_cap if phu_cap else 0,
+        'nganhang': ngan_hang if ngan_hang else ''
+    }
+
+    # Thêm nhân viên vào bảng nhanvien
+    result_nhanvien = nhanvien_bus.them_nhan_vien(du_lieu_nhan_vien)
+    print(f"Kết quả thêm nhân viên từ BUS: {result_nhanvien}")
+    if result_nhanvien.get('success'):
+        print("Thêm nhân viên thành công!")
         danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
-        print(f"Danh sách nhân viên sau khi thêm: {danh_sach_nhan_vien}")
     else:
-        print(f"Thêm nhân viên thất bại, result: {result}")
-    
-    return redirect(url_for('nhanvien.quan_ly_nhan_vien'))
+        print(f"Thêm nhân viên thất bại: {result_nhanvien.get('error', 'Không có thông tin lỗi')}")
+        taikhoan.xoaTaiKhoan(id_tai_khoan)
+
+    return redirect(url_for('quan_ly_nhan_vien'))
 
 # Route xóa nhân viên ( thông qua id nhân viên )
 @app.route('/xoa-nhan-vien/<int:id_nhan_vien>')
 def xoa_nhan_vien(id_nhan_vien):
     # gọi bus
     nhanvien_bus.xoa_nhan_vien(id_nhan_vien)
-    return redirect(url_for('nhanvien.quan_ly_nhan_vien'))
+    return redirect(url_for('quan_ly_nhan_vien'))
 
 # Route sửa thông tin nhân viên ( lấy id nhân viên tại bảng )
 @app.route('/sua-nhan-vien/<int:id>', methods=['POST'])

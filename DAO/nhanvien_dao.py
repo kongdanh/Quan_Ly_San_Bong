@@ -19,22 +19,46 @@ class NhanVienDAO:
             return []
     
     def them_nhan_vien(self, nhan_vien_data: Dict) -> Dict:
-        if not nhan_vien_data.get('HoTen') or not nhan_vien_data.get('SDT'):
-            return {"success": False, "error": "Thiếu thông tin bắt buộc"}
+        print(nhan_vien_data)
+        required_fields = [
+            'HoTen', 'NgaySinh', 'SDT', 'DiaChi', 'IdTaiKhoan', 'luong', 'chuc_vu', 'vi_tri',
+            'ngayvaolam', 'mota', 'hopdong', 'phucap', 'cccd', 'gioitinh', 'nganhang', 'hoatdong'
+        ]
+        missing_fields = [field for field in required_fields if not nhan_vien_data.get(field)]
+        if missing_fields:
+            print(f"Thiếu trường bắt buộc trong nhanvien (DAO): {missing_fields}")
+            return {"success": False, "error": f"Thiếu thông tin bắt buộc: {', '.join(missing_fields)}"}
 
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT INTO nhanvien (HoTen, NgaySinh, SDT, DiaChi, IdTaiKhoan) VALUES (%s, %s, %s, %s, %s)",
+                """
+                INSERT INTO nhanvien (
+                    HoTen, NgaySinh, SDT, DiaChi, IdTaiKhoan, luong, chuc_vu, vi_tri, ngayvaolam, mota,
+                    hopdong, phucap, cccd, gioitinh, nganhang, hoatdong
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
                 (
                     nhan_vien_data['HoTen'],
                     nhan_vien_data['NgaySinh'],
                     nhan_vien_data['SDT'],
                     nhan_vien_data['DiaChi'],
-                    nhan_vien_data['IdTaiKhoan']
+                    nhan_vien_data['IdTaiKhoan'],  
+                    nhan_vien_data['luong'],
+                    nhan_vien_data['chuc_vu'],
+                    nhan_vien_data['vi_tri'],                     
+                    nhan_vien_data['ngayvaolam'],
+                    nhan_vien_data.get('mota', ''), 
+                    nhan_vien_data['hopdong'], 
+                    nhan_vien_data.get('phucap', 0),               
+                    nhan_vien_data['cccd'],
+                    nhan_vien_data['gioitinh'],
+                    nhan_vien_data.get('nganhang', ''),
+                    nhan_vien_data['hoatdong']
                 )
             )
             self.conn.commit()
+            print(f"Đã commit nhân viên, số hàng bị ảnh hưởng: {cursor.rowcount}")
             return {"success": True, "insert_id": cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
