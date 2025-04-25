@@ -28,14 +28,15 @@ class TaiKhoanDAO:
                 """INSERT INTO taikhoan (TenTaiKhoan, MatKhau, NgayTao, AccType) 
                     VALUES (%s, %s, %s, %s)
                 """,
-                (signUpData['username'],signUpData['password'],date.today(),signUpData['AccType'])
+                (signUpData['TenTaiKhoan'],signUpData['MatKhau'],signUpData['NgayTao'],signUpData['AccType'])
             )
             self.conn.commit()
+            id_tai_khoan = cursor.lastrowid
             return {"success": True, "idTaiKhoan": cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
-            return {"success": False, "message": str(e)}
+            return {"success": False, "message": str(e), "idTaiKhoan": id_tai_khoan}
         finally:
             cursor.close()
 
@@ -47,7 +48,8 @@ class TaiKhoanDAO:
                 (userData.values()[0:],accID)
             )
             self.conn.commit()
-            return {"success": cursor.rowcount > 0}
+            id_tai_khoan = cursor.lastrowid
+            return {"success": True, "idTaiKhoan": id_tai_khoan}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi sửa người dùng: {e}")
@@ -154,3 +156,13 @@ class TaiKhoanDAO:
         except Error as e:
             print(f"[DAO ERROR] Lỗi khi lấy danh sách theo ngày: {e}")
             return []
+        
+    def get_max_id_taikhoan(self) -> int:
+        """Lấy giá trị idTaiKhoan lớn nhất từ bảng taikhoan"""
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT MAX(IdTaiKhoan) FROM taikhoan")
+            max_id = cursor.fetchone()[0]
+            return int(max_id) if max_id is not None else 0
+        except Exception as e:
+            raise Exception(f"Lỗi khi lấy ID lớn nhất: {str(e)}")

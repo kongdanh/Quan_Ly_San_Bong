@@ -2,33 +2,33 @@ from typing import Dict
 from DAO.nhanvien_dao import NhanVienDAO  # Import lớp DAO tương ứng
 
 class NhanVienBus:
-    def __init__(self, dao: NhanVienDAO):
-        self.dao = dao
+    def __init__(self):
+        self.dao = NhanVienDAO()
         self.danh_sach_nhan_vien = []  # Tùy chọn, nếu muốn giữ bản sao nội bộ
 
     def them_nhan_vien(self, nhan_vien_data: Dict) -> Dict:
         """Thêm nhân viên mới thông qua DAO"""
-        if not nhan_vien_data.get('HoTen') or not nhan_vien_data.get('SDT'):
-            return {"success": False, "error": "Thiếu thông tin bắt buộc"}
-        return self.dao.them_nhan_vien(nhan_vien_data)
+        required_fields = [
+            'HoTen', 'NgaySinh', 'SDT', 'DiaChi', 'IdTaiKhoan', 'luong', 'chuc_vu', 'vi_tri',
+            'ngayvaolam', 'mota', 'hopdong', 'phucap', 'cccd', 'gioitinh', 'nganhang', 'hoatdong'
+        ]
+        
+        missing_fields = [field for field in required_fields if not nhan_vien_data.get(field)]
+        if missing_fields:
+            print(f"Thiếu trường bắt buộc trong nhân viên: {missing_fields}")
+            return {"success": False, "error": f"Thiếu thông tin bắt buộc: {', '.join(missing_fields)}"}
+        print("bus", nhan_vien_data)
+        result = self.dao.them_nhan_vien(nhan_vien_data)
+        print(f"Kết quả từ DAO (nhanvien): {result}")
+        
+        if result.get("success") and "insert_id" in result:
+            return {"success": True, "idNhanVien": result["insert_id"]}
+        else:
+            return {"success": False, "error": result.get("error", "Lỗi không xác định khi thêm nhân viên")}
 
     def lay_danh_sach_nhan_vien(self):
         danh_sach = self.dao.lay_danh_sach_nhan_vien()
         return danh_sach
-
-    def them_nhan_vien_to_list(self, nhan_vien_data):
-        if not hasattr(self, 'danh_sach_nhan_vien'):
-            self.danh_sach_nhan_vien = []
-        new_id = max((nv.get('IdNhanVien', 0) for nv in self.danh_sach_nhan_vien), default=0) + 1
-        self.danh_sach_nhan_vien.append({
-            "IdNhanVien": new_id,
-            "HoTen": nhan_vien_data["HoTen"],
-            "NgaySinh": nhan_vien_data["NgaySinh"],
-            "SDT": nhan_vien_data["SDT"],
-            "DiaChi": nhan_vien_data["DiaChi"],
-            "IdTaiKhoan": nhan_vien_data["IdTaiKhoan"]
-        })
-        return True
 
     def xoa_nhan_vien(self, id_nhan_vien):
         """Xóa nhân viên thông qua DAO"""

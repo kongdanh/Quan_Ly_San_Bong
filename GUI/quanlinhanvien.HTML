@@ -150,6 +150,10 @@
         .btn-primary {
             background-color: #3498db;
             color: white;
+            display: flex;
+            justify-content: right;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
         .btn-outline {
@@ -294,6 +298,135 @@
             color: #2c3e50;
             font-weight: 500;
         }
+
+        /* Thêm vào phần style hiện có */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h2 {
+            color: #2c3e50;
+            font-size: 22px;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .btn-outline:hover {
+            background-color: #f8d7da;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
     </style>
 </head>
 
@@ -316,7 +449,8 @@
     <div class="right-content">
         <div class="dashboard-header">
             <h2>Quản lý nhân viên</h2>
-            <button class="btn btn-primary">+ Thêm nhân viên</button>
+            <button class="btn btn-primary" onclick="themnv()">+ Thêm nhân viên</button>
+            <div id="formContainer"></div>
         </div>
 
         <!-- Employee Overview -->
@@ -384,7 +518,9 @@
                         <td>{{ nv.vi_tri if nv.vi_tri else '' }}</td>
                         <td>{{ nv.ngayvaolam if nv.ngayvaolam else '' }}</td>
                         <td>{{ nv.luong if nv.luong else '' }}</td>
-                        <td>{{ nv.hoatdong if nv.hoatdong else '' }}</td>
+                        <td>
+                            <p><span class="status status-active">{{ nv.hoatdong if nv.hoatdong else '' }}</span></p>
+                        </td>
                         <td>
                             <span id="edit" style="cursor: pointer;">✏️</span>
                             <span id="view" style="cursor: pointer;"
@@ -399,28 +535,262 @@
 
         <div id="xemthongtin"></div>
         <script>
+
             // Nếu biến đã tồn tại:
             const employeeData = JSON.parse('{{ danh_sach_nhan_vien | tojson | safe }}');
+            function themnv() {
+                // Tạo modal overlay
+                const modalOverlay = document.createElement('div');
+                modalOverlay.className = 'modal-overlay';
+                modalOverlay.id = 'employeeModal';
+
+                // Tạo nội dung modal
+                modalOverlay.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Thêm nhân viên mới</h2>
+                            <button class="close-btn" onclick="closeModal()">×</button>
+                        </div>
+                        
+                        <form id="addEmployeeForm">
+                            <div class="form-grid">
+                                <!-- Cột 1 -->
+                                <div>
+                                    <div class="form-group">
+                                        <label for="HoTen">Họ tên *</label>
+                                        <input type="text" id="HoTen" name="HoTen" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="NgaySinh">Ngày sinh *</label>
+                                        <input type="date" id="NgaySinh" name="NgaySinh" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="SDT">Số điện thoại *</label>
+                                        <input type="tel" id="SDT" name="SDT" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="DiaChi">Địa chỉ *</label>
+                                        <input type="text" id="DiaChi" name="DiaChi" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="cccd">CCCD/CMND *</label>
+                                        <input type="text" id="cccd" name="cccd" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="gioitinh">Giới tính *</label>
+                                        <select id="gioitinh" name="gioitinh" required>
+                                            <option value="Nam">Nam</option>
+                                            <option value="Nữ">Nữ</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Cột 2 -->
+                                <div>
+                                    <div class="form-group">
+                                        <label for="chuc_vu">Chức vụ *</label>
+                                        <select id="chuc_vu" name="chuc_vu" required>
+                                            <option value="Nhân viên" selected>Nhân viên</option>
+                                            <option value="Quản lý">Quản lý</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="vi_tri">Vị trí *</label>
+                                        <select id="vi_tri" name="vi_tri" required onchange="toggleOtherPosition()">
+                                            <option value="Nhân viên lễ tân / tiếp tân">Nhân viên lễ tân / tiếp tân</option>
+                                            <option value="Nhân viên kỹ thuật / bảo trì">Nhân viên kỹ thuật / bảo trì</option>
+                                            <option value="Nhân viên giữ xe">Nhân viên giữ xe</option>
+                                            <option value="Nhân viên vệ sinh">Nhân viên vệ sinh</option>
+                                            <option value="Nhân viên thu ngân">Nhân viên thu ngân</option>
+                                            <option value="Nhân viên chăm sóc khách hàng">Nhân viên chăm sóc khách hàng</option>
+                                            <option value="Nhân viên phục vụ">Nhân viên phục vụ</option>
+                                            <option value="Nhân viên quản lý đặt sân">Nhân viên quản lý đặt sân</option>
+                                            <option value="Nhân viên an ninh / bảo vệ">Nhân viên an ninh / bảo vệ</option>
+                                            <option value="Nhân viên marketing / truyền thông">Nhân viên marketing / truyền thông</option>
+                                            <option value="Khác">Khác</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group" id="otherPositionGroup" style="display: none;">
+                                        <label for="vi_tri_khac">Vị trí khác *</label>
+                                        <input type="text" id="vi_tri_khac" name="vi_tri_khac">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="ten_tai_khoan">Tên tài khoản *</label>
+                                        <input type="text" id="ten_tai_khoan" name="ten_tai_khoan" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="mat_khau">Mật khẩu *</label>
+                                        <input type="text" id="mat_khau" name="mat_khau" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="ngay_tao">Ngày tạo *</label>
+                                        <input type="date" id="ngay_tao" name="ngay_tao" value="2025-04-25" readonly required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="nhom_quyen">Nhóm quyền *</label>
+                                        <select id="nhom_quyen" name="nhom_quyen" required>
+                                            <option value="Nhân viên" selected>Nhân viên</option>
+                                            <option value="Quản lý">Quản lý</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="ngayvaolam">Ngày vào làm *</label>
+                                        <input type="date" id="ngayvaolam" name="ngayvaolam" required min="2025-04-25">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="hopdong">Hợp đồng *</label>
+                                        <select id="hopdong" name="hopdong" required>
+                                            <option value="Dài hạn">Dài hạn</option>
+                                            <option value="Trung hạn">Trung hạn</option>
+                                            <option value="Ngắn hạn">Ngắn hạn</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="hoatdong">Trạng thái *</label>
+                                        <select id="hoatdong" name="hoatdong" required>
+                                            <option value="Hoạt động" selected>Hoạt động</option>
+                                            <option value="Nghỉ phép">Nghỉ phép</option>
+                                            <option value="Nghỉ việc">Nghỉ việc</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Full width -->
+                                <div class="form-group full-width">
+                                    <label for="mota">Mô tả</label>
+                                    <textarea id="mota" name="mota" placeholder="Nhập mô tả về nhân viên..."></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="luong">Lương cơ bản *</label>
+                                    <input type="number" id="luong" name="luong" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="phucap">Phụ cấp</label>
+                                    <input type="number" id="phucap" name="phucap" value="0">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="nganhang">Ngân hàng</label>
+                                    <input type="text" id="nganhang" name="nganhang" placeholder="Tên ngân hàng - Số tài khoản">
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-outline" onclick="closeModal()">Hủy</button>
+                                <button type="button" class="btn btn-primary" onclick="submitEmployeeForm()">Lưu thông tin</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modalOverlay);
+
+                // Ngăn chặn scroll khi modal mở
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                const modal = document.getElementById('employeeModal');
+                if (modal) {
+                    modal.remove();
+                    document.body.style.overflow = 'auto';
+                }
+            }
+
+            function toggleOtherPosition() {
+                const positionSelect = document.getElementById('vi_tri');
+                const otherPositionGroup = document.getElementById('otherPositionGroup');
+                const otherPositionInput = document.getElementById('vi_tri_khac');
+
+                if (positionSelect.value === 'Khác') {
+                    otherPositionGroup.style.display = 'block';
+                    otherPositionInput.required = true;
+                } else {
+                    otherPositionGroup.style.display = 'none';
+                    otherPositionInput.required = false;
+                }
+            }
+
+            function submitEmployeeForm() {
+                const form = document.getElementById('addEmployeeForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const formData = new FormData(form);
+
+                // Xử lý vị trí nếu chọn "Khác"
+                if (formData.get('vi_tri') === 'Khác') {
+                    formData.set('vi_tri', formData.get('vi_tri_khac'));
+                    formData.delete('vi_tri_khac');
+                }
+
+                // Thêm IdTaiKhoan
+                formData.set('IdTaiKhoan', '0');
+
+                // Gửi dữ liệu đến Flask endpoint
+                fetch('/them-nhan-vien', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        // Không cần parse JSON vì Flask trả về redirect
+                        return response;
+                    })
+                    .then(() => {
+                        console.log('Thêm nhân viên thành công');
+                        closeModal();
+                        // Redirect sẽ được xử lý bởi trình duyệt do Flask trả về redirect
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra khi thêm nhân viên!');
+                    });
+                window.location.reload()
+            }
+
+
+
             function thongtinv(maNV) {
                 const nv = employeeData.find(nv => nv.IdNhanVien == maNV);
-
+                const formattedDate = new Date(nv.NgaySinh).toISOString().split('T')[0];
+                const formattedDateNVL = new Date(nv.NgaySinh).toISOString().split('T')[0];
                 const htmlContent = `
                         <!-- Employee Details -->
                     <div class="employee-details">
                         <div class="detail-card">
                             <h3>Thông tin cá nhân</h3>
                             <div class="employee-info">
-                                <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="Nguyễn Văn A">
+                                <img src="https://randomuser.me/api/portraits/men/${nv.IdNhanVien}.jpg" alt="Nguyễn Văn A">
                                 <div class="employee-info-text">
                                     <h4>${nv.HoTen}</h4>
-                                    <p>Quản lý sân</p>
-                                    <p>${nv.IdNhanVien}</p>
+                                    <p>ID: ${nv.IdNhanVien}</p>
                                 </div>
                             </div>
                             <div class="info-grid">
                                 <div class="info-item">
                                     <label>Ngày sinh</label>
-                                    <p>${nv.NgaySinh}</p>
+                                    <p>${formattedDate}</p>
                                 </div>
                                 <div class="info-item">
                                     <label>Giới tính</label>
@@ -458,7 +828,7 @@
                                 </div>
                                 <div class="info-item">
                                     <label>Ngày vào làm</label>
-                                    <p>${nv.ngayvaolam}</p>
+                                    <p>${formattedDateNVL}</p>
                                 </div>
                                 <div class="info-item">
                                     <label>Hợp đồng</label>
