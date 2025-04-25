@@ -90,7 +90,7 @@ class TaiKhoanDAO:
         finally:
             cursor.close()
     
-    def timKiemTaiKhoan(self,accName:str)->Dict:
+    def timKiemTaiKhoanByName(self,accName:str)->Dict:
         try:
             cursor = self.conn.cursor(dictionary=True)
             query = """
@@ -100,9 +100,11 @@ class TaiKhoanDAO:
             cursor.execute(query,values)
             data = cursor.fetchone()
             if data:
-                return {"success": True,'idTaiKhoan': cursor.lastrowid}
+                data.update({'success':True})
+                return data
             else:
-                return {"success": False,"message":"tài khoản không tồn tại"}
+                data = {"success": False,"message":"tài khoản không tồn tại"}
+                return data
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")

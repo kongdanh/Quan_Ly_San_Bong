@@ -31,7 +31,8 @@ class TaiKhoanBUS:
     def dangNhapTaiKhoan(self,signInData:Dict)->Dict:
         #dictionary đưa vào chỉ có 2 values là tên và mật khẩu
         # ví dụ: {'username': 'user1', 'password': 'pass1'}
-        result = self.accDao.timKiemTaiKhoan(signInData['username'])
+        result = self.accDao.timKiemTaiKhoanByName(signInData['username'])
+        print(result,flush=True)
         if result.get("success"):
             return self.accDao.dangNhapTaiKhoan(signInData)
         return result
@@ -39,7 +40,7 @@ class TaiKhoanBUS:
     def dangKiTaiKhoan(self,signUpData:Dict)->Dict:
         #dictionary đưa vào chỉ có 2 values là tên và mật khẩu
         # ví dụ: {'username': 'user1', 'password': 'pass1'}
-        result = self.accDao.timKiemTaiKhoan(signUpData['username'])
+        result = self.accDao.timKiemTaiKhoanByName(signUpData['username'])
         if result.get("success"):
             return {'success':False,'message':'Tên người dùng đã tồn tại'}
         result = self.userDao.timKiemNguoiDung(signUpData['phone'])

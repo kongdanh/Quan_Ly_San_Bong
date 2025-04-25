@@ -183,9 +183,7 @@ def dangNhap():
 #đăng nhập
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
-    name = request.form.get('username')
-    pwd = request.form.get('password')
-    print(request.form.to_dict())
+    print(request.form.to_dict(),flush=True)
     result = taikhoan.dangNhapTaiKhoan(request.form.to_dict())
     if result.get('success'):
         # dẫn vào trang người dùng
