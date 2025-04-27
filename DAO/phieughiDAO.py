@@ -1,6 +1,7 @@
 from db_config import get_connection
 from typing import List, Dict
 from mysql.connector import Error
+from datetime import datetime
 class PhieuGhiDAO:
     def __init__(self, conn=None):
         if conn is None:
@@ -62,3 +63,14 @@ class PhieuGhiDAO:
             return {"success": False, "message": str(e)}
         finally:
             cursor.close()
+            
+    def getListByDate(self, date: datetime) -> List[Dict]:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date,))
+            result = cursor.fetchall()
+            result = sorted(result, key=lambda x: x['KhungGio'])
+            return result
+        except Error as e:
+            print(f"Error: {e}")
+            return []

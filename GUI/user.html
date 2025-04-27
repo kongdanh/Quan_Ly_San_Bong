@@ -200,6 +200,7 @@
             <h2>Đặt sân bóng</h2>
             <div class="filter">
                 <select id="loai-san">
+                    <option value="0">Tất cả</option>
                     <option value="5">Sân 5 người</option>
                     <option value="7">Sân 7 người</option>
                     <option value="11">Sân 11 người</option>
@@ -207,8 +208,8 @@
                 <input type="date" id="ngay-dat">
             </div>
 
-            <table class="booking-table">
-                <thead>
+            <table class="booking-table" id="booking-table">
+                <!-- <thead>
                     <tr>
                         <th>Thời gian</th>
                         <th>Sân 1 (VIP)</th>
@@ -241,7 +242,7 @@
                         <td><button class="booking-btn available" data-san="2" data-gio="16-18">300k</button></td>
                         <td><button class="booking-btn booked">Đã đặt</button></td>
                     </tr>
-                </tbody>
+                </tbody> -->
             </table>
         </section>
     </main>
@@ -258,25 +259,79 @@
             });
         }
 
-        // Xử lý đặt sân
-        document.querySelectorAll('.available').forEach(button => {
-            button.addEventListener('click', function() {
-                const san = this.getAttribute('data-san');
-                const gio = this.getAttribute('data-gio');
-                const loaiSan = document.getElementById('loai-san').value;
-                const ngayDat = document.getElementById('ngay-dat').value || 'hôm nay';
-                
-                if (confirm(`Bạn có chắc muốn đặt Sân ${san} (${loaiSan} người) từ ${gio} vào ${ngayDat}?`)) {
-                    this.classList.remove('available');
-                    this.classList.add('booked');
-                    this.textContent = 'Đã đặt';
-                    alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
-                }
-            });
-        });
+        
 
         // Đặt ngày mặc định là hôm nay
         document.getElementById('ngay-dat').valueAsDate = new Date();
+        
+        const PID = {{ userID }};  
+        const sanList = {{ san | tojson | safe }};
+        const phieuGhiList = {{ danhsachphieughi | tojson | safe }};
+        
+        console.log("User ID:", PID);
+        console.log("Sân list:", sanList);
+        console.log("Phiếu ghi list:", phieuGhiList);
+
+        function createDisplay(){
+            const table = document.getElementById('booking-table')
+            let content
+            content = `
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+            `
+            sanList.forEach(field =>{
+                content +=`
+                        <th>Sân ${field.idSan}</th>
+                `
+            })
+            content += `
+                    </tr>
+                </thead>
+                <tbody>
+            `
+            phieuGhiList.forEach(phieuGhi=>{
+                n = 0
+                content += `
+                <tr>
+                    <td>${phieuGhi.KhungGio}</td>
+                `
+                sanList.forEach(field=>{
+                    console.log(field)
+                    if ( phieuGhi.list.length > n && field.idSan === phieuGhi.list[n]){
+                        n++
+                        content += `
+                        <td><button class="booking-btn booked">Đã đặt</button></td>
+                        `
+                    }
+                    else{
+                        content +=`
+                        <td><button class="booking-btn available" data-san="${field.idSan}" data-gio="${phieuGhi.KhungGio}">300k</button></td>
+                        `
+                    }
+                })
+                content +=`</tr>`
+            })
+            content += `</tbody>`
+            table.innerHTML = content
+            // Xử lý đặt sân
+            document.querySelectorAll('.available').forEach(button => {
+                button.addEventListener('click', function() {
+                    const san = this.getAttribute('data-san');
+                    const gio = this.getAttribute('data-gio');
+                    const loaiSan = document.getElementById('loai-san').value;
+                    const ngayDat = document.getElementById('ngay-dat').value || 'hôm nay';
+                    
+                    if (confirm(`Bạn có chắc muốn đặt Sân ${san} (${loaiSan} người) từ ${gio} vào ${ngayDat}?`)) {
+                        this.classList.remove('available');
+                        this.classList.add('booked');
+                        this.textContent = 'Đã đặt';
+                        alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
+                    }
+                });
+            });
+        }
+        createDisplay();
     </script>
 </body>
 </html>

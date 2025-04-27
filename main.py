@@ -9,6 +9,7 @@ from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
 from BUS.NguoiDungBUS import NguoiDungBUS
 from BUS.ThanhToanBUS import ThanhToanBUS
+from BUS.phieughiBUS import PhieuGhiBUS
 from datetime import datetime
 import sys
 import io
@@ -24,6 +25,7 @@ san_bus = SanBus(dao)
 taikhoan = TaiKhoanBUS()
 khachhang = NguoiDungBUS()
 thanhtoan = ThanhToanBUS()
+phieughi = PhieuGhiBUS()
 # trang mở đầu ====================================================================================
 @app.route('/')
 def index():
@@ -205,8 +207,12 @@ def sua_nhan_vien(id):
 # region người dùng
 # trang người dùng
 @app.route('/user<userID>')
-def nguoidung(userID):
-    return render_template('user.html',userID=userID)
+def nguoidung(userID: int):
+    PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
+    return render_template('user.html',
+                           userID = userID,
+                           danhsachphieughi = PhieuGhiBUS.danhSachPhieuGhi,
+                           san = san_bus.lay_danh_sach_san())
 
 # endregion
 ############################################################################################
@@ -229,7 +235,7 @@ def xuLiDangNhap():
         else:
             return redirect(url_for('index'))   
     else:
-        return redirect('login')
+        return redirect('/login')
         
 @app.route('/signUp', methods=['POST'])
 def xuliDangKi():
