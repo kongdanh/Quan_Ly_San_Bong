@@ -306,7 +306,7 @@
                     }
                     else{
                         content +=`
-                        <td><button class="booking-btn available" data-san="${field.idSan}" data-gio="${phieuGhi.KhungGio}">300k</button></td>
+                        <td><button class="booking-btn available" data-san="${field.idSan}" data-gio="${phieuGhi.KhungGio}" data-gia="300000">300k</button></td>
                         `
                     }
                 })
@@ -319,19 +319,31 @@
                 button.addEventListener('click', function() {
                     const san = this.getAttribute('data-san');
                     const gio = this.getAttribute('data-gio');
+                    const gia = this.getAttribute('data-gia');
                     const loaiSan = document.getElementById('loai-san').value;
-                    const ngayDat = document.getElementById('ngay-dat').value || 'hôm nay';
+                    const ngayDat = document.getElementById('ngay-dat').value;
                     
                     if (confirm(`Bạn có chắc muốn đặt Sân ${san} (${loaiSan} người) từ ${gio} vào ${ngayDat}?`)) {
-                        this.classList.remove('available');
-                        this.classList.add('booked');
-                        this.textContent = 'Đã đặt';
-                        alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
+                        fetch(`/user/${PID}/dat_san/${san}/ngay/${ngayDat}/khung_gio/${gio}/gia/${gia}`,{method:'POST'}).
+                        then(response => response.json()).then(data=>{
+                            if (data['success']){
+                                this.classList.remove('available');
+                                this.classList.add('booked');
+                                this.textContent = 'Đã đặt';
+                                alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
+                            }
+                            else{
+                                console.log(data)
+                                alert(`Lỗi khi đặt sân, Error: ${data['message']}`)
+                            }
+                        })
+                        
                     }
                 });
             });
         }
         createDisplay();
+
     </script>
 </body>
 </html>

@@ -30,14 +30,10 @@ class PhieuGhiBUS:
             list = self.phieuGhiDAO.getListByDate(date)
             print(list)
             new_list = PhieuGhiBUS.danhSachKhungGio
-            i = 0
             for y in new_list:
-                for x in range(i,len(list)):
-                    if list[x]['KhungGio'] == y['KhungGio']:
-                        y['list'].append(list[x]['KhungGio'])
-                    else:
-                        i=x
-                        break
+                for x in list:
+                    if x['KhungGio'] == y['KhungGio']:
+                        y['list'].append(x['IdSan'])
             print(new_list)
             return new_list
         except ValueError as e:

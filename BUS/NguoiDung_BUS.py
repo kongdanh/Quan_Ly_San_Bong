@@ -4,7 +4,7 @@ from BUS.ThanhToanBUS import ThanhToanBUS
 from BUS.phieughiBUS import PhieuGhiBUS
 from typing import List, Dict
 
-class NguoiDungBUS:
+class NguoiDung_BUS:
     list: List[Dict] = []
     def __init__(self,conn=None):
         self.nguoidungDAO = NguoiDungDAO()
@@ -18,7 +18,7 @@ class NguoiDungBUS:
     
     def xoaNguoiDung(self, idNguoiDung: int) -> Dict:
         result = self.nguoidungDAO.timKiemNguoiDung(idNguoiDung)
-        acc = self.taiKhoanBUS.timKiemTaiKhoan(idNguoiDung)
+        accID = result['IdTaiKhoan']
         ListPhieuGhi = self.phieuGhiBUS.getListPhieuGhi(idNguoiDung)
         ListThanhToan = self.thanhToanBUS.getListThanhToan(idNguoiDung)
         for x in ListPhieuGhi:
@@ -34,7 +34,7 @@ class NguoiDungBUS:
         if result['success']:
             result = self.nguoidungDAO.xoa_NguoiDung(idNguoiDung)
         if result['success']:
-            return self.taiKhoanBUS.xoaTaiKhoan(acc['IdTaiKhoan'])
+            return self.taiKhoanBUS.xoaTaiKhoan(accID)
         return result
     
     def getTongTien(self, idNguoiDung:int) -> int:

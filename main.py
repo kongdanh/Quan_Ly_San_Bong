@@ -7,7 +7,7 @@ from DAO.db_config import get_connection
 from BUS.nhanvien_bus import NhanVienBus
 from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
-from BUS.NguoiDungBUS import NguoiDungBUS
+from BUS.NguoiDung_BUS import NguoiDung_BUS
 from BUS.ThanhToanBUS import ThanhToanBUS
 from BUS.phieughiBUS import PhieuGhiBUS
 from datetime import datetime
@@ -23,7 +23,7 @@ conn = get_connection()
 dao = SanDAO(conn)  # Truyền conn từ get_connection()
 san_bus = SanBus(dao)
 taikhoan = TaiKhoanBUS()
-khachhang = NguoiDungBUS()
+khachhang = NguoiDung_BUS()
 thanhtoan = ThanhToanBUS()
 phieughi = PhieuGhiBUS()
 # trang mở đầu ====================================================================================
@@ -206,13 +206,28 @@ def sua_nhan_vien(id):
 ###################################################################################
 # region người dùng
 # trang người dùng
-@app.route('/user<userID>')
+@app.route('/user/<userID>')
 def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
     return render_template('user.html',
                            userID = userID,
                            danhsachphieughi = PhieuGhiBUS.danhSachPhieuGhi,
                            san = san_bus.lay_danh_sach_san())
+
+@app.route('/user/<int:userID>/dat_san/<int:sanID>/ngay/<date>/khung_gio/<khung_gio>/gia/<gia>', methods = ['POST'])
+def datsan(userID:int, sanID:int, date, khung_gio, gia):
+    date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    data={
+        'Ngay' : date_obj,
+        'KhungGio' : khung_gio,
+        'GiaTien' : gia,
+        'IdSan' : sanID,
+        'IdNguoiDung': userID,
+    }
+    print(data,flush=True)
+    result = phieughi.themPhieuGhi(data)
+    print(result, flush=True)
+    return jsonify(result)
 
 # endregion
 ############################################################################################
@@ -319,16 +334,16 @@ def sua_hoa_don(id):
 # region quản lí khách hàng
 @app.route('/khachhang')
 def quanlikhachhang():
-    NguoiDungBUS.list = khachhang.getListNguoiDung()
+    NguoiDung_BUS.list = khachhang.getListNguoiDung()
     date = datetime.now().date()
-    datas = {'Tong':len(NguoiDungBUS.list),
+    datas = {'Tong':len(NguoiDung_BUS.list),
              'newByWeek': len(taikhoan.getListByDate(date - timedelta(days=7),'user')),
              'newByMonth': len(taikhoan.getListByDate(date - timedelta(days=30),'user')),
              'comeBack':30}
-    for x in NguoiDungBUS.list:
+    for x in NguoiDung_BUS.list:
         x['SoLuong'] = len(thanhtoan.getListThanhToan(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-    return render_template('quanlikhachhang.html',danhsachkhachhang = NguoiDungBUS.list, data=datas)
+    return render_template('quanlikhachhang.html',danhsachkhachhang = NguoiDung_BUS.list, data=datas)
 
 @app.route('/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
 def xoa_khachhang(IdNguoiDung: int):

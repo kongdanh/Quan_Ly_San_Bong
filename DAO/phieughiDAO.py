@@ -52,8 +52,8 @@ class PhieuGhiDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT INTO phieughi (IdSan, IdNguoiDung, Ngay, KhungGio) VALUES (%s, %s, %s, %s)",
-                (Datas['IdSan'], Datas['IdNguoiDung'], Datas['Ngay'], Datas['KhungGio'])
+                "INSERT INTO phieughi (IdSan, IdNguoiDung, Ngay, KhungGio, GiaTien) VALUES (%s, %s, %s, %s, %s)",
+                (Datas['IdSan'], Datas['IdNguoiDung'], Datas['Ngay'], Datas['KhungGio'], Datas['GiaTien'])
             )
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
@@ -69,7 +69,7 @@ class PhieuGhiDAO:
             cursor = self.conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date,))
             result = cursor.fetchall()
-            result = sorted(result, key=lambda x: x['KhungGio'])
+            result = sorted(result, key=lambda x: x['IdSan'])
             return result
         except Error as e:
             print(f"Error: {e}")
