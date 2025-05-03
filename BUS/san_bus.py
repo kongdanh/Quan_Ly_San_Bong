@@ -3,7 +3,7 @@ from DAO.san_dao import SanDAO  # Import DAO layer
 
 class SanBus:
     def __init__(self, dao):
-        self.dao = dao  # Truyền instance của SanDAO vào Bus
+        self.dao = dao if dao is not None else SanDAO  # Truyền instance của SanDAO vào Bus
         # Nếu muốn giữ danh sách nội bộ, khởi tạo nó
         self.danh_sach_san = []  # Khởi tạo danh sách (tùy chọn)
 

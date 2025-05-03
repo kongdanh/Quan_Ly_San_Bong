@@ -229,6 +229,7 @@ def datsan(userID:int, sanID:int, date, khung_gio, gia):
         'GiaTien' : gia,
         'IdSan' : sanID,
         'IdNguoiDung': userID,
+        'TrangThai': "Chưa xác nhận"
     }
     result = phieughi.themPhieuGhi(data)
     return jsonify(result)

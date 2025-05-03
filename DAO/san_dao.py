@@ -30,7 +30,7 @@ class SanDAO:
         """Lấy toàn bộ danh sách sân (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("SELECT idSan, coSan, diaChi FROM san")
+            cursor.execute("SELECT * FROM san")
             return cursor.fetchall()
         except Error as e:
             print(f"[DAO ERROR] Lỗi khi lấy danh sách: {e}")

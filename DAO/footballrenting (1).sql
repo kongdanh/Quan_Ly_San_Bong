@@ -186,9 +186,9 @@ CREATE TABLE `san` (
 --
 
 INSERT INTO `san` (`IdSan`, `CoSan`, `DiaChi`) VALUES
-(1, '7 vs 7', '123 Le Loi'),
-(2, '7 vs 7', '456 Tran Phu'),
-(9, '5 vs 5', 'bbbb');
+(1, '11', '123 Lê Lợi'),
+(2, '7', '456 Trần Phú'),
+(9, '5', '347 Tân Bình');
 
 -- --------------------------------------------------------
 
