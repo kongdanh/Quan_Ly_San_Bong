@@ -207,8 +207,8 @@
         <h2>Thêm sân mới</h2>
         <form method="POST" action="/them-san">
             <div class="form-group">
-                <label for="coSan">Cỡ sân:</label>
-                <select id="coSan" name="coSan" required>
+                <label for="CoSan">Cỡ sân:</label>
+                <select id="CoSan" name="CoSan" required>
                     <option value="" disabled selected>Chọn cỡ sân</option>
                     <option value="5 vs 5">5 vs 5</option>
                     <option value="7 vs 7">7 vs 7</option>
@@ -218,8 +218,8 @@
             </div>
 
             <div class="form-group">
-                <label for="diaChi">Địa chỉ:</label>
-                <input type="text" id="diaChi" name="diaChi" required placeholder="Nhập địa chỉ sân">
+                <label for="DiaChi">Địa chỉ:</label>
+                <input type="text" id="DiaChi" name="DiaChi" required placeholder="Nhập địa chỉ sân">
             </div>
 
             <button type="submit" class="btn-primary">Thêm sân</button>
@@ -241,14 +241,14 @@
             <tbody>
                 {% for san in danh_sach_san %}
                 <tr>
-                    <td>{{ san.idSan }}</td>
-                    <td>{{ san.coSan }}</td>
-                    <td>{{ san.diaChi }}</td>
+                    <td>{{ san.IdSan }}</td>
+                    <td>{{ san.CoSan }}</td>
+                    <td>{{ san.DiaChi }}</td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn btn-warning"
-                                onclick="moFormSua('{{ san.idSan }}', '{{ san.coSan }}', '{{ san.diaChi }}')">Sửa</button>
-                            <button class="btn btn-danger" onclick="xoaSan('{{ san.idSan }}')">Xóa</button>
+                                onclick="moFormSua('{{ san.IdSan }}', '{{ san.CoSan }}', '{{ san.DiaChi }}')">Sửa</button>
+                            <button class="btn btn-danger" onclick="xoaSan('{{ san.IdSan }}')">Xóa</button>
                         </div>
                     </td>
                 </tr>
@@ -264,21 +264,21 @@
                 <h3>Sửa thông tin sân</h3>
             </div>
             <form id="suaForm" method="POST">
-                <input type="hidden" name="idSan" id="suaId">
+                <input type="hidden" name="IdSan" id="suaId">
 
                 <div class="form-group">
                     <label for="suaCoSan">Cỡ sân:</label>
-                    <select id="suaCoSan" name="coSan" required>
-                        <option value="5 vs 5">5 vs 5</option>
-                        <option value="7 vs 7">7 vs 7</option>
-                        <option value="9 vs 9">9 vs 9</option>
-                        <option value="11 vs 11">11 vs 11</option>
+                    <select id="suaCoSan" name="CoSan" required>
+                        <option value="5">5 vs 5</option>
+                        <option value="7">7 vs 7</option>
+                        <option value="9">9 vs 9</option>
+                        <option value="11">11 vs 11</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="suaDiaChi">Địa chỉ:</label>
-                    <input type="text" id="suaDiaChi" name="diaChi" required>
+                    <input type="text" id="suaDiaChi" name="DiaChi" required>
                 </div>
 
                 <div class="modal-footer">
@@ -292,12 +292,12 @@
 
     <script>
         // Mở form sửa và đặt giá trị hiện tại
-        function moFormSua(id, coSan, diaChi) {
+        function moFormSua(id, CoSan, DiaChi) {
             document.getElementById('suaId').value = id;               // Gán ID sân
-            document.getElementById('suaDiaChi').value = diaChi;       // Gán địa chỉ sân
+            document.getElementById('suaDiaChi').value = DiaChi;       // Gán địa chỉ sân
 
             // Gán giá trị cỡ sân vào select của form sửa
-            document.getElementById('suaCoSan').value = coSan;
+            document.getElementById('suaCoSan').value = CoSan;
 
             document.getElementById('formSua').style.display = 'flex';  // Hiển thị form sửa
         }

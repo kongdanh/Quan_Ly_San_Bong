@@ -70,7 +70,6 @@ class PhieuGhiDAO:
             cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date.strftime('%Y-%m-%d'),))
             result = cursor.fetchall()
             result = sorted(result, key=lambda x: x['IdSan'])
-            print(date,flush=True)
             return result
         except Error as e:
             print(f"Error: {e}")
