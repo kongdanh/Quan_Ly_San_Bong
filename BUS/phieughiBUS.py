@@ -28,13 +28,13 @@ class PhieuGhiBUS:
     def getListByDate(self, date: datetime) -> List[Dict]:
         try:
             list = self.phieuGhiDAO.getListByDate(date)
-            print(list)
             new_list = PhieuGhiBUS.danhSachKhungGio
             for y in new_list:
+                y['list'] = []
                 for x in list:
                     if x['KhungGio'] == y['KhungGio']:
                         y['list'].append(x['IdSan'])
-            print(new_list)
+            # print(new_list)
             return new_list
         except ValueError as e:
             print(f"[BUS ERROR] Lỗi khi chuyển đổi định dạng ngày: {e}")

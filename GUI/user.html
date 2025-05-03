@@ -263,17 +263,25 @@
 
         // Đặt ngày mặc định là hôm nay
         document.getElementById('ngay-dat').valueAsDate = new Date();
-        
         const PID = {{ userID }};  
         const sanList = {{ san | tojson | safe }};
-        const phieuGhiList = {{ danhsachphieughi | tojson | safe }};
+        
+
         
         console.log("User ID:", PID);
         console.log("Sân list:", sanList);
-        console.log("Phiếu ghi list:", phieuGhiList);
 
-        function createDisplay(){
+        async function getData(){
+            const ngayDat = document.getElementById('ngay-dat').value;
+            const response =await fetch(`/user/${PID}/render-date/${ngayDat}`,{method:'POST'})
+            const data = await response.json()
+            return data
+        }
+
+        async function createDisplay(){
             const table = document.getElementById('booking-table')
+            listPhieuGhi = await getData()
+            console.log(listPhieuGhi)
             let content
             content = `
                 <thead>
@@ -290,14 +298,13 @@
                 </thead>
                 <tbody>
             `
-            phieuGhiList.forEach(phieuGhi=>{
+            listPhieuGhi.forEach(phieuGhi=>{
                 n = 0
                 content += `
                 <tr>
                     <td>${phieuGhi.KhungGio}</td>
                 `
                 sanList.forEach(field=>{
-                    console.log(field)
                     if ( phieuGhi.list.length > n && field.idSan === phieuGhi.list[n]){
                         n++
                         content += `
@@ -343,7 +350,10 @@
             });
         }
         createDisplay();
-
+        
+        document.getElementById('ngay-dat').addEventListener( 'change' , function(){
+            createDisplay()
+        })
     </script>
 </body>
 </html>

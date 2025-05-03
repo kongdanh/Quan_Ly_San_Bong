@@ -67,9 +67,10 @@ class PhieuGhiDAO:
     def getListByDate(self, date: datetime) -> List[Dict]:
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date,))
+            cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date.strftime('%Y-%m-%d'),))
             result = cursor.fetchall()
             result = sorted(result, key=lambda x: x['IdSan'])
+            print(date,flush=True)
             return result
         except Error as e:
             print(f"Error: {e}")

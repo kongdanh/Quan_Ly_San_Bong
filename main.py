@@ -211,8 +211,14 @@ def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
     return render_template('user.html',
                            userID = userID,
-                           danhsachphieughi = PhieuGhiBUS.danhSachPhieuGhi,
                            san = san_bus.lay_danh_sach_san())
+
+@app.route('/user/<int:userID>/render-date/<date>', methods = ['POST'])
+def renderBooking(userID:int, date):
+    date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(date_obj)
+    print(PhieuGhiBUS.danhSachPhieuGhi,flush=True)
+    return jsonify(PhieuGhiBUS.danhSachPhieuGhi)
 
 @app.route('/user/<int:userID>/dat_san/<int:sanID>/ngay/<date>/khung_gio/<khung_gio>/gia/<gia>', methods = ['POST'])
 def datsan(userID:int, sanID:int, date, khung_gio, gia):
@@ -224,9 +230,7 @@ def datsan(userID:int, sanID:int, date, khung_gio, gia):
         'IdSan' : sanID,
         'IdNguoiDung': userID,
     }
-    print(data,flush=True)
     result = phieughi.themPhieuGhi(data)
-    print(result, flush=True)
     return jsonify(result)
 
 # endregion
