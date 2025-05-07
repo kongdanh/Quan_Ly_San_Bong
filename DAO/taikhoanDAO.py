@@ -166,3 +166,21 @@ class TaiKhoanDAO:
             return int(max_id) if max_id is not None else 0
         except Exception as e:
             raise Exception(f"Lỗi khi lấy ID lớn nhất: {str(e)}")
+        
+    def getAcc(self, ID:int) -> Dict:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM TaiKhoan Where IdTaiKhoan = %s",(ID,))
+            data = cursor.fetchone()
+            if data:
+                data.update({'success':True})
+                return data
+            else:
+                data = {"success": False,"message":"tài khoản không tồn tại"}
+                return data
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi tìm tài khoản: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            cursor.close()

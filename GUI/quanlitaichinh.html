@@ -160,7 +160,11 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-height: 400px;
             overflow: hidden;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #ccc;
         }
         
         table {
@@ -196,6 +200,11 @@
             color: #155724;
         }
         
+        .status-accepted {
+            background-color: #cecdeb;
+            color: #151d57;
+        }
+
         .status-pending {
             background-color: #fff3cd;
             color: #856404;
@@ -242,6 +251,41 @@
             color: #7f8c8d;
             border-radius: 4px;
         }
+        .popup {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup.hidden {
+        display: none;
+        }
+
+        .popup-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 300px;
+        }
+
+        .popup-actions {
+        margin-top: 10px;
+        text-align: right;
+        }
+
+        .popup-actions button {
+        margin-left: 10px;
+        }
+        .order-table thead th {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 1;
+        }
     </style>
 </head>
 <body>
@@ -287,22 +331,22 @@
             </div>
             
             <div class="search-bar">
-                <input type="text" placeholder="Tìm kiếm giao dịch...">
+                <input type="text" placeholder="Tìm kiếm giao dịch..." id="search" onchange="loadData()">
                 <div class="action-buttons">
-                    <select class="btn btn-outline">
+                    <!-- <select class="btn btn-outline">
                         <option>Tháng này</option>
                         <option>Tuần này</option>
                         <option>Quý này</option>
                         <option>Tùy chỉnh</option>
                     </select>
-                    <button class="btn btn-primary">Xuất báo cáo</button>
+                    <button class="btn btn-primary">Xuất báo cáo</button> -->
                 </div>
             </div>
         </div>
         
         <!-- Transactions Table -->
         <div class="transactions-table">
-            <table>
+            <table class="orders-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -315,8 +359,8 @@
                         <th>Thao tác</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
+                <tbody id ='bills'>
+                    <!-- <tr>
                         <td>#GD001</td>
                         <td>15/04/2023</td>
                         <td>Thu tiền sân</td>
@@ -390,7 +434,7 @@
                                 <span>📁</span>
                             </div>
                         </td>
-                    </tr>
+                    </tr> -->
                 </tbody>
             </table>
         </div>
@@ -411,5 +455,92 @@
             </div>
         </div>
     </div>
+
+    <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <h3>Thay đổi trạng thái</h3>
+            <select id="statusSelect">
+                <option value="Chờ xác nhận">Chờ xác nhận</option>
+                <option value="Đã xác nhận">Đã xác nhận</option>
+                <option value="Đã thanh toán">Đã thanh toán</option>
+            </select>
+            <div class="popup-actions">
+                <button id="saveB" style="border: none; background: rgb(193, 211, 193); color: rgb(10, 72, 10); width: 45px; height: 30;" onclick="saveStatus()">Lưu</button>
+                <button id="closeB" style="border: none; background: rgb(213, 193, 193); color: rgb(72, 10, 10); width: 45px; height: 30;" onclick="closePopup()">Hủy</button>
+            </div>
+        </div>
+    </div>
+      
+
+    <script>
+        async function getData(){
+            const key = document.getElementById('search').value;
+            const response = key == "" ?await fetch(`/quanlitaichinh/load`,{method:'POST'}):
+                                        await fetch(`/quanlitaichinh/timkiem/${key}`,{method:'POST'})
+            const data = await response.json()
+            return data
+        }
+
+        async function loadData(){
+            let content =''
+            let search = document.getElementById('search').value
+            const listBills = await getData()
+            console.log(listBills)
+            listBills.forEach( x =>{
+                content +=
+                `<tr>
+                    <td>${x.IdHoaDon}</td>
+                    <td>${x.Ngay}</td>
+                    <td>Thu tiền sân</td>
+                    <td>${x.HoTen}</td>
+                    <td>${x.TongTien}</td>
+                    <td>${x.PhuongThuc == null ? "Chưa xác nhận": x.PhuongThuc}</td>
+                    ${x.TrangThai == 'Đã thanh toán'? 
+                    `<td><span class="status status-completed">Hoàn thành</span></td>`:
+                        x.TrangThai == 'Đã xác nhận'?
+                        `<td><span class="status status-accepted">Chờ thanh toán</span></td>`:
+                        `<td><span class="status status-pending">Chờ xác nhận</span></td>`}
+                    <td>
+                        <div class="action-icons">
+                            <span onclick="stateChange(${x.IdHoaDon}, '${x.TrangThai}')">✏️</span>
+                        </div>
+                    </td>
+                </tr>`
+            })
+            const table = document.getElementById('bills')
+            table.innerHTML = content
+        }
+
+        loadData()
+        let selectedOrderId = null;
+
+        function stateChange(orderId, currentStatus) {
+            selectedOrderId = orderId;
+            document.getElementById("statusSelect").value = currentStatus;
+            document.getElementById("popup").classList.remove("hidden");
+        }
+
+        function closePopup() {
+            document.getElementById("popup").classList.add("hidden");
+            selectedOrderId = null;
+        }
+
+        function saveStatus() {
+            const newStatus = document.getElementById("statusSelect").value;
+
+            fetch(`/quanlitaichinh/edit/${selectedOrderId}/${newStatus}`,{method:'POST'}).
+            then(response => response.json()).then(data=>{
+                if (data['success']){
+                    alert("Đã thành công cập nhật trạng thái hóa đơn!")
+                    loadData()
+                }
+                else{
+                    alert(`Lỗi khi cập nhật!\nError: ${data['message']}`)
+                }
+            })
+
+            closePopup();
+        }
+    </script>
 </body>
 </html>

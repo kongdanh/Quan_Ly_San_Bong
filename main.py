@@ -223,15 +223,26 @@ def renderBooking(userID:int, date):
 @app.route('/user/<int:userID>/dat_san/<int:sanID>/ngay/<date>/khung_gio/<khung_gio>/gia/<gia>', methods = ['POST'])
 def datsan(userID:int, sanID:int, date, khung_gio, gia):
     date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    order={
+        'Ngay' : date_obj,
+        'TongTien' : gia,
+        'PhuongThuc' : None,
+        'IdNhanVien': None,
+        'IdNguoiDung': userID,
+        'TrangThai': "Chờ xác nhận"
+    }
     data={
         'Ngay' : date_obj,
         'KhungGio' : khung_gio,
         'GiaTien' : gia,
         'IdSan' : sanID,
-        'IdNguoiDung': userID,
-        'TrangThai': "Chưa xác nhận"
     }
-    result = phieughi.themPhieuGhi(data)
+    result = hoa_don_bus.addHD(order)
+    if result['success']:
+        data['IdHoaDon'] = result['IdHoaDon']
+        print(data,flush=True)
+        result = phieughi.themPhieuGhi(data)
+        
     return jsonify(result)
 
 # endregion
@@ -339,23 +350,33 @@ def sua_hoa_don(id):
 # region quản lí khách hàng
 @app.route('/khachhang')
 def quanlikhachhang():
-    NguoiDung_BUS.list = khachhang.getListNguoiDung()
-    date = datetime.now().date()
-    datas = {'Tong':len(NguoiDung_BUS.list),
-             'newByWeek': len(taikhoan.getListByDate(date - timedelta(days=7),'user')),
-             'newByMonth': len(taikhoan.getListByDate(date - timedelta(days=30),'user')),
-             'comeBack':30}
-    for x in NguoiDung_BUS.list:
-        x['SoLuong'] = len(thanhtoan.getListThanhToan(x['IdNguoiDung']))
-        x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-    return render_template('quanlikhachhang.html',danhsachkhachhang = NguoiDung_BUS.list, data=datas)
+    return render_template('quanlikhachhang.html')
 
 @app.route('/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
 def xoa_khachhang(IdNguoiDung: int):
-    print("HELLO", flush=True)
     result = khachhang.xoaNguoiDung(IdNguoiDung)
     print(result, flush=True)
     return jsonify(result)
+
+@app.route('/khachhang/timkiem/<key>', methods=['POST'])
+def tim_khachhang(key:str):
+    listGuest = khachhang.timKhachHang(key)
+    for x in listGuest:
+        x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
+        x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
+        x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
+    return jsonify(listGuest)
+
+@app.route('/khachhang/load', methods=['POST'])
+def load_khachhang():
+    listGuest = khachhang.timKhachHang("")
+    for x in listGuest:
+        x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
+        x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
+        x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
+    print("HI")
+    print(listGuest,flush=True)
+    return jsonify(listGuest)
 # endregion
 ########################################################################################
 # region báo cáo & thống kê
@@ -368,6 +389,23 @@ def baocao():
 @app.route('/quanlitaichinh')
 def quanlitaichinh():
     return render_template('quanlitaichinh.html')
+
+@app.route('/quanlitaichinh/timkiem/<key>', methods=['POST'])
+def tim_taichinh(key:str):
+    print(key + ".",flush=True)
+    listHD = hoa_don_bus.timkiemHD(key)
+    print(listHD,flush=True)
+    return jsonify(listHD)
+
+@app.route('/quanlitaichinh/load/', methods=['POST'])
+def load_taichinh():
+    listHD = hoa_don_bus.timkiemHD("")
+    return jsonify(listHD)
+
+@app.route('/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
+def editState(IDHD:int,Status):
+    result = hoa_don_bus.editState(IDHD,Status)
+    return jsonify(result)
 # endregion 
 ########################################################################################
 

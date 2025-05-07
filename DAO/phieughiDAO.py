@@ -1,4 +1,4 @@
-from db_config import get_connection
+from DAO.db_config import get_connection
 from typing import List, Dict
 from mysql.connector import Error
 from datetime import datetime
@@ -36,8 +36,8 @@ class PhieuGhiDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "UPDATE phieughi SET IdSan=%s, IdNguoiDung=%s, Ngay=%s, KhungGio=%s WHERE IdPhieuGhi = %s",
-                (Datas['IdSan'], Datas['IdNguoiDung'], Datas['Ngay'], Datas['KhungGio'], Datas['IdPhieuGhi'])
+                "UPDATE phieughi SET IdSan=%s, IdHoaDon=%s, Ngay=%s, KhungGio=%s WHERE IdPhieuGhi = %s",
+                (Datas['IdSan'], Datas['IdHoaDon'], Datas['Ngay'], Datas['KhungGio'], Datas['IdPhieuGhi'])
             )
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
@@ -49,11 +49,12 @@ class PhieuGhiDAO:
             cursor.close()
             
     def themPhieuGhi(self, Datas: Dict) -> Dict:
+        print(Datas,flush=True)
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT INTO phieughi (IdSan, IdNguoiDung, Ngay, KhungGio, GiaTien) VALUES (%s, %s, %s, %s, %s)",
-                (Datas['IdSan'], Datas['IdNguoiDung'], Datas['Ngay'], Datas['KhungGio'], Datas['GiaTien'])
+                "INSERT INTO phieughi (IdSan, IdHoaDon, Ngay, KhungGio, GiaTien) VALUES (%s, %s, %s, %s, %s)",
+                (Datas['IdSan'], Datas['IdHoaDon'], Datas['Ngay'], Datas['KhungGio'], Datas['GiaTien'])
             )
             self.conn.commit()
             return {"success": cursor.rowcount > 0}

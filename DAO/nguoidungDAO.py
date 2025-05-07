@@ -110,3 +110,21 @@ class NguoiDungDAO:
                 print("Kết nối database đã được đóng.")
             except Error as e:
                 print(f"Lỗi khi đóng kết nối: {e}")
+                
+    def search(self, key:str) -> List[Dict]:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            try:
+                key = int(key)
+                cursor.execute("SELECT * FROM nguoidung WHERE IdNguoiDung = %s OR SDT = %s", (key, key))
+            except ValueError as e:
+                key = "%" + key + "%"
+                cursor.execute("SELECT * FROM nguoidung WHERE HoTen Like %s OR Email Like %s", (key, key))
+            data = cursor.fetchall()
+            return data
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
+            return []
+        finally:
+            cursor.close()

@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Dict
+from typing import Dict, List
 from DAO.nguoidungDAO import NguoiDungDAO
 from DAO.taikhoanDAO import TaiKhoanDAO
 
@@ -94,3 +94,8 @@ class TaiKhoanBUS:
             return int(max_id) if max_id is not None else 0
         except Exception as e:
             raise Exception(f"Lỗi khi lấy ID lớn nhất: {str(e)}")
+        
+    def getAcc(self, ID:int )-> Dict:
+        return self.accDao.getAcc(ID)
+    
+    

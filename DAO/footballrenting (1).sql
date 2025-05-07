@@ -100,7 +100,7 @@ CREATE TABLE `nguoidung` (
 --
 
 INSERT INTO `nguoidung` (`IdNguoiDung`, `HoTen`, `NgaySinh`, `SDT`, `Email`, `IdTaiKhoan`) VALUES
-(1, 'Nguyen Van A', '2000-05-05', 'nguyenvanA@gmail.com', 'Ha Noi', 1);
+(1, 'Nguyen Van A', '2000-05-05', '0987654321', 'nguyenvanA@gmail.com', 1);
 
 -- --------------------------------------------------------
 
