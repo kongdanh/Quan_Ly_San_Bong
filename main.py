@@ -259,6 +259,23 @@ def datsan(userID:int, sanID:int, date, khung_gio, gia):
 def dangNhap():
     return render_template('dangnhap_dangki.html')
 
+def render_index_template(context=None):
+    # Context mặc định
+    default_context = {
+        'pg': [],
+        'san': [],
+        'today_date': datetime.now().strftime("%Y-%m-%d"),
+        'today_revenue': 0,
+        'booked_fields': 0,
+        'total_fields': 0
+    }
+    
+    # Merge với context truyền vào
+    if context:
+        default_context.update(context)
+    
+    return render_template('index.html', **default_context)
+
 #đăng nhập
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
@@ -270,7 +287,7 @@ def xuLiDangNhap():
             return redirect(url_for('nguoidung',userID = result.get('IdTaiKhoan')))    
         # dẫn tới quản lí sân
         else:
-            return render_template('index.html')   
+            return render_index_template()
     else:
         return redirect('/login')
         
@@ -388,11 +405,52 @@ def load_khachhang():
 # region báo cáo & thống kê
 @app.route("/baocao")
 def baocao():
+    from collections import defaultdict
+    import datetime
+
     # Gọi phương thức để lấy danh sách hóa đơn
-    hd = hoa_don_bus.lay_danh_sach_hoa_don()  # Sửa từ danh_sach_hoa_don thành lay_danh_sach_hoa_don
-    total_revenue = sum(float(invoice['TongTien']) for invoice in hd) if hd else 0
+    hd = hoa_don_bus.lay_danh_sach_hoa_don() or []
+    
+    # Tính tổng doanh thu theo tháng trong năm 2025
+    monthly_revenue = defaultdict(float)
+    for invoice in hd:
+        ngay_value = invoice.get('Ngay')
+        if ngay_value is not None:
+            if isinstance(ngay_value, datetime.date):
+                ngay = ngay_value
+            else:
+                ngay = datetime.datetime.strptime(ngay_value, '%Y-%m-%d').date()
+            if ngay.year == 2025:
+                month = ngay.month
+                monthly_revenue[month] += float(invoice.get('TongTien', 0))
+
+    # Lấy danh sách phiếu ghi
+    phieu_ghi = phieughi.getListPhieuGhi(None)
+    print("phieu_ghi in main.py:", phieu_ghi)  # Debug dữ liệu
+
+    # Tính số lần xuất hiện của từng sân (IdSan)
+    field_counts = defaultdict(int)
+    for item in phieu_ghi:
+        id_san = item.get('IdSan')
+        if id_san is not None:
+            field_counts[id_san] += 1
+    print("field_counts:", dict(field_counts))  # Debug kết quả đếm
+
+    # Chuẩn bị dữ liệu cho biểu đồ
+    months = range(1, 13)
+    revenue_data = [monthly_revenue.get(month, 0) for month in months]
+
+    total_revenue = sum(revenue_data) if revenue_data else 0
     total_orders = len(hd) if hd else 0
-    return render_template("baocao.html", invoices=hd, total_revenue=total_revenue, total_orders=total_orders)
+
+    return render_template("baocao.html", 
+                           invoices=hd, 
+                           total_revenue=total_revenue, 
+                           total_orders=total_orders,
+                           monthly_revenue=revenue_data,
+                           phieu_ghi=phieu_ghi,
+                           field_counts=dict(field_counts),  # Truyền field_counts vào template
+                           months=[f'Tháng {m}' for m in months])
 # endregion
 ########################################################################################
 # region quản lý tài chính
@@ -418,16 +476,84 @@ def editState(IDHD:int,Status):
     return jsonify(result)
 # endregion 
 ########################################################################################
-
+# region phiếu ghi
+@app.route('/them-phieu-ghi')
+def themphieughi():
+    phieughi = PhieuGhiBUS.themPhieuGhi()
+    return
 # trang mở đầu ====================================================================================
 @app.route('/')
 def index():
     danh_sach_san = san_bus.lay_danh_sach_san()
     return render_template('user.html', san = danh_sach_san)
 
-@app.route
+@app.route('/index')
+def render_index_template(context=None):
+    """Hàm render template với các giá trị mặc định"""
+    default_context = {
+        'pg': [],
+        'san': [],
+        'today_date': datetime.now().strftime("%Y-%m-%d"),
+        'today_revenue': 0.0,
+        'booked_fields': 0,
+        'total_fields': 0
+    }
+    if context:
+        default_context.update(context)
+    return render_template('index.html', **default_context)
+
 def pagemain():
-    return render_template('index.html')
+    """Lấy dữ liệu đặt sân hôm nay và hiển thị trang chủ"""
+    try:
+        # 1. Lấy dữ liệu thô từ database
+        raw_bookings = phieughi.getListPhieuGhi(None) or []
+        fields = san_bus.danh_sach_san() or []
+        
+        # 2. Chuẩn bị dữ liệu
+        today = datetime.now().strftime("%Y-%m-%d")
+        filtered_bookings = []
+        revenue = Decimal('0')
+        booked_field_ids = set()
+        
+        # 3. Xử lý từng booking
+        for booking in raw_bookings:
+            try:
+                # Kiểm tra booking hợp lệ
+                if not all(hasattr(booking, attr) for attr in ['Ngay', 'TrangThai', 'GiaTien', 'IdSan']):
+                    continue
+                    
+                # Kiểm tra ngày booking
+                if not hasattr(booking.Ngay, 'strftime') or booking.Ngay.strftime("%Y-%m-%d") != today:
+                    continue
+                    
+                filtered_bookings.append(booking)
+                
+                # Tính toán doanh thu và sân đã đặt
+                if booking.TrangThai.lower() != 'huy':
+                    revenue += Decimal(str(booking.GiaTien))
+                    booked_field_ids.add(booking.IdSan)
+                    
+            except (AttributeError, TypeError, ValueError) as e:
+                print(f"Lỗi xử lý booking {getattr(booking, 'IdPhieuGhi', 'unknown')}: {str(e)}")
+                continue
+        
+        # 4. Chuẩn bị dữ liệu trả về
+        context = {
+            'pg': filtered_bookings,
+            'san': fields,
+            'today_date': today,
+            'today_revenue': float(revenue),  # Chuyển Decimal sang float để tương thích JSON
+            'booked_fields': len(booked_field_ids),
+            'total_fields': len(fields)
+        }
+        
+        return render_index_template(context)
+        
+    except Exception as e:
+        print(f"Lỗi nghiêm trọng trong pagemain: {str(e)}")
+        # Ghi log lỗi đầy đủ ở đây
+        return render_index_template()  # Trả về trang với dữ liệu mặc định
+        
 
 if __name__ == '__main__':
     app.run(debug=True)

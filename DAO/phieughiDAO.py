@@ -2,6 +2,7 @@ from DAO.db_config import get_connection
 from typing import List, Dict
 from mysql.connector import Error
 from datetime import datetime
+
 class PhieuGhiDAO:
     def __init__(self, conn=None):
         if conn is None:
@@ -9,7 +10,7 @@ class PhieuGhiDAO:
         else:
             self.conn = conn
 
-    def getListPhieuGhi(self, idNguoiDung:int = None) -> List[Dict]:
+    def getListPhieuGhi(self, idNguoiDung: int = None) -> List[Dict]:
         try:
             cursor = self.conn.cursor(dictionary=True)
             if idNguoiDung:
@@ -49,7 +50,7 @@ class PhieuGhiDAO:
             cursor.close()
             
     def themPhieuGhi(self, Datas: Dict) -> Dict:
-        print(Datas,flush=True)
+        print(Datas, flush=True)
         try:
             cursor = self.conn.cursor()
             cursor.execute(
@@ -68,10 +69,18 @@ class PhieuGhiDAO:
     def getListByDate(self, date: datetime) -> List[Dict]:
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date.strftime('%Y-%m-%d'),))
+            if date is None:
+                # Truy vấn tất cả phiếu ghi nếu date là None
+                cursor.execute("SELECT * FROM phieughi")
+            else:
+                # Truy vấn theo ngày
+                cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date.strftime('%Y-%m-%d'),))
             result = cursor.fetchall()
             result = sorted(result, key=lambda x: x['IdSan'])
+            print("DAO result:", result)  # Debug
             return result
         except Error as e:
             print(f"Error: {e}")
             return []
+        finally:
+            cursor.close()

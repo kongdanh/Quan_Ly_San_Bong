@@ -190,11 +190,15 @@
             background-color: white;
             border-radius: 8px;
             padding: 20px;
-            padding-bottom: 50px;
             padding-left: 50px;
+            padding-bottom: 50px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            height: 350px;
-            /* Tăng chiều cao để chứa biểu đồ tròn và nhãn */
+            height: 400px;
+        }
+
+        #fieldUsageBarChart {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .chart-container h3 {
@@ -204,8 +208,7 @@
         }
 
         .chart-placeholder {
-            height: 300px;
-            /* Tăng chiều cao để biểu đồ hiển thị đầy đủ */
+            height: 350px;
         }
 
         /* Report Tables */
@@ -322,14 +325,12 @@
                 <h3>Tổng doanh thu</h3>
                 <p>{{ total_revenue }}đ</p>
                 <div class="trend up">
-                    <span>▲ 12% so với tháng trước</span>
                 </div>
             </div>
             <div class="report-card">
                 <h3>Tổng số đặt sân</h3>
                 <p>{{ total_orders }}</p>
                 <div class="trend up">
-                    <span>▲ 8% so với tháng trước</span>
                 </div>
             </div>
         </div>
@@ -345,152 +346,59 @@
                 <canvas id="fieldUsageBarChart" class="chart-placeholder"></canvas>
             </div>
         </div>
-
-        <!-- Report Tables -->
-        <div class="report-tables">
-            <div class="table-container">
-                <div class="table-header">
-                    <h3>Top khách hàng thân thiết</h3>
-                    <select>
-                        <option>Xếp hạng theo số lần đặt</option>
-                        <option>Xếp hạng theo tổng chi tiêu</option>
-                    </select>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Khách hàng</th>
-                            <th>Số lần đặt</th>
-                            <th>Tổng chi tiêu</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Nguyễn Văn A</td>
-                            <td>45</td>
-                            <td>32,500,000đ</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Trần Thị B</td>
-                            <td>32</td>
-                            <td>24,800,000đ</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Lê Văn C</td>
-                            <td>28</td>
-                            <td>19,200,000đ</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Phạm Thị D</td>
-                            <td>25</td>
-                            <td>16,500,000đ</td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>Hoàng Văn E</td>
-                            <td>22</td>
-                            <td>15,000,000đ</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="see-all">Xem tất cả</div>
-            </div>
-
-            <div class="table-container">
-                <div class="table-header">
-                    <h3>Top nhân viên</h3>
-                    <select>
-                        <option>Xếp hạng theo số ca làm</option>
-                        <option>Xếp hạng theo đánh giá</option>
-                    </select>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Nhân viên</th>
-                            <th>Số ca làm</th>
-                            <th>Đánh giá</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Nguyễn Văn A</td>
-                            <td>48</td>
-                            <td>4.9/5</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Trần Thị B</td>
-                            <td>42</td>
-                            <td>4.8/5</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>Lê Văn C</td>
-                            <td>40</td>
-                            <td>4.7/5</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Phạm Thị D</td>
-                            <td>38</td>
-                            <td>4.6/5</td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>Hoàng Văn E</td>
-                            <td>35</td>
-                            <td>4.5/5</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="see-all">Xem tất cả</div>
-            </div>
-        </div>
     </div>
+
     <script>
-        // Lấy dữ liệu từ Flask, xử lý trường hợp invoices không tồn tại
-        const invoices = {{ invoices | tojson | default ('[]') | safe }};
+        // Lấy dữ liệu từ Flask
+        const monthlyRevenue = {{ monthly_revenue | tojson | default ('[]') | safe }};
+        const fieldCounts = {{ field_counts | tojson | default ('{}') | safe }};
+        const months = {{ months | tojson | default ('["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"]') | safe }};
 
-        // Kiểm tra dữ liệu trong console
-        console.log("Dữ liệu invoices:", invoices);
+        // Debug dữ liệu
+        console.log("fieldCounts:", fieldCounts);
 
-        // 1. Xử lý dữ liệu cho biểu đồ hình tròn (Tổng doanh thu)
-        const totalRevenue = invoices.reduce((sum, invoice) => {
-            return sum + (parseFloat(invoice.TongTien) || 0);
-        }, 0);
+        // 1. Xử lý dữ liệu cho biểu đồ hình tròn (Tổng doanh thu theo tháng)
+        const monthColors = [
+            '#FF6B6B', '#FF8E53', '#FFCA28', '#66BB6A', '#4CAF50',
+            '#26A69A', '#29B6F6', '#0288D1', '#AB47BC', '#7E57C2',
+            '#EC407A', '#F06292'
+        ];
+
         const revenueData = {
-            labels: ['Tổng doanh thu'],
+            labels: months,
             datasets: [{
-                data: [totalRevenue],
-                backgroundColor: ['#3498db'],
-                hoverBackgroundColor: ['#2980b9']
+                data: monthlyRevenue,
+                backgroundColor: monthColors,
+                hoverBackgroundColor: monthColors.map(color => color.replace('0.6', '0.8')),
+                borderWidth: 1
             }]
         };
 
         // 2. Xử lý dữ liệu cho biểu đồ cột (Số lần thuê theo sân)
-        const fieldUsage = {};
-        invoices.forEach(invoice => {
-            const fieldId = invoice.IdSan;
-            fieldUsage[fieldId] = (fieldUsage[fieldId] || 0) + 1;
-        });
+        const fieldLabels = Object.keys(fieldCounts);
+        const fieldValues = Object.values(fieldCounts);
 
-        const fieldLabels = Object.keys(fieldUsage).map(id => `Sân ${id}`);
-        const fieldCounts = Object.values(fieldUsage);
+        // Nếu không có dữ liệu, hiển thị thông báo mặc định
+        if (fieldLabels.length === 0) {
+            fieldLabels.push("aaaaaaaa");
+            fieldValues.push(0);
+        }
+
+        const fieldColors = [
+            '#FF6B6B', '#FFCA28', '#66BB6A', '#29B6F6', '#AB47BC',
+            '#EC407A', '#0288D1', '#F06292', '#26A69A', '#7E57C2',
+            '#FFD700', '#00CED1', '#FF4500', '#DA70D6', '#20B2AA',
+            '#FF69B4', '#4682B4', '#FFA500', '#9ACD32', '#6A5ACD',
+            '#FF6347'
+        ];
+
         const fieldData = {
-            labels: fieldLabels,
+            labels: fieldLabels.map(label => label === 'undefined' ? 'Chưa xác định' : `Sân ${label}`),
             datasets: [{
                 label: 'Số lần thuê',
-                data: fieldCounts,
-                backgroundColor: '#3498db',
-                borderColor: '#2980b9',
+                data: fieldValues,
+                backgroundColor: fieldLabels.map((_, index) => fieldColors[index % fieldColors.length]),
+                borderColor: fieldLabels.map((_, index) => fieldColors[index % fieldColors.length].replace('0.6', '0.8')),
                 borderWidth: 1
             }]
         };
@@ -502,10 +410,19 @@
             data: revenueData,
             options: {
                 responsive: true,
-                maintainAspectRatio: true, // Giữ tỷ lệ để biểu đồ không bị méo
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.label || '';
+                                let value = context.raw || 0;
+                                return `${label}: ${value.toLocaleString()}đ`;
+                            }
+                        }
                     }
                 }
             }
@@ -518,7 +435,7 @@
             data: fieldData,
             options: {
                 responsive: true,
-                maintainAspectRatio: true, // Giữ tỷ lệ để biểu đồ không bị méo
+                maintainAspectRatio: true,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -527,7 +444,7 @@
                             text: 'Số lần thuê'
                         },
                         ticks: {
-                            stepSize: 5 // Đặt bước trục Y là 5 (5, 10, 15, ...)
+                            stepSize: 5
                         }
                     },
                     x: {
@@ -540,6 +457,15 @@
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.label || '';
+                                let value = context.raw || 0;
+                                return `${label}: ${value} lần`;
+                            }
+                        }
                     }
                 }
             }
