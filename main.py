@@ -388,8 +388,11 @@ def load_khachhang():
 # region báo cáo & thống kê
 @app.route("/baocao")
 def baocao():
-    hd = hoa_don_bus.danh_sach_hoa_don
-    return render_template("baocao.html", hd= hd)
+    # Gọi phương thức để lấy danh sách hóa đơn
+    hd = hoa_don_bus.lay_danh_sach_hoa_don()  # Sửa từ danh_sach_hoa_don thành lay_danh_sach_hoa_don
+    total_revenue = sum(float(invoice['TongTien']) for invoice in hd) if hd else 0
+    total_orders = len(hd) if hd else 0
+    return render_template("baocao.html", invoices=hd, total_revenue=total_revenue, total_orders=total_orders)
 # endregion
 ########################################################################################
 # region quản lý tài chính
@@ -422,6 +425,9 @@ def index():
     danh_sach_san = san_bus.lay_danh_sach_san()
     return render_template('user.html', san = danh_sach_san)
 
+@app.route
+def pagemain():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

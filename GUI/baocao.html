@@ -139,7 +139,7 @@
         /* Report Cards */
         .report-cards {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -190,8 +190,11 @@
             background-color: white;
             border-radius: 8px;
             padding: 20px;
+            padding-bottom: 50px;
+            padding-left: 50px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            height: 300px;
+            height: 350px;
+            /* Tăng chiều cao để chứa biểu đồ tròn và nhãn */
         }
 
         .chart-container h3 {
@@ -201,7 +204,8 @@
         }
 
         .chart-placeholder {
-            height: 250px;
+            height: 300px;
+            /* Tăng chiều cao để biểu đồ hiển thị đầy đủ */
         }
 
         /* Report Tables */
@@ -268,13 +272,12 @@
     <div class="left-menu">
         <h1>Quản Lí Sân Bóng</h1>
         <ul>
-            <li><a href="/">Dashboard</a></li>
+            <li><a href="/index">Dashboard</a></li>
             <li><a href="/san">Quản lí sân</a></li>
             <li><a href="/khachhang">Quản lí khách hàng</a></li>
             <li><a href="/quanlitaichinh">Quản lí tài chính</a></li>
             <li><a href="/nhanvien">Quản lí nhân viên</a></li>
             <li class="active"><a href="/baocao">Báo cáo và thống kê</a></li>
-            <li><a href="/caidat">Cài đặt</a></li>
         </ul>
     </div>
 
@@ -289,9 +292,9 @@
         <div class="report-controls">
             <div class="date-filter">
                 <span>Xem báo cáo từ</span>
-                <input type="date" value="2023-01-01">
+                <input type="date" value="2025-01-01">
                 <span>đến</span>
-                <input type="date" value="2023-12-31">
+                <input type="date" value="2025-05-01">
             </div>
 
             <div class="filter-group">
@@ -317,30 +320,16 @@
         <div class="report-cards">
             <div class="report-card">
                 <h3>Tổng doanh thu</h3>
-                <p>245,600,000đ</p>
+                <p>{{ total_revenue }}đ</p>
                 <div class="trend up">
                     <span>▲ 12% so với tháng trước</span>
                 </div>
             </div>
             <div class="report-card">
                 <h3>Tổng số đặt sân</h3>
-                <p>1,245</p>
+                <p>{{ total_orders }}</p>
                 <div class="trend up">
                     <span>▲ 8% so với tháng trước</span>
-                </div>
-            </div>
-            <div class="report-card">
-                <h3>Khách hàng mới</h3>
-                <p>78</p>
-                <div class="trend down">
-                    <span>▼ 5% so với tháng trước</span>
-                </div>
-            </div>
-            <div class="report-card">
-                <h3>Tỷ lệ sử dụng sân</h3>
-                <p>72%</p>
-                <div class="trend up">
-                    <span>▲ 3% so với tháng trước</span>
                 </div>
             </div>
         </div>
@@ -467,11 +456,16 @@
         </div>
     </div>
     <script>
-        // Giả sử dữ liệu từ Flask được truyền vào dưới dạng JSON
-        const invoices = {{ hd | tojson | safe }};
+        // Lấy dữ liệu từ Flask, xử lý trường hợp invoices không tồn tại
+        const invoices = {{ invoices | tojson | default ('[]') | safe }};
+
+        // Kiểm tra dữ liệu trong console
+        console.log("Dữ liệu invoices:", invoices);
 
         // 1. Xử lý dữ liệu cho biểu đồ hình tròn (Tổng doanh thu)
-        const totalRevenue = invoices.reduce((sum, invoice) => sum + invoice.TongTien, 0);
+        const totalRevenue = invoices.reduce((sum, invoice) => {
+            return sum + (parseFloat(invoice.TongTien) || 0);
+        }, 0);
         const revenueData = {
             labels: ['Tổng doanh thu'],
             datasets: [{
@@ -508,14 +502,10 @@
             data: revenueData,
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true, // Giữ tỷ lệ để biểu đồ không bị méo
                 plugins: {
                     legend: {
                         position: 'top',
-                    },
-                    title: {
-                        display: true,
-                        text: `Tổng doanh thu: ${totalRevenue.toLocaleString()}đ`
                     }
                 }
             }
@@ -528,13 +518,16 @@
             data: fieldData,
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true, // Giữ tỷ lệ để biểu đồ không bị méo
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
                             text: 'Số lần thuê'
+                        },
+                        ticks: {
+                            stepSize: 5 // Đặt bước trục Y là 5 (5, 10, 15, ...)
                         }
                     },
                     x: {
