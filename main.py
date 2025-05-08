@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, render_template, request, redirect, url_for
+import os
+from flask import Flask, current_app, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
 from BUS.taikhoanBUS import TaiKhoanBUS
@@ -26,20 +27,17 @@ taikhoan = TaiKhoanBUS()
 khachhang = NguoiDung_BUS()
 thanhtoan = ThanhToanBUS()
 phieughi = PhieuGhiBUS()
-# trang mở đầu ====================================================================================
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 # sân
 # khi nhấn quản lý sân ( chức năng của quản lý or nhân viên) ======================================
 # region sân
 @app.route('/san')
 def quan_ly_san():
-    # Lấy danh sách sân
     danh_sach_san = san_bus.lay_danh_sach_san()
-    # Truyền danh sách sân vào template san.html
+    for san in danh_sach_san:
+        san['HinhAnh'] = url_for('static', filename='asset/' + san['HinhAnh'])
     return render_template('san.html', danh_sach_san=danh_sach_san)
+
 
 # route thêm sân
 @app.route('/them-san', methods=['POST'])
@@ -206,12 +204,20 @@ def sua_nhan_vien(id):
 ###################################################################################
 # region người dùng
 # trang người dùng
+def get_asset_path():
+    return os.path.join(current_app.root_path, 'static', 'asset')
+
+
 @app.route('/user/<userID>')
 def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
+    danh_sach_san = san_bus.danh_sach_san()
+    for san in danh_sach_san:
+        san['HinhAnh'] = url_for('static', filename='asset/' + san['HinhAnh'])
+
     return render_template('user.html',
                            userID = userID,
-                           san = san_bus.lay_danh_sach_san())
+                           san = danh_sach_san)
 
 @app.route('/user/<int:userID>/render-date/<date>', methods = ['POST'])
 def renderBooking(userID:int, date):
@@ -264,7 +270,7 @@ def xuLiDangNhap():
             return redirect(url_for('nguoidung',userID = result.get('IdTaiKhoan')))    
         # dẫn tới quản lí sân
         else:
-            return redirect(url_for('index'))   
+            return render_template('index.html')   
     else:
         return redirect('/login')
         
@@ -408,6 +414,13 @@ def editState(IDHD:int,Status):
     return jsonify(result)
 # endregion 
 ########################################################################################
+
+# trang mở đầu ====================================================================================
+@app.route('/')
+def index():
+    danh_sach_san = san_bus.lay_danh_sach_san()
+    return render_template('user.html', san = danh_sach_san)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
