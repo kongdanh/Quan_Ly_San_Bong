@@ -6,7 +6,7 @@
 -- Thời gian đã tạo: Th4 22, 2025 lúc 10:01 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
-create database footballrenting;
+create database IF NOT EXISTS footballrenting;
 use footballrenting;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;

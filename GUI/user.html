@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Sân Bóng - Đặt Sân Online</title>
     <style>
-        /* Reset CSS */
         * {
             margin: 0;
             padding: 0;
@@ -18,7 +18,6 @@
             color: #333;
         }
 
-        /* Header */
         header {
             background-color: #2ecc71;
             color: white;
@@ -26,7 +25,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .logo h1 {
@@ -50,16 +49,14 @@
             opacity: 0.8;
         }
 
-        /* Main Content */
         main {
             padding: 2rem;
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        /* Banner */
         .banner {
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://via.placeholder.com/1200x300');
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://via.placeholder.com/1200x300');
             background-size: cover;
             color: white;
             padding: 3rem;
@@ -88,12 +85,11 @@
             background-color: #c0392b;
         }
 
-        /* Booking Section */
         .booking-section {
             background-color: white;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .filter {
@@ -102,54 +98,124 @@
             margin-bottom: 1.5rem;
         }
 
-        .filter select, .filter input {
+        .filter select,
+        .filter input {
             padding: 0.5rem;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
 
-        /* Booking Table */
-        .booking-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
+        #san-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
-        .booking-table th, .booking-table td {
+        .san-card {
             border: 1px solid #ddd;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .booking-table th {
-            background-color: #f2f2f2;
-        }
-
-        .booking-btn {
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            width: 200px;
             cursor: pointer;
-            font-weight: bold;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             transition: all 0.3s;
         }
 
-        .available {
+        .san-card:hover {
+            background-color: #f5f5f5;
+        }
+
+        .san-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            position: relative;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-content img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .modal-content label {
+            margin: 0.5rem 0;
+            display: block;
+        }
+
+        .modal-content button {
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal-content button:first-child {
             background-color: #2ecc71;
             color: white;
         }
 
-        .available:hover {
-            background-color: #27ae60;
-        }
-
-        .booked {
+        .modal-content button:last-child {
             background-color: #e74c3c;
             color: white;
-            cursor: not-allowed;
         }
 
-        /* Footer */
+        .booking-info {
+            margin-top: 1rem;
+        }
+
+        .booking-info p {
+            margin: 0.5rem 0;
+        }
+
+        .booking-info img.qr-code {
+            width: 150px;
+            height: 150px;
+            margin: 1rem auto;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
         footer {
             background-color: #34495e;
             color: white;
@@ -158,23 +224,27 @@
             margin-top: 2rem;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
                 text-align: center;
             }
-            
+
             nav ul {
                 margin-top: 1rem;
             }
-            
+
             .filter {
                 flex-direction: column;
+            }
+
+            .san-card {
+                width: 100%;
             }
         }
     </style>
 </head>
+
 <body>
     <header>
         <div class="logo">
@@ -182,9 +252,6 @@
         </div>
         <nav>
             <ul>
-                <li><a href="#">Trang chủ</a></li>
-                <li><a href="#dat-san">Đặt sân</a></li>
-                <li><a href="#">Lịch sử</a></li>
                 <li><a href="/login">Đăng nhập</a></li>
             </ul>
         </nav>
@@ -207,43 +274,7 @@
                 </select>
                 <input type="date" id="ngay-dat">
             </div>
-
-            <table class="booking-table" id="booking-table">
-                <!-- <thead>
-                    <tr>
-                        <th>Thời gian</th>
-                        <th>Sân 1 (VIP)</th>
-                        <th>Sân 2</th>
-                        <th>Sân 3</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>8h-10h</td>
-                        <td><button class="booking-btn available" data-san="1" data-gio="8-10">500k</button></td>
-                        <td><button class="booking-btn available" data-san="2" data-gio="8-10">300k</button></td>
-                        <td><button class="booking-btn booked">Đã đặt</button></td>
-                    </tr>
-                    <tr>
-                        <td>10h-12h</td>
-                        <td><button class="booking-btn available" data-san="1" data-gio="10-12">500k</button></td>
-                        <td><button class="booking-btn booked">Đã đặt</button></td>
-                        <td><button class="booking-btn available" data-san="3" data-gio="10-12">400k</button></td>
-                    </tr>
-                    <tr>
-                        <td>14h-16h</td>
-                        <td><button class="booking-btn booked">Đã đặt</button></td>
-                        <td><button class="booking-btn available" data-san="2" data-gio="14-16">300k</button></td>
-                        <td><button class="booking-btn available" data-san="3" data-gio="14-16">400k</button></td>
-                    </tr>
-                    <tr>
-                        <td>16h-18h</td>
-                        <td><button class="booking-btn available" data-san="1" data-gio="16-18">500k</button></td>
-                        <td><button class="booking-btn available" data-san="2" data-gio="16-18">300k</button></td>
-                        <td><button class="booking-btn booked">Đã đặt</button></td>
-                    </tr>
-                </tbody> -->
-            </table>
+            <div id="san-list"></div>
         </section>
     </main>
 
@@ -254,109 +285,210 @@
     <script>
         // Cuộn đến phần đặt sân
         function scrollToBooking() {
-            document.getElementById('dat-san').scrollIntoView({ 
-                behavior: 'smooth' 
+            document.getElementById('dat-san').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Khởi tạo sau khi DOM tải hoàn toàn
+        document.addEventListener('DOMContentLoaded', () => {
+            // Đặt ngày mặc định là hôm nay
+            document.getElementById('ngay-dat').valueAsDate = new Date();
+            const PID = 123; // Giá trị giả lập, cần truyền userID từ Flask
+            const sanList = {{ san | tojson
+        }};
+
+        // Hàm tạo giao diện danh sách sân
+        function createSanList() {
+            const container = document.getElementById('san-list');
+            const loaiSan = parseInt(document.getElementById('loai-san').value);
+            container.innerHTML = '';
+
+            const filteredSanList = loaiSan === 0 ? sanList : sanList.filter(san => san.CoSan === loaiSan);
+
+            filteredSanList.forEach(san => {
+                const card = document.createElement('div');
+                card.className = 'san-card';
+                card.innerHTML = `
+                        <img src="/static/asset/${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 150px; object-fit: cover;">
+                        <h3>Sân ${san.IdSan} (${san.CoSan} người)</h3>
+                        <p>Giá: ${san.GiaSan} VNĐ/giờ</p>
+                        <p>Địa chỉ: ${san.DiaChi}</p>
+                        <p>Trạng thái: ${san.TrangThai === 1 ? 'Còn trống' : 'Đã đặt'}</p>
+                    `;
+                card.addEventListener('click', () => showBookingModal(san));
+                container.appendChild(card);
             });
         }
 
-        
+        // Hàm hiển thị modal đặt sân
+        function showBookingModal(san) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            // Thoát các ký tự đặc biệt trong địa chỉ để tránh lỗi JavaScript
+            const escapedDiaChi = san.DiaChi.replace(/'/g, "\\'").replace(/"/g, '\\"');
+            modal.innerHTML = `
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="this.parentElement.parentElement.remove()">×</span>
+                        <img src="/static/asset/${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 200px; object-fit: cover;">
+                        <h3>Sân ${san.IdSan} - ${san.CoSan} người</h3>
+                        <p>Mô tả: ${san.MoTa}</p>
+                        <label>Thời gian bắt đầu: <input type="time" id="start-time" required></label><br>
+                        <label>Thời gian kết thúc: <input type="time" id="end-time" required></label><br>
+                        <p>Thành tiền: <span id="total-cost">0 VNĐ</span></p>
+                        <button onclick="confirmBooking(${san.IdSan}, '${escapedDiaChi}', ${san.CoSan}, ${san.GiaSan})">Xác nhận</button>
+                        <button onclick="this.parentElement.parentElement.remove()">Hủy</button>
+                    </div>
+                `;
+            document.body.appendChild(modal);
 
-        // Đặt ngày mặc định là hôm nay
-        document.getElementById('ngay-dat').valueAsDate = new Date();
-        const PID = {{ userID }};  
-        const sanList = {{ san | tojson | safe }};
-        
+            const startTime = document.getElementById('start-time');
+            const endTime = document.getElementById('end-time');
+            const totalCost = document.getElementById('total-cost');
 
-        async function getData(){
-            const ngayDat = document.getElementById('ngay-dat').value;
-            const response =await fetch(`/user/${PID}/render-date/${ngayDat}`,{method:'POST'})
-            const data = await response.json()
-            return data
-        }
-
-        async function createDisplay(){
-            loai = document.getElementById('loai-san').value
-            
-            const table = document.getElementById('booking-table')
-            listPhieuGhi = await getData()
-            console.log(listPhieuGhi)
-            let content
-            content = `
-                <thead>
-                    <tr>
-                        <th>Thời gian</th>
-            `
-            sanList.forEach(field =>{
-                if (loai === '0' || loai === field.CoSan){
-                    content +=`
-                        <th>Sân ${field.IdSan}</th>
-                    `
-                }
-            })
-            content += `
-                    </tr>
-                </thead>
-                <tbody>
-            `
-            listPhieuGhi.forEach(phieuGhi=>{
-                content += `
-                <tr>
-                    <td>${phieuGhi.KhungGio}</td>
-                `
-                sanList.forEach(field=>{
-                    if(loai === '0' || loai === field.CoSan){
-                        created = false
-                        phieuGhi.list.forEach(idSan=>{
-                            if (field.IdSan === idSan){
-                                content += `
-                                <td><button class="booking-btn booked">Đã đặt</button></td>
-                                `
-                                created = true
-                            }
-                        })
-                        if(!created){
-                            content +=`
-                            <td><button class="booking-btn available" data-san="${field.IdSan}" data-gio="${phieuGhi.KhungGio}" data-gia="300000">300k</button></td>
-                            `
-                        }
-                    }
-                })
-                content +=`</tr>`
-            })
-            content += `</tbody>`
-            table.innerHTML = content
-            // Xử lý đặt sân
-            document.querySelectorAll('.available').forEach(button => {
-                button.addEventListener('click', function() {
-                    const san = this.getAttribute('data-san');
-                    const gio = this.getAttribute('data-gio');
-                    const gia = this.getAttribute('data-gia');
-                    const loaiSan = document.getElementById('loai-san').value;
-                    const ngayDat = document.getElementById('ngay-dat').value;
-                    
-                    if (confirm(`Bạn có chắc muốn đặt Sân ${san} (${loaiSan} người) từ ${gio} vào ${ngayDat}?`)) {
-                        fetch(`/user/${PID}/dat_san/${san}/ngay/${ngayDat}/khung_gio/${gio}/gia/${gia}`,{method:'POST'}).
-                        then(response => response.json()).then(data=>{
-                            if (data['success']){
-                                this.classList.remove('available');
-                                this.classList.add('booked');
-                                this.textContent = 'Đã đặt';
-                                alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
-                            }
-                            else{
-                                console.log(data)
-                                alert(`Lỗi khi đặt sân, Error: ${data['message']}`)
-                            }
-                        })
-                        
+            [startTime, endTime].forEach(input => {
+                input.addEventListener('change', () => {
+                    const start = new Date(`1970-01-01T${startTime.value}:00`);
+                    const end = new Date(`1970-01-01T${endTime.value}:00`);
+                    if (start < end) {
+                        const diffMs = end - start;
+                        const diffHours = diffMs / (1000 * 60 * 60);
+                        const cost = diffHours * san.GiaSan;
+                        totalCost.textContent = `${cost.toFixed(0)} VNĐ`;
+                    } else {
+                        totalCost.textContent = '0 VNĐ';
                     }
                 });
             });
         }
-        createDisplay();
-        
-        document.getElementById('ngay-dat').addEventListener( 'change' ,createDisplay)
-        document.getElementById('loai-san').addEventListener('change',createDisplay)
+
+        // Hàm hiển thị modal thông tin đặt sân
+        function showBookingInfoModal(sanId, diaChi, coSan, startTime, endTime, ngayDat, gia) {
+            console.log('Hiển thị modal thông tin đặt sân:', { sanId, diaChi, coSan, startTime, endTime, ngayDat, gia });
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="this.parentElement.parentElement.remove()">×</span>
+                        <h3>Thông tin đặt sân</h3>
+                        <div class="booking-info">
+                            <p><strong>Tên khách hàng:</strong> Nguyễn Văn A</p>
+                            <p><strong>Khung giờ đặt:</strong> ${startTime} - ${endTime}, ${ngayDat}</p>
+                            <p><strong>Địa chỉ sân:</strong> ${diaChi}</p>
+                            <p><strong>Cỡ sân:</strong> ${coSan} người</p>
+                            <p><strong>Sân số:</strong> ${sanId}</p>
+                            <p><strong>Thông tin thanh toán:</strong></p>
+                            <p>Số tài khoản: XXX123456789</p>
+                            <p>Ngân hàng: XXX Bank</p>
+                            <img src="https://via.placeholder.com/150" alt="QR Code" class="qr-code">
+                        </div>
+                        <div class="button-group">
+                            <button onclick="completeBooking()">Hoàn thành</button>
+                            <button onclick="cancelBooking(${sanId}, '${ngayDat}', '${startTime}', '${endTime}')">Hủy</button>
+                        </div>
+                    </div>
+                `;
+            document.body.appendChild(modal);
+        }
+
+        // Hàm xác nhận đặt sân
+        function confirmBooking(sanId, diaChi, coSan, giaSan) {
+            console.log('confirmBooking được gọi với:', { sanId, diaChi, coSan, giaSan });
+
+            const startTime = document.getElementById('start-time')?.value;
+            const endTime = document.getElementById('end-time')?.value;
+            const ngayDat = document.getElementById('ngay-dat')?.value;
+            const totalCost = document.getElementById('total-cost')?.textContent.replace(' VNĐ', '');
+
+            if (!startTime || !endTime || !ngayDat || totalCost === '0') {
+                console.error('Thiếu thông tin hoặc giá trị không hợp lệ:', { startTime, endTime, ngayDat, totalCost });
+                alert('Vui lòng nhập đầy đủ thời gian bắt đầu, thời gian kết thúc và đảm bảo thành tiền không phải 0.');
+                return;
+            }
+
+            // Kiểm tra thời gian hợp lệ
+            const start = new Date(`1970-01-01T${startTime}:00`);
+            const end = new Date(`1970-01-01T${endTime}:00`);
+            if (start >= end) {
+                console.error('Thời gian không hợp lệ:', { startTime, endTime });
+                alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
+                return;
+            }
+
+            if (confirm(`Xác nhận đặt Sân ${sanId} từ ${startTime} đến ${endTime} vào ${ngayDat}?`)) {
+                console.log('Gửi yêu cầu đặt sân:', { sanId, ngayDat, startTime, endTime, totalCost });
+                // Mô phỏng yêu cầu fetch (thay bằng URL thực tế của server)
+                fetch(`/user/${PID}/dat_san/${sanId}/ngay/${ngayDat}/start/${startTime}/end/${endTime}/gia/${totalCost}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(response => {
+                        console.log('Phản hồi từ server:', response);
+                        if (!response.ok) {
+                            throw new Error(`Lỗi HTTP! Trạng thái: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Dữ liệu từ server:', data);
+                        if (data.success) {
+                            console.log('Đặt sân thành công, hiển thị modal thông tin');
+                            const currentModal = document.querySelector('.modal');
+                            if (currentModal) currentModal.remove();
+                            showBookingInfoModal(sanId, diaChi, coSan, startTime, endTime, ngayDat, totalCost);
+                        } else {
+                            console.error('Đặt sân thất bại:', data.message);
+                            alert(`Lỗi khi đặt sân: ${data.message || 'Không xác định'}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Lỗi khi gửi yêu cầu:', error);
+                        alert('Lỗi khi gửi yêu cầu đặt sân. Vui lòng thử lại.');
+                    });
+            } else {
+                console.log('Người dùng hủy xác nhận đặt sân');
+            }
+        }
+
+        // Hàm hoàn thành đặt sân
+        function completeBooking() {
+            console.log('Hoàn thành đặt sân');
+            alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
+            const modal = document.querySelector('.modal');
+            if (modal) modal.remove();
+        }
+
+        // Hàm hủy đặt sân
+        function cancelBooking(sanId, ngayDat, startTime, endTime) {
+            console.log('cancelBooking được gọi với:', { sanId, ngayDat, startTime, endTime });
+            if (confirm('Bạn có chắc muốn hủy đặt sân này?')) {
+                fetch(`/user/${PID}/huy_dat_san/${sanId}/ngay/${ngayDat}/start/${startTime}/end/${endTime}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Hủy đặt sân thành công!');
+                            const modal = document.querySelector('.modal');
+                            if (modal) modal.remove();
+                        } else {
+                            alert('Lỗi khi hủy đặt sân!');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Lỗi khi hủy đặt sân:', error);
+                        alert('Lỗi khi hủy đặt sân. Vui lòng thử lại.');
+                    });
+            }
+        }
+
+        // Khởi tạo giao diện
+        createSanList();
+
+        // Cập nhật khi thay đổi ngày hoặc loại sân
+        document.getElementById('ngay-dat').addEventListener('change', createSanList);
+        document.getElementById('loai-san').addEventListener('change', createSanList);
+        });
     </script>
 </body>
+
 </html>
