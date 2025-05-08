@@ -388,7 +388,8 @@ def load_khachhang():
 # region báo cáo & thống kê
 @app.route("/baocao")
 def baocao():
-    return render_template("baocao.html")
+    hd = hoa_don_bus.danh_sach_hoa_don()
+    return render_template("baocao.html", hd= hd)
 # endregion
 ########################################################################################
 # region quản lý tài chính
