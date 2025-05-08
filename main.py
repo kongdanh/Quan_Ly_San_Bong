@@ -8,7 +8,6 @@ from BUS.nhanvien_bus import NhanVienBus
 from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
 from BUS.NguoiDung_BUS import NguoiDung_BUS
-from BUS.ThanhToanBUS import ThanhToanBUS
 from BUS.phieughiBUS import PhieuGhiBUS
 from datetime import datetime
 import sys
@@ -24,7 +23,6 @@ dao = SanDAO(conn)  # Truyền conn từ get_connection()
 san_bus = SanBus(dao)
 taikhoan = TaiKhoanBUS()
 khachhang = NguoiDung_BUS()
-thanhtoan = ThanhToanBUS()
 phieughi = PhieuGhiBUS()
 # trang mở đầu ====================================================================================
 @app.route('/')
