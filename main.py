@@ -211,13 +211,21 @@ def get_asset_path():
 @app.route('/user/<userID>')
 def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
-    danh_sach_san = san_bus.danh_sach_san()
+    danh_sach_san = san_bus.lay_danh_sach_san()
+    # Lặp qua danh_sach_san và xử lý HinhAnh
     for san in danh_sach_san:
-        san['HinhAnh'] = url_for('static', filename='asset/' + san['HinhAnh'])
-
-    return render_template('user.html',
-                           userID = userID,
-                           san = danh_sach_san)
+        print("Sân:", san)
+        # Đảm bảo san là một từ điển và có khóa 'HinhAnh'
+        if isinstance(san, dict):
+            # Sử dụng .get() để lấy giá trị HinhAnh, mặc định là 'default.jpg' nếu không tồn tại
+            hinh_anh = san.get('HinhAnh', 'default.jpg')
+            # Cập nhật đường dẫn HinhAnh
+            san['HinhAnh'] = url_for('static', filename='asset/' + hinh_anh)
+        else:
+            print(f"Phần tử không phải từ điển: {san}")
+        return render_template('user.html',
+                            userID = userID,
+                            san = danh_sach_san)
 
 @app.route('/user/<int:userID>/render-date/<date>', methods = ['POST'])
 def renderBooking(userID:int, date):
@@ -488,71 +496,33 @@ def index():
     return render_template('user.html', san = danh_sach_san)
 
 @app.route('/index')
-def render_index_template(context=None):
-    """Hàm render template với các giá trị mặc định"""
-    default_context = {
-        'pg': [],
-        'san': [],
-        'today_date': datetime.now().strftime("%Y-%m-%d"),
-        'today_revenue': 0.0,
-        'booked_fields': 0,
-        'total_fields': 0
-    }
-    if context:
-        default_context.update(context)
-    return render_template('index.html', **default_context)
-
 def pagemain():
-    """Lấy dữ liệu đặt sân hôm nay và hiển thị trang chủ"""
     try:
-        # 1. Lấy dữ liệu thô từ database
-        raw_bookings = phieughi.getListPhieuGhi(None) or []
-        fields = san_bus.danh_sach_san() or []
-        
-        # 2. Chuẩn bị dữ liệu
-        today = datetime.now().strftime("%Y-%m-%d")
-        filtered_bookings = []
-        revenue = Decimal('0')
-        booked_field_ids = set()
-        
-        # 3. Xử lý từng booking
-        for booking in raw_bookings:
-            try:
-                # Kiểm tra booking hợp lệ
-                if not all(hasattr(booking, attr) for attr in ['Ngay', 'TrangThai', 'GiaTien', 'IdSan']):
-                    continue
-                    
-                # Kiểm tra ngày booking
-                if not hasattr(booking.Ngay, 'strftime') or booking.Ngay.strftime("%Y-%m-%d") != today:
-                    continue
-                    
-                filtered_bookings.append(booking)
-                
-                # Tính toán doanh thu và sân đã đặt
-                if booking.TrangThai.lower() != 'huy':
-                    revenue += Decimal(str(booking.GiaTien))
-                    booked_field_ids.add(booking.IdSan)
-                    
-            except (AttributeError, TypeError, ValueError) as e:
-                print(f"Lỗi xử lý booking {getattr(booking, 'IdPhieuGhi', 'unknown')}: {str(e)}")
-                continue
-        
-        # 4. Chuẩn bị dữ liệu trả về
-        context = {
-            'pg': filtered_bookings,
-            'san': fields,
-            'today_date': today,
-            'today_revenue': float(revenue),  # Chuyển Decimal sang float để tương thích JSON
-            'booked_fields': len(booked_field_ids),
-            'total_fields': len(fields)
-        }
-        
-        return render_index_template(context)
-        
+        # Lấy danh sách sân và xử lý ngoại lệ
+        danh_sach_san = san_bus.lay_danh_sach_san() or []
+        print("Danh sách sân trong /index:", danh_sach_san)
+        for san in danh_sach_san:
+            print("Sân:", san)
+            san['HinhAnh'] = url_for('static', filename='asset/' + (san.get('HinhAnh', 'default.jpg')))
+
+        # Lấy danh sách phiếu ghi theo ngày hiện tại
+        ds_pg = phieughi.getListByDate(datetime.now().date()) or []
+        print("Danh sách phiếu ghi:", ds_pg)
+
+        # Tính số sân đã đặt
+        booked_fields = len([pg for pg in ds_pg if pg.get('TrangThai', '').lower() == 'dat'])
+
+        # Truyền dữ liệu vào template
+        return render_template('index.html', 
+                             san=danh_sach_san, 
+                             pg=ds_pg, 
+                             today_date=datetime.now().strftime("%Y-%m-%d"), 
+                             today_revenue=0, 
+                             booked_fields=booked_fields, 
+                             total_fields=len(danh_sach_san) if danh_sach_san else 0)
     except Exception as e:
-        print(f"Lỗi nghiêm trọng trong pagemain: {str(e)}")
-        # Ghi log lỗi đầy đủ ở đây
-        return render_index_template()  # Trả về trang với dữ liệu mặc định
+        print("Lỗi trong route /index:", str(e))
+        return "Có lỗi xảy ra: " + str(e), 500
         
 
 if __name__ == '__main__':
