@@ -105,7 +105,7 @@
             border-left: 4px solid #3498db;
         }
         
-        .stat-card h3 {
+        .stat-card h3,h5 {
             font-size: 14px;
             color: #7f8c8d;
             margin-bottom: 5px;
@@ -313,19 +313,23 @@
             <div class="stats-container">
                 <div class="stat-card">
                     <h3>Tổng doanh thu</h3>
+                    <h5>(Năm nay)</h5>
                     <p>45,200,000đ</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Chi phí</h3>
-                    <p>12,500,000đ</p>
-                </div>
-                <div class="stat-card">
                     <h3>Lợi nhuận</h3>
+                    <h5>(Tháng này)</h5>
                     <p>32,700,000đ</p>
                 </div>
                 <div class="stat-card">
+                    <h3>Lợi nhuận</h3>
+                    <h5>(Tháng trước)</h5>
+                    <p>65,400,000đ</p>
+                </div>
+                <div class="stat-card">
                     <h3>Tăng trưởng</h3>
-                    <p>78%</p>
+                    <h5>(So với tháng trước)</h5>
+                    <p>100%</p>
                 </div>
             </div>
             
@@ -458,14 +462,14 @@
     <div id="popup" class="popup hidden">
         <div class="popup-content">
             <h3>Thay đổi trạng thái</h3>
-            <select id="statusSelect">
+            <select id="statusSelect" style="border: none;">
                 <option value="Chờ xác nhận">Chờ xác nhận</option>
                 <option value="Đã xác nhận">Đã xác nhận</option>
                 <option value="Đã thanh toán">Đã thanh toán</option>
             </select>
             <div class="popup-actions">
-                <button id="saveB" style="border: none; background: rgb(193, 211, 193); color: rgb(10, 72, 10); width: 45px; height: 30;" onclick="saveStatus()">Lưu</button>
-                <button id="closeB" style="border: none; background: rgb(213, 193, 193); color: rgb(72, 10, 10); width: 45px; height: 30;" onclick="closePopup()">Hủy</button>
+                <button id="saveB" style="border: none; background: rgb(196, 222, 196); color: rgb(10, 72, 10); width: 45px; height: 30; cursor: pointer;" onclick="saveStatus()">Lưu</button>
+                <button id="closeB" style="border: none; background: rgb(226, 190, 190); color: rgb(72, 10, 10); width: 45px; height: 30; cursor: pointer;" onclick="closePopup()">Hủy</button>
             </div>
         </div>
     </div>
@@ -491,7 +495,9 @@
                     <td>${x.IdHoaDon}</td>
                     <td>${x.Ngay}</td>
                     <td>Thu tiền sân</td>
-                    <td>${x.HoTen}</td>
+                    ${x.HoTen != null ?
+                    `<td>${x.HoTen}</td>`:  
+                    `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
                     <td>${x.TongTien}</td>
                     <td>${x.PhuongThuc == null ? "Chưa xác nhận": x.PhuongThuc}</td>
                     ${x.TrangThai == 'Đã thanh toán'? 

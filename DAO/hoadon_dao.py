@@ -129,10 +129,15 @@ class HoaDonDAO:
             try:
                 key = int(key)
                 sql="""SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE IdHoaDon = %s"""
+                cursor.execute(sql,(key,))
             except ValueError:
-                key = "%" + key + "%"
-                sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE HoTen LIKE %s"""
-            cursor.execute(sql,(key,))
+                if key == "":
+                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung"""
+                    cursor.execute(sql)
+                else:
+                    key = "%" + key + "%"
+                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE HoTen LIKE %s"""
+                    cursor.execute(sql,(key,))
             return cursor.fetchall()
         except Error as e:
             print(f"[DAO ERROR] lỗi khi lấy danh sách {e}")
