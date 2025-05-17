@@ -383,8 +383,8 @@ def tim_khachhang(key:str):
     listGuest = khachhang.timKhachHang(key)
     today = datetime.today().date()
     data = {"list": listGuest, 'data':{'total':len(listGuest),
-                                       'month':taikhoan.getListByDate(today - timedelta(days=30),'user'),
-                                       'week':taikhoan.getListByDate(today - timedelta(days=30),'user'),
+                                       'month':len(taikhoan.getListByDate(today - timedelta(days=30),'user')),
+                                       'week':len(taikhoan.getListByDate(today - timedelta(days=7),'user')),
                                        'return':len(phieughi.getReturn())/len(listGuest)}}
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
