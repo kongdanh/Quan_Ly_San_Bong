@@ -47,3 +47,21 @@ class NguoiDung_BUS:
     
     def timKhachHang(self, key:str) -> List[Dict]:
         return self.nguoidungDAO.search(key)
+    
+    def suaNguoiDung(self, data:Dict) -> Dict:
+        result = self.taiKhoanBUS.updateAcc(data)
+        print(result,flush=True)
+        if result['success']:
+            result = self.nguoidungDAO.sua_NguoiDung(data)
+            print(result,flush=True)
+        return result
+    
+    def themNguoiDung(self, data:Dict) -> Dict:
+        data['AccType'] = 'user'
+        result = self.taiKhoanBUS.addND(data)
+        print(result,flush=True)
+        if result['success']:    
+            data['IdTaiKhoan'] = result['idTaiKhoan']
+            result = self.nguoidungDAO.add(data)
+            print(result,flush=True)
+        return result

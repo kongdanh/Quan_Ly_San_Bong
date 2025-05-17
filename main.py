@@ -209,7 +209,7 @@ def get_asset_path():
 @app.route('/user/<userID>')
 def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
-    danh_sach_san = san_bus.danh_sach_san()
+    danh_sach_san = san_bus.lay_danh_sach_san()
     for san in danh_sach_san:
         san['HinhAnh'] = url_for('static', filename='asset/' + san['HinhAnh'])
 
@@ -376,7 +376,6 @@ def quanlikhachhang():
 @app.route('/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
 def xoa_khachhang(IdNguoiDung: int):
     result = khachhang.xoaNguoiDung(IdNguoiDung)
-    print(result, flush=True)
     return jsonify(result)
 
 @app.route('/khachhang/timkiem/<key>', methods=['POST'])
@@ -385,7 +384,6 @@ def tim_khachhang(key:str):
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-        x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
     return jsonify(listGuest)
 
 @app.route('/khachhang/load', methods=['POST'])
@@ -394,10 +392,33 @@ def load_khachhang():
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-        x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
-    print("HI")
-    print(listGuest,flush=True)
     return jsonify(listGuest)
+
+@app.route('/khachhang/sua', methods=['POST'])
+def editKhachHang():
+    # birth = request.form.to_dict()['date']
+    # date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
+    adjDatas = request.form.to_dict()
+    adjDatas['NgaySinh'] = None
+    print(adjDatas,flush=True)
+    return jsonify(khachhang.suaNguoiDung(adjDatas))
+
+@app.route('/khachhang/them', methods=['POST'])
+def addKhachHang():
+    # birth = request.form.to_dict()['date']
+    # date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
+    adjDatas = request.form.to_dict()
+    adjDatas['NgaySinh'] = None
+    adjDatas['NgayTao'] = datetime.today().date()
+    print(adjDatas,flush=True)
+    return jsonify(khachhang.themNguoiDung(adjDatas))
+
+@app.route('/khachhang/status', methods=['POST'])
+def statusUpdate():
+    adjDatas = request.get_json()
+    print(adjDatas,flush=True)
+    return jsonify(taikhoan.status(adjDatas))
+
 # endregion
 ########################################################################################
 # region báo cáo & thống kê
@@ -555,4 +576,5 @@ def pagemain():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
 

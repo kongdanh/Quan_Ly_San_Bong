@@ -41,13 +41,18 @@ class NguoiDungDAO:
         finally:
             cursor.close()
 
-    def sua_NguoiDung(self, userID: int, userData: Dict) -> Dict:
+    def sua_NguoiDung(self, userData: Dict) -> Dict:
+        print(userData,flush=True)
         """Sửa thông tin người dùng (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "UPDATE nguoidung SET HoTen=%s, NamSinh=%s, SDT=%s, Email=%s WHERE idNguoiDung = %s",
-                (userData.values()[0:],userID)
+                "UPDATE nguoidung SET HoTen=%s, NgaySinh=%s, SDT=%s, Email=%s WHERE IdNguoiDung = %s",
+                (userData['HoTen'],
+                 userData['NgaySinh'],
+                 userData['SDT'],
+                 userData['Email'],
+                 userData['IdNguoiDung'])
             )
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
@@ -112,19 +117,45 @@ class NguoiDungDAO:
                 print(f"Lỗi khi đóng kết nối: {e}")
                 
     def search(self, key:str) -> List[Dict]:
+        result = []
         try:
             cursor = self.conn.cursor(dictionary=True)
             try:
+                self.conn.commit()
                 key = int(key)
-                cursor.execute("SELECT * FROM nguoidung WHERE IdNguoiDung = %s OR SDT = %s", (key, key))
+                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE IdNguoiDung = %s OR SDT = %s", (key, key))
             except ValueError as e:
                 key = "%" + key + "%"
-                cursor.execute("SELECT * FROM nguoidung WHERE HoTen Like %s OR Email Like %s", (key, key))
-            data = cursor.fetchall()
-            return data
+                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE HoTen Like %s OR Email Like %s", (key, key))
+            result = cursor.fetchall()
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
-            return []
         finally:
             cursor.close()
+            return result
+            
+            
+    def add(self, data: Dict) -> Dict:  
+        result = {}
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                """INSERT INTO nguoidung (HoTen, SDT, NgaySinh, Email, IdTaiKhoan) 
+                    VALUES (%s, %s, %s, %s, %s)
+                """,    
+                (data['HoTen'],
+                 data['SDT'],
+                 data['NgaySinh'],
+                 data['Email'],
+                 data['IdTaiKhoan'])
+            )
+            self.conn.commit()
+            result = {"success": True, "idNguoiDung": cursor.lastrowid}
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
+            result = {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+            return result

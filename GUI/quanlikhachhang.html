@@ -254,6 +254,149 @@
             font-size: 14px;
             color: #7f8c8d;
         }
+
+        /* Overlay */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* Form Container */
+        #formContainer {
+            background-color: #fff;
+            padding: 30px 25px;
+            border-radius: 12px;
+            width: 350px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Close Button */
+        #CloseForm {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        #CloseForm:hover {
+            background-color: red;
+            color: white;
+        }
+
+        /* Labels and Inputs */
+        form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        form input[type="text"],
+        form input[type="tel"],
+        form input[type="email"],
+        form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+
+        form input:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+
+        /* Submit Button */
+        #ComfirmForm {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        #ComfirmForm:hover {
+          background-color: #0056b3;
+        }
+        
+        
+        #card {
+            width: 300px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-close {
+            background-color: #ccc;
+            color: #333;
+        }
+
+        .btn-submit {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #statusOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -278,10 +421,11 @@
         <div class="main-content">
             <div class="header">
                 <div class="page-title">Quản lí khách hàng</div>
-                <div class="user-info">
+                <button class="btn btn-primary" id="OpenForm">+ Thêm khách hàng</button>
+                <!-- <div class="user-info">
                     <div class="user-avatar">QT</div>
                     <span>Quản trị viên</span>
-                </div>
+                </div> -->
             </div>
             
             <!-- Stats Cards -->
@@ -347,6 +491,49 @@
             </div>
         </div>
     </div>
+
+    <div id="overlay">
+        <div id="formContainer">
+            <span id="CloseForm">&times;</span>
+            <h2>Thông tin khách hàng</h2>
+            <form id="UserForm">
+                <label for="name">Họ tên *</label><br>
+                <input type="text" id="HoTen" name="HoTen" required autocomplete="off"><br><br>
+
+                <label for="phone">SĐT *</label><br>
+                <input type="tel" id="SDT" name="SDT" required autocomplete="off" pattern="\d{10}" title="Enter a 10-digit phone number"><br><br>
+
+                <label for="email">Email *</label><br>
+                <input type="email" id="Email" name="Email" required autocomplete="off"><br><br>
+
+                <label for="username">Tên Tài khoản *</label><br>
+                <input type="text" id="TenTaiKhoan" name="TenTaiKhoan" required autocomplete="off"><br><br>
+
+                <label for="password">Mật Khẩu *</label><br>
+                <input type="text" id="MatKhau" name="MatKhau" required autocomplete="off"><br><br>
+
+                <button type="button" id="ComfirmForm">Xác nhận</button>
+            </form>
+        </div>
+    </div>
+
+    <div id ='statusOverlay'>
+        <div id="card">
+            <label for="status">Trạng thái:</label>
+            <select id="status" name="status">
+                <option value="user">Hoạt động</option>
+                <option value="blocked">Không hoạt động</option>
+            </select>
+
+            <div class="buttons">
+                <button class="btn-close" onclick="statusClose()">Đóng</button>
+                <button class="btn-submit" onclick="statusUpdate()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
     <script>
         function xoaKhachHang(idNguoiDung){
             obj = {'IdNguoiDung':idNguoiDung}
@@ -355,6 +542,7 @@
             then(response => response.json()).then(data=>{
                     if (data['success']){
                         alert("Đã thành công xóa người dùng!")
+                        loadData()
                         // window.location.href = "/khachhang"
                     }
                     else{
@@ -384,13 +572,21 @@
                     <td>${ x.Email }</td>
                     <td>${ x.SoLuong }</td>
                     <td>${ x.TongTien } VNĐ</td>
-                    ${(x.TrangThai == "user")?
+                    ${(x.AccType == "user")?
                         `<td class="status-active">Hoạt động</td>`: 
                         `<td class="status-inactive">Ngưng Hoạt động</td>`} 
                     <td>
                         <div class="action-btns">
-                            <button class="btn btn-primary btn-sm"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-primary btn-sm" onclick=statusOpen('${x.IdTaiKhoan}','${x.AccType}')><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-warning btn-sm" onclick="editForm('${x.IdNguoiDung}',
+                                                                                    '${x.IdTaiKhoan}',
+                                                                                    '${x.HoTen}',
+                                                                                    '${x.Email}',
+                                                                                    '${x.SDT}',
+                                                                                    '${x.TenTaiKhoan}',
+                                                                                    '${x.MatKhau}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
                             <button class="btn btn-danger btn-sm" onclick="xoaKhachHang(${x.IdNguoiDung})"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
@@ -400,6 +596,123 @@
             guest.innerHTML = content
         }
         loadData()
+             
+        
+        const openBtn = document.getElementById("OpenForm");
+        const closeBtn = document.getElementById("CloseForm");
+
+        openBtn.onclick = () => {
+            overlay.style.display = "flex";
+            const submitButton = document.getElementById('ComfirmForm');
+            submitButton.addEventListener("click",add);
+        };
+
+        closeBtn.onclick = closeForm
+
+        function closeForm(){
+            const overlay = document.getElementById("overlay")
+            overlay.style.display = "none";
+            document.getElementById('UserForm').reset()
+            const submitButton = document.getElementById('ComfirmForm');
+            submitButton.removeEventListener("click",editHandler)
+            submitButton.removeEventListener("click",add)
+        }
+
+        var PID, UID
+        function editHandler(event){
+            edit(PID,UID)
+        }
+
+
+        function editForm(pid,uid,name,mail,SDT,uName,pwd){
+            const nameField = document.getElementById('HoTen');
+            const phoneField = document.getElementById('SDT');
+            const emailField = document.getElementById('Email');
+            const usernameField = document.getElementById('TenTaiKhoan');
+            const passwordField = document.getElementById('MatKhau');
+            const submitButton = document.getElementById('ComfirmForm');
+            nameField.value = name
+            phoneField.value = SDT
+            emailField.value = mail
+            usernameField.value = uName
+            passwordField.value = pwd
+            PID = pid
+            UID = uid
+            overlay.style.display = "flex";
+            submitButton.addEventListener("click",editHandler); 
+        }
+        
+        async function add(event){       
+            event.preventDefault();
+            const form = document.getElementById('UserForm');
+            if (form.checkValidity()){
+                const formData = new FormData(form);
+                const response = await fetch(`/khachhang/them`,{method:'POST', body:formData})
+                const data = await response.json()
+                closeForm()
+                if(data['success']){ 
+                    alert("Đã thành công thêm người dùng")
+                    loadData()
+                }
+                else{
+                    alert("Đã xảy ra lỗi khi thêm người dùng")
+                }
+            }
+        }
+
+        async function edit(pid, uid){
+            const form = document.getElementById('UserForm');
+            if (form.checkValidity()){
+                const formData = new FormData(form);
+                formData.append('IdNguoiDung', pid);
+                formData.append('IdTaiKhoan', uid);
+                const response = await fetch(`/khachhang/sua`,{method:'POST', body:formData})
+                const data = await response.json()
+                console.log(PID,UID)
+                closeForm()
+                if(data['success']){ 
+                    alert("Đã thành công cập nhật người dùng")
+                    loadData()
+                }
+                else{
+                    alert("Đã xảy ra lỗi khi cập nhật người dùng")
+                }
+            }
+        }
+
+        function statusOpen(uid,status){
+            const overlay = document.getElementById('statusOverlay')
+            UID = uid
+            overlay.style.display = 'flex'
+            const selectBox = document.getElementById('status')
+            selectBox.value = status == 'user' ? 'user' : 'blocked'
+        }
+
+        function statusClose(){
+            const overlay = document.getElementById('statusOverlay')
+            overlay.style.display = 'none'
+        }
+        statusClose()
+
+        async function statusUpdate(){
+            const status = document.getElementById('status').value
+            console.log(UID,status)
+            const sendData = {'IdTaiKhoan': UID, 'AccType': status}
+            const response = await fetch(`/khachhang/status`,{method:'POST', 
+                                                            headers: {'Content-Type': 'application/json',},
+                                                            body:JSON.stringify(sendData)})
+            const data = await response.json()
+            console.log(data)
+            if(data['success']){ 
+                alert("Đã thành công cập nhật trạng thái")
+                loadData()
+            }
+            else{
+                alert("Đã xảy ra lỗi khi cập nhật trạng thái")
+            }
+            statusClose()
+        }
+
     </script>
 </body>
 </html>

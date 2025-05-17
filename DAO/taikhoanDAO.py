@@ -18,10 +18,7 @@ class TaiKhoanDAO:
             return []
 
     def them_TaiKhoan(self, signUpData: Dict) -> Dict:
-        for x in signUpData.values():
-            if not x:
-                return {"success": False, "message": "Thiếu thông tin bắt buộc"}
-
+        result = {}
         try:
             cursor = self.conn.cursor()
             cursor.execute(
@@ -32,13 +29,14 @@ class TaiKhoanDAO:
             )
             self.conn.commit()
             id_tai_khoan = cursor.lastrowid
-            return {"success": True, "idTaiKhoan": cursor.lastrowid}
+            result =  {"success": True, "idTaiKhoan": cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
-            return {"success": False, "message": str(e), "idTaiKhoan": id_tai_khoan}
+            result =  {"success": False, "message": str(e), "idTaiKhoan": id_tai_khoan}
         finally:
             cursor.close()
+            return result
 
     def sua_TaiKhoan(self, accID: int, userData: Dict) -> Dict:
         try:
@@ -184,3 +182,39 @@ class TaiKhoanDAO:
             return {"success": False, "message": str(e)}
         finally:
             cursor.close()
+            
+    def update(self, userData: Dict) -> Dict:
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "UPDATE taikhoan SET TenTaiKhoan=%s, MatKhau=%s WHERE IdTaiKhoan = %s",
+                (userData['TenTaiKhoan'], userData['MatKhau'], userData['IdTaiKhoan'])
+            )
+            self.conn.commit()
+            id_tai_khoan = cursor.lastrowid
+            return {"success": True, "idTaiKhoan": id_tai_khoan}
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi sửa người dùng: {e}")
+            return {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+            
+    def status(self, userData: Dict) -> Dict:
+        result = {}
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "UPDATE taikhoan SET AccType = %s WHERE IdTaiKhoan = %s",
+                (userData['AccType'], 
+                 userData['IdTaiKhoan'])
+            )
+            self.conn.commit()
+            result = {"success": cursor.rowcount}
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi sửa tài khoản: {e}")
+            result = {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+            return result
