@@ -1,8 +1,8 @@
 -- SQL DUMP: Football Database with Users and Staff
 -- Version: Updated - Full Sample Data
 
-CREATE DATABASE IF NOT EXISTS football;
-USE football;
+CREATE DATABASE IF NOT EXISTS footballrenting;
+USE footballrenting;
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;

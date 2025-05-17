@@ -1,7 +1,7 @@
 from DAO.db_config import get_connection
 from typing import List, Dict
 from mysql.connector import Error
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class PhieuGhiDAO:
     def __init__(self, conn=None):
@@ -84,3 +84,24 @@ class PhieuGhiDAO:
             return []
         finally:
             cursor.close()
+            
+    def getReturn(self) -> List[Dict]:
+        result = []
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("""SELECT 
+                                IdNguoiDung,
+                                COUNT(*) AS Tong,
+                                SUM(TongTien) AS TongTien
+                            FROM 
+                                hoadon
+                            WHERE 
+                                Ngay >= %s
+                            GROUP BY 
+                                IdNguoiDung;""",(datetime.today().date()-timedelta(days=30)))
+            result = cursor.fetchall()
+        except Error as e:
+            print(f"Error: {e}")
+        finally:
+            cursor.close()
+            return result

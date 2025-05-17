@@ -381,6 +381,11 @@ def xoa_khachhang(IdNguoiDung: int):
 @app.route('/khachhang/timkiem/<key>', methods=['POST'])
 def tim_khachhang(key:str):
     listGuest = khachhang.timKhachHang(key)
+    today = datetime.today().date()
+    data = {"list": listGuest, 'data':{'total':len(listGuest),
+                                       'month':taikhoan.getListByDate(today - timedelta(days=30),'user'),
+                                       'week':taikhoan.getListByDate(today - timedelta(days=30),'user'),
+                                       'return':len(phieughi.getReturn())/len(listGuest)}}
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
@@ -389,10 +394,15 @@ def tim_khachhang(key:str):
 @app.route('/khachhang/load', methods=['POST'])
 def load_khachhang():
     listGuest = khachhang.timKhachHang("")
+    today = datetime.today().date()
+    data = {"list": listGuest, 'data':{'total':len(listGuest),
+                                       'month':len(taikhoan.getListByDate(today - timedelta(days=30),'user')),
+                                       'week':len(taikhoan.getListByDate(today - timedelta(days=7),'user')),
+                                       'return':len(phieughi.getReturn())/len(listGuest)}}
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-    return jsonify(listGuest)
+    return jsonify(data)
 
 @app.route('/khachhang/sua', methods=['POST'])
 def editKhachHang():
@@ -405,8 +415,6 @@ def editKhachHang():
 
 @app.route('/khachhang/them', methods=['POST'])
 def addKhachHang():
-    # birth = request.form.to_dict()['date']
-    # date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
     adjDatas = request.form.to_dict()
     adjDatas['NgaySinh'] = None
     adjDatas['NgayTao'] = datetime.today().date()

@@ -145,6 +145,7 @@ class TaiKhoanDAO:
                 
     def getListByDate(self, date: date, type:str = None) -> List[Dict]:
         try:
+            self.conn.commit()
             cursor = self.conn.cursor(dictionary=True)
             if type is not None:
                 cursor.execute("SELECT * FROM taikhoan WHERE NgayTao >= %s AND AccType = %s", (date, type))

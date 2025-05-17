@@ -431,19 +431,19 @@
             <!-- Stats Cards -->
             <div class="stats-cards">
                 <div class="stats-card">
-                    <div class="stats-value">0</div>
+                    <div class="stats-value" id ='totalUser'>0</div>
                     <div class="stats-label">Tổng khách hàng</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">0</div>
+                    <div class="stats-value" id ='newByMonth'>0</div>
                     <div class="stats-label">Khách hàng mới (tháng)</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">0</div>
+                    <div class="stats-value" id ='newByWeek'>0</div>
                     <div class="stats-label">Khách hàng mới (tuần)</div>
                 </div>
                 <div class="stats-card">
-                    <div class="stats-value">0</div>
+                    <div class="stats-value" id ='return'>0</div>
                     <div class="stats-label">Khách hàng quay lại</div>
                 </div>
             </div>
@@ -560,7 +560,17 @@
         async function loadData(){
             const guest = document.getElementById('guess-table')
             let key = document.getElementById('search').value;
-            const listkhachhang = await getData() 
+            const data = await getData() 
+            const listkhachhang = data['list']
+            const tabs = data['data']
+            const totalUser = document.getElementById('totalUser');
+            totalUser.textContent = tabs['total']
+            const newByMonth = document.getElementById('newByMonth');
+            newByMonth.textContent = tabs['month']
+            const newByWeek = document.getElementById('newByWeek');
+            newByWeek.textContent = tabs['week']
+            const returnUser = document.getElementById('return');
+            returnUser.textContent = tabs['return'] + "%"
             let content = ``
             console.log(listkhachhang)
             listkhachhang.forEach(x =>{
@@ -712,7 +722,6 @@
             }
             statusClose()
         }
-
     </script>
 </body>
 </html>
