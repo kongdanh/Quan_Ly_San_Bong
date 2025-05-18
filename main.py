@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os
+from typing import Dict
 from flask import Flask, current_app, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
@@ -487,15 +488,27 @@ def quanlitaichinh():
 
 @app.route('/quanlitaichinh/timkiem/<key>', methods=['POST'])
 def tim_taichinh(key:str):
-    print(key + ".",flush=True)
     listHD = hoa_don_bus.timkiemHD(key)
-    print(listHD,flush=True)
-    return jsonify(listHD)
+    income:Dict = hoa_don_bus.getMonthlyIncome()
+    tabs = hoa_don_bus.getTabs()
+    total = 0
+    for x in income.values():
+        total += x
+    tabs['total'] = total
+    data = {"list": listHD,"income":income,"fees":tabs}
+    return jsonify(data)
 
 @app.route('/quanlitaichinh/load/', methods=['POST'])
 def load_taichinh():
     listHD = hoa_don_bus.timkiemHD("")
-    return jsonify(listHD)
+    income:Dict = hoa_don_bus.getMonthlyIncome()
+    tabs = hoa_don_bus.getTabs()
+    total = 0
+    for x in income.values():
+        total += x
+    tabs['total'] = total
+    data = {"list": listHD,"income":income,"fees":tabs}
+    return jsonify(data)
 
 @app.route('/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
 def editState(IDHD:int,Status):

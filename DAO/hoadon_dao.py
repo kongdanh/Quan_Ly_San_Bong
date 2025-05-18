@@ -1,3 +1,4 @@
+from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 from typing import List, Dict
@@ -180,3 +181,30 @@ class HoaDonDAO:
             return {"success": False, "error": str(e)}
         finally:
             cursor.close()
+    
+    def getMonthly(self, month:int) -> float:
+        result = {}
+        date = datetime.today().date()
+        if month != 0:
+            date1 = date.replace(day = 1,month = month)
+            date2 = date.replace(day = 1,month = month + 1) if month < 12 else date.replace(day=1,
+                                                                                month=1,
+                                                                                year=(date.year + 1))
+        else:
+            date1 = date.replace(day = 1,month = 12, year = date.year - 1)
+            date2 = date.replace(day = 1,month = 1) 
+            
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("""SELECT sum(TongTien) as total from hoadon 
+                           WHERE TrangThai = "Đã thanh toán"
+                           AND Ngay >= %s AND Ngay < %s""",
+                            (date1,date2))
+            result = cursor.fetchone()
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi thay đổi hóa đơn: {e}")
+            result = 0
+        finally:
+            cursor.close()
+            return 0 if result['total'] == None else result['total']
