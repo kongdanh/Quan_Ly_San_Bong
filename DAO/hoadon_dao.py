@@ -124,21 +124,24 @@ class HoaDonDAO:
         finally:
             cursor.close()
             
-    def timkiemHD(self, key:str):
+    def timkiemHD(self, key:str, type:str) -> List[Dict]:
+        if type == "all":
+            type = ""
+        type = "%" + type + "%"
         try:
             cursor = self.conn.cursor(dictionary=True)
             try:
                 key = int(key)
-                sql="""SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE IdHoaDon = %s"""
-                cursor.execute(sql,(key,))
+                sql="""SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE IdHoaDon = %s AND TrangThai LIKE %s ORDER BY Ngay DESC"""
+                cursor.execute(sql,(key,type))
             except ValueError:
                 if key == "":
-                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung"""
-                    cursor.execute(sql)
+                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE TrangThai LIKE %s ORDER BY Ngay DESC"""
+                    cursor.execute(sql,(type,))
                 else:
                     key = "%" + key + "%"
-                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE HoTen LIKE %s"""
-                    cursor.execute(sql,(key,))
+                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE HoTen LIKE %s AND TrangThai LIKE %s ORDER BY Ngay DESC"""
+                    cursor.execute(sql,(key,type))
             return cursor.fetchall()
         except Error as e:
             print(f"[DAO ERROR] lỗi khi lấy danh sách {e}")

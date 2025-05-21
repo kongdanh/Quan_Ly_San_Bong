@@ -33,8 +33,8 @@ class HoaDonBUS:
     def updateHD(self, data:Dict):
         return self.dao.update(data)
     
-    def timkiemHD(self, key:str) -> List[Dict]:
-        return self.dao.timkiemHD(key)
+    def timkiemHD(self, key:str, type:str) -> List[Dict]:
+        return self.dao.timkiemHD(key,type)
     
     def editState(self,IdHoaDon:int,State:str)->Dict:
         return self.dao.editState(IdHoaDon,State)

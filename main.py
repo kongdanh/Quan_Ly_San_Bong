@@ -451,9 +451,9 @@ def baocao():
 def quanlitaichinh():
     return render_template('quanlitaichinh.html')
 
-@app.route('/quanlitaichinh/timkiem/<key>', methods=['POST'])
-def tim_taichinh(key:str):
-    listHD = hoa_don_bus.timkiemHD(key)
+@app.route('/quanlitaichinh/timkiem/<key>/<type>', methods=['POST'])
+def tim_taichinh(key:str, type:str):
+    listHD = hoa_don_bus.timkiemHD(key, type)
     income:Dict = hoa_don_bus.getMonthlyIncome()
     tabs = hoa_don_bus.getTabs()
     total = 0
@@ -463,9 +463,11 @@ def tim_taichinh(key:str):
     data = {"list": listHD,"income":income,"fees":tabs}
     return jsonify(data)
 
-@app.route('/quanlitaichinh/load/', methods=['POST'])
-def load_taichinh():
-    listHD = hoa_don_bus.timkiemHD("")
+@app.route('/quanlitaichinh/load/<type>', methods=['POST'])
+def load_taichinh(type:str):
+    listHD = hoa_don_bus.timkiemHD("", type)
+    for x in listHD:
+        x['Ngay'] = str(x['Ngay'])
     income:Dict = hoa_don_bus.getMonthlyIncome()
     tabs = hoa_don_bus.getTabs()
     total = 0
