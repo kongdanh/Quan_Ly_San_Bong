@@ -55,7 +55,7 @@ class NguoiDungDAO:
                  userData['IdNguoiDung'])
             )
             self.conn.commit()
-            return {"success": cursor.rowcount > 0}
+            return {"success": True}
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi sửa người dùng: {e}")
@@ -116,17 +116,25 @@ class NguoiDungDAO:
             except Error as e:
                 print(f"Lỗi khi đóng kết nối: {e}")
                 
-    def search(self, key:str) -> List[Dict]:
+    def search(self, key:str, type:str = None) -> List[Dict]:
+        
         result = []
+        if type is None or type == "all":
+            type = ""
+        type =  "%" + type + "%"
+        print(key,flush=True)
+        print(type,flush=True)    
         try:
             cursor = self.conn.cursor(dictionary=True)
             try:
                 self.conn.commit()
                 key = int(key)
-                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE IdNguoiDung = %s OR SDT = %s", (key, key))
+                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE ( IdNguoiDung = %s OR SDT = %s ) AND AccType LIKE %s",
+                               (key, key, type))
             except ValueError as e:
                 key = "%" + key + "%"
-                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE HoTen Like %s OR Email Like %s", (key, key))
+                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE ( HoTen Like %s OR Email Like %s ) AND AccType LIKE %s",
+                               (key, key, type))
             result = cursor.fetchall()
         except Error as e:
             self.conn.rollback()
@@ -155,6 +163,33 @@ class NguoiDungDAO:
         except Error as e:
             self.conn.rollback()
             print(f"[DAO ERROR] Lỗi khi thêm người dùng: {e}")
+            result = {"success": False, "message": str(e)}
+        finally:
+            cursor.close()
+            return result
+        
+        
+    def checkValidation(self, data:Dict, ignore:int = None) -> Dict:
+        result = []
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("""SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE 
+                                Email = %s OR 
+                                SDT = %s OR
+                                TenTaiKhoan = %s""", 
+                                (data["Email"],
+                                 data["SDT"],
+                                 data["TenTaiKhoan"]))
+            result = cursor.fetchone()
+            if result['IdNguoiDung'] == ignore:
+                result = cursor.fetchone()
+            cursor.fetchall()
+            if result is not None:
+                result['amount'] = cursor.rowcount
+                result.update({"success": True,"message": "Người dùng đã tồn tại"})
+        except Error as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi tìm người dùng: {e}")
             result = {"success": False, "message": str(e)}
         finally:
             cursor.close()

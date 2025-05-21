@@ -368,15 +368,15 @@
             </div>
             
             <div class="search-bar">
-                <input type="text" placeholder="Tìm kiếm giao dịch..." id="search" onchange="loadData()">
+                <input type="text" placeholder="Tìm kiếm giao dịch..." id="search" onchange="loadData()" autocomplete="off">
                 <div class="action-buttons">
-                    <!-- <select class="btn btn-outline">
-                        <option>Tháng này</option>
-                        <option>Tuần này</option>
-                        <option>Quý này</option>
-                        <option>Tùy chỉnh</option>
+                    <select class="btn btn-outline" id="typeSelect" onchange="loadData()">
+                        <option value="all">Tất cả</option>
+                        <option value="Chờ xác nhận">Chờ xác nhận</option>
+                        <option value="Đã xác nhận">Đã xác nhận</option>
+                        <option value="Đã thanh toán">Đã thanh toán</option>
                     </select>
-                    <button class="btn btn-primary">Xuất báo cáo</button> -->
+                    <!-- <button class="btn btn-primary">Xuất báo cáo</button> -->
                 </div>
             </div>
         </div>
@@ -411,86 +411,23 @@
                                 <span>📁</span>
                             </div>
                         </td>
-                    </tr>
-                    <tr>
-                        <td>#GD002</td>
-                        <td>14/04/2023</td>
-                        <td>Thu tiền sân</td>
-                        <td>Trần Thị B</td>
-                        <td>800,000đ</td>
-                        <td>Chuyển khoản</td>
-                        <td><span class="status status-completed">Hoàn thành</span></td>
-                        <td>
-                            <div class="action-icons">
-                                <span>✏️</span>
-                                <span>📁</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>#GD003</td>
-                        <td>13/04/2023</td>
-                        <td>Chi lương</td>
-                        <td>Nhân viên X</td>
-                        <td>5,000,000đ</td>
-                        <td>Chuyển khoản</td>
-                        <td><span class="status status-completed">Hoàn thành</span></td>
-                        <td>
-                            <div class="action-icons">
-                                <span>✏️</span>
-                                <span>📁</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>#GD004</td>
-                        <td>12/04/2023</td>
-                        <td>Chi mua bóng</td>
-                        <td>Nhà cung cấp Y</td>
-                        <td>2,500,000đ</td>
-                        <td>Tiền mặt</td>
-                        <td><span class="status status-completed">Hoàn thành</span></td>
-                        <td>
-                            <div class="action-icons">
-                                <span>✏️</span>
-                                <span>📁</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>#GD005</td>
-                        <td>11/04/2023</td>
-                        <td>Thu tiền sân</td>
-                        <td>Lê Văn C</td>
-                        <td>600,000đ</td>
-                        <td>Tiền mặt</td>
-                        <td><span class="status status-pending">Đang chờ</span></td>
-                        <td>
-                            <div class="action-icons">
-                                <span>✏️</span>
-                                <span>📁</span>
-                            </div>
-                        </td>
                     </tr> -->
                 </tbody>
             </table>
         </div>
         
-        <!-- Charts Section -->
-        <div class="charts-section">
+        <!-- <div class="charts-section">
             <div class="chart-container">
                 <h3>Biểu đồ doanh thu theo tháng</h3>
                 <canvas class="chart-placeholder" id ="incomeBarChart">
-                    <!-- [Biểu đồ cột sẽ được hiển thị ở đây] -->
                 </canvas>
             </div>
             <div class="chart-container">
                 <h3>Phân loại chi phí</h3>
                 <canvas class="chart-placeholder">
-                    <!-- [Biểu đồ tròn sẽ được hiển thị ở đây] -->
                 </canvas>
             </div>
-        </div>
+        </div> -->
     </div>
 
     <div id="popup" class="popup hidden">
@@ -514,8 +451,9 @@
         var incomeChart
         async function getData(){
             const key = document.getElementById('search').value;
-            const response = key == "" ?await fetch(`/quanlitaichinh/load`,{method:'POST'}):
-                                        await fetch(`/quanlitaichinh/timkiem/${key}`,{method:'POST'})
+            const type = document.getElementById('typeSelect').value;
+            const response = key == "" ?await fetch(`/quanlitaichinh/load/${type}`,{method:'POST'}):
+                                        await fetch(`/quanlitaichinh/timkiem/${key}/${type}`,{method:'POST'})
             const data = await response.json()
             return data
         }
@@ -551,87 +489,87 @@
             })
             const table = document.getElementById('bills')
             table.innerHTML = content
-            if (chartLoad == false){
-                        // 2. Xử lý dữ liệu cho biểu đồ cột (Số lần thuê theo sân)
-                const incomeLabels = Object.keys(data['income']);
-                const incomeValues = Object.values(data['income']);
+            // if (chartLoad == false){
+            //             // 2. Xử lý dữ liệu cho biểu đồ cột (Số lần thuê theo sân)
+            //     const incomeLabels = Object.keys(data['income']);
+            //     const incomeValues = Object.values(data['income']);
 
-                // Nếu không có dữ liệu, hiển thị thông báo mặc định
-                if (incomeLabels.length === 0) {
-                    incomeLabels.push("aaaaaaaa");
-                    incomeValues.push(0);
-                }
+            //     // Nếu không có dữ liệu, hiển thị thông báo mặc định
+            //     if (incomeLabels.length === 0) {
+            //         incomeLabels.push("aaaaaaaa");
+            //         incomeValues.push(0);
+            //     }
 
-                const incomeColors = [
-                    '#FF6B6B', '#FFCA28', '#66BB6A', '#29B6F6', '#AB47BC',
-                    '#EC407A', '#0288D1', '#F06292', '#26A69A', '#7E57C2',
-                    '#FFD700', '#00CED1', '#FF4500', '#DA70D6', '#20B2AA',
-                    '#FF69B4', '#4682B4', '#FFA500', '#9ACD32', '#6A5ACD',
-                    '#FF6347'
-                ];
+            //     const incomeColors = [
+            //         '#FF6B6B', '#FFCA28', '#66BB6A', '#29B6F6', '#AB47BC',
+            //         '#EC407A', '#0288D1', '#F06292', '#26A69A', '#7E57C2',
+            //         '#FFD700', '#00CED1', '#FF4500', '#DA70D6', '#20B2AA',
+            //         '#FF69B4', '#4682B4', '#FFA500', '#9ACD32', '#6A5ACD',
+            //         '#FF6347'
+            //     ];
 
-                const incomeData = {
-                    labels: incomeLabels,
-                    datasets: [{
-                        label: 'Số lần thuê',
-                        data: incomeValues,
-                        backgroundColor: incomeLabels.map((_, index) => incomeColors[index % incomeColors.length]),
-                        borderColor: incomeLabels.map((_, index) => incomeColors[index % incomeColors.length].replace('0.6', '0.8')),
-                        borderWidth: 1
-                    }]
-                };
+            //     const incomeData = {
+            //         labels: incomeLabels,
+            //         datasets: [{
+            //             label: 'Số lần thuê',
+            //             data: incomeValues,
+            //             backgroundColor: incomeLabels.map((_, index) => incomeColors[index % incomeColors.length]),
+            //             borderColor: incomeLabels.map((_, index) => incomeColors[index % incomeColors.length].replace('0.6', '0.8')),
+            //             borderWidth: 1
+            //         }]
+            //     };
 
-                const incomeContainer = document.getElementById('incomeBarChart')
-                const canvas = incomeContainer.getContext('2d');
-                // 4. Vẽ biểu đồ cột (Bar Chart)
-                if( incomeChart != undefined)
-                    incomeChart.destroy()
-                    canvas.clearRect(0, 0, incomeContainer.width, incomeContainer.height)
-                incomeChart = new Chart(canvas, {
-                    type: 'bar',
-                    data: incomeData,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: ''
-                                },
-                                ticks: {
-                                    stepSize: 100000,
-                                    callback: function(value) {
-                                        return Intl.NumberFormat('vi-VN').format(value);
-                                    }
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Tháng'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        let label = context.label || '';
-                                        let value = context.raw || 0;
-                                        return `${label}: ${Intl.NumberFormat('vi-VN').format(value)} VNĐ`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                chartLoad = true
-            }
+            //     const incomeContainer = document.getElementById('incomeBarChart')
+            //     const canvas = incomeContainer.getContext('2d');
+            //     // 4. Vẽ biểu đồ cột (Bar Chart)
+            //     if( incomeChart != undefined)
+            //         incomeChart.destroy()
+            //         canvas.clearRect(0, 0, incomeContainer.width, incomeContainer.height)
+            //     incomeChart = new Chart(canvas, {
+            //         type: 'bar',
+            //         data: incomeData,
+            //         options: {
+            //             responsive: true,
+            //             maintainAspectRatio: true,
+            //             scales: {
+            //                 y: {
+            //                     beginAtZero: true,
+            //                     title: {
+            //                         display: true,
+            //                         text: ''
+            //                     },
+            //                     ticks: {
+            //                         stepSize: 100000,
+            //                         callback: function(value) {
+            //                             return Intl.NumberFormat('vi-VN').format(value);
+            //                         }
+            //                     }
+            //                 },
+            //                 x: {
+            //                     title: {
+            //                         display: true,
+            //                         text: 'Tháng'
+            //                     }
+            //                 }
+            //             },
+            //             plugins: {
+            //                 legend: {
+            //                     display: false
+            //                 },
+            //                 tooltip: {
+            //                     callbacks: {
+            //                         label: function (context) {
+            //                             let label = context.label || '';
+            //                             let value = context.raw || 0;
+            //                             return `${label}: ${Intl.NumberFormat('vi-VN').format(value)} VNĐ`;
+            //                         }
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     });
+            //     chartLoad = true
+            // }
             tabs = data['fees']
             document.getElementById('total').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['total'])} VNĐ`
             document.getElementById('curr').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['curr'])} VNĐ`
@@ -670,35 +608,6 @@
 
             closePopup();
         }
-
-
-        
-        // 3. Vẽ biểu đồ hình tròn (Pie Chart)
-        // const revenueCtx = document.getElementById('revenuePieChart').getContext('2d');
-        // new Chart(revenueCtx, {
-        //     type: 'pie',
-        //     data: revenueData,
-        //     options: {
-        //         responsive: true,
-        //         maintainAspectRatio: true,
-        //         plugins: {
-        //             legend: {
-        //                 position: 'top',
-        //             },
-        //             tooltip: {
-        //                 callbacks: {
-        //                     label: function (context) {
-        //                         let label = context.label || '';
-        //                         let value = context.raw || 0;
-        //                         return `${label}: ${value.toLocaleString()}đ`;
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // });
-
-        
 
     </script>
 </body>

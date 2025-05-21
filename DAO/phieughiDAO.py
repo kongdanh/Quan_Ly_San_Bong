@@ -98,7 +98,7 @@ class PhieuGhiDAO:
                             WHERE 
                                 Ngay >= %s
                             GROUP BY 
-                                IdNguoiDung;""",(datetime.today().date()-timedelta(days=30)))
+                                IdNguoiDung;""",(datetime.today().date()-timedelta(days=30),))
             result = cursor.fetchall()
         except Error as e:
             print(f"Error: {e}")

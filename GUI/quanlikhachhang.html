@@ -482,10 +482,16 @@
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Tìm kiếm khách hàng..." id="search" onchange="loadData()">
                 </div>
-                <div>
+                <span>
+                    <select class="btn btn-outline" id="typeSelect" onchange="loadData()" style="margin-bottom: 0px;">
+                        <option value="all">Tất cả</option>
+                        <option value="user">Hoạt động</option>
+                        <option value="blocked">Ngưng hoạt động</option>
+                    </select>
                     <!-- <button class="btn btn-primary"><i class="fas fa-filter"></i> Lọc</button>
                     <button class="btn btn-success"><i class="fas fa-plus"></i> Thêm khách hàng</button> -->
-                </div>
+                </span>
+                
             </div>
 
             <!-- Customer Table -->
@@ -508,14 +514,14 @@
                 </table>
 
                 <!-- Pagination -->
-                <div class="pagination">
+                <!-- <div class="pagination">
                     <div class="page-item"><i class="fas fa-angle-left"></i></div>
                     <div class="page-item active">1</div>
                     <div class="page-item">2</div>
                     <div class="page-item">3</div>
                     <div class="page-item">4</div>
                     <div class="page-item"><i class="fas fa-angle-right"></i></div>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
@@ -580,9 +586,10 @@
                     })
         }
         async function getData() {
+            const type = document.getElementById('typeSelect').value;
             const key = document.getElementById('search').value;
-            const response = key == '' ? await fetch(`/khachhang/load`, { method: 'POST' }) :
-                await fetch(`/khachhang/timkiem/${key}`, { method: 'POST' })
+            const response = key == '' ? await fetch(`/khachhang/load/${type}`, { method: 'POST' }) :
+                await fetch(`/khachhang/timkiem/${key}/${type}`, { method: 'POST' })
             const data = await response.json()
             return data
         }
@@ -590,6 +597,7 @@
             const guest = document.getElementById('guess-table')
             let key = document.getElementById('search').value;
             const data = await getData()
+            console.log(data)
             const listkhachhang = data['list']
             const tabs = data['data']
             const totalUser = document.getElementById('totalUser');
@@ -688,13 +696,13 @@
                 const formData = new FormData(form);
                 const response = await fetch(`/khachhang/them`, { method: 'POST', body: formData })
                 const data = await response.json()
-                closeForm()
-                if (data['success']) {
+                if(data['success']){ 
                     alert("Đã thành công thêm người dùng")
                     loadData()
+                    closeForm()
                 }
-                else {
-                    alert("Đã xảy ra lỗi khi thêm người dùng")
+                else{
+                    alert(`Đã xảy ra lỗi khi thêm người dùng, ${data['message']}`)
                 }
             }
         }
@@ -707,14 +715,14 @@
                 formData.append('IdTaiKhoan', uid);
                 const response = await fetch(`/khachhang/sua`, { method: 'POST', body: formData })
                 const data = await response.json()
-                console.log(PID, UID)
-                closeForm()
-                if (data['success']) {
+                console.log(PID,UID)
+                if(data['success']){ 
                     alert("Đã thành công cập nhật người dùng")
                     loadData()
+                    closeForm()
                 }
-                else {
-                    alert("Đã xảy ra lỗi khi cập nhật người dùng")
+                else{
+                    alert(`Đã xảy ra lỗi khi cập nhật người dùng, ${data.message}`)
                 }
             }
         }
