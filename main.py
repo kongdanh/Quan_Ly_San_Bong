@@ -522,7 +522,7 @@ def index():
     danh_sach_san = san_bus.lay_danh_sach_san()
     for san in danh_sach_san:
         if isinstance(san, dict):
-            hinh_anh = san.get('HinhAnh', 'default.jpg')
+            hinh_anh = san.get('HinhAnh', 'default.jpg') or 'default.jpg'
             if 'asset/' in hinh_anh:
                 san['HinhAnh'] = url_for('static', filename=hinh_anh)
             else:

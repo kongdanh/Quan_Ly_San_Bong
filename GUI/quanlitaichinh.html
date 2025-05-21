@@ -464,29 +464,37 @@
             const data = await getData()
             const listBills = data['list']
             console.log(data)
-            listBills.forEach( x =>{
-                content +=
-                `<tr>
-                    <td>${x.IdHoaDon}</td>
-                    <td>${x.Ngay}</td>
-                    <td>Thu tiền sân</td>
-                    ${x.HoTen != null ?
-                    `<td>${x.HoTen}</td>`:  
-                    `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
-                    <td>${x.TongTien}</td>
-                    <td>${x.PhuongThuc == null ? "Chưa xác nhận": x.PhuongThuc}</td>
-                    ${x.TrangThai == 'Đã thanh toán'? 
-                    `<td><span class="status status-completed">Hoàn thành</span></td>`:
-                        x.TrangThai == 'Đã xác nhận'?
-                        `<td><span class="status status-accepted">Chờ thanh toán</span></td>`:
-                        `<td><span class="status status-pending">Chờ xác nhận</span></td>`}
-                    <td>
-                        <div class="action-icons">
-                            <span onclick="stateChange(${x.IdHoaDon}, '${x.TrangThai}')">✏️</span>
-                        </div>
-                    </td>
-                </tr>`
-            })
+            if (listBills.length == 0){
+                content +=`
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Không có dữ liệu</td>
+                    </tr>`
+            }
+            else{
+                listBills.forEach( x =>{
+                    content +=
+                    `<tr>
+                        <td>${x.IdHoaDon}</td>
+                        <td>${x.Ngay}</td>
+                        <td>Thu tiền sân</td>
+                        ${x.HoTen != null ?
+                        `<td>${x.HoTen}</td>`:  
+                        `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
+                        <td>${x.TongTien}</td>
+                        <td>${x.PhuongThuc == null ? "Chưa xác nhận": x.PhuongThuc}</td>
+                        ${x.TrangThai == 'Đã thanh toán'? 
+                        `<td><span class="status status-completed">Hoàn thành</span></td>`:
+                            x.TrangThai == 'Đã xác nhận'?
+                            `<td><span class="status status-accepted">Chờ thanh toán</span></td>`:
+                            `<td><span class="status status-pending">Chờ xác nhận</span></td>`}
+                        <td>
+                            <div class="action-icons">
+                                <span onclick="stateChange(${x.IdHoaDon}, '${x.TrangThai}')">✏️</span>
+                            </div>
+                        </td>
+                    </tr>`
+                })
+            }
             const table = document.getElementById('bills')
             table.innerHTML = content
             // if (chartLoad == false){
