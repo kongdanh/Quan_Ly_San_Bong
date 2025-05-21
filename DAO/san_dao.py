@@ -14,8 +14,13 @@ class SanDAO:
         create_table = """
         CREATE TABLE IF NOT EXISTS san (
             idSan INT AUTO_INCREMENT PRIMARY KEY,
-            coSan VARCHAR(10) NOT NULL DEFAULT 'Có',
-            diaChi VARCHAR(255) NOT NULL
+            coSan VARCHAR(10) NOT NULL,
+            diaChi VARCHAR(255) NOT NULL,
+            hinhAnh VARCHAR(255) DEFAULT 'default.jpg',
+            soSan INT NOT NULL,
+            moTa TEXT,
+            trangThai INT NOT NULL DEFAULT 1,
+            giaSan INT NOT NULL DEFAULT 0
         )
         """
         try:
@@ -44,8 +49,19 @@ class SanDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT INTO san (coSan, diaChi) VALUES (%s, %s)",
-                (san_data['coSan'], san_data['diaChi'])
+                """
+                INSERT INTO san (coSan, diaChi, hinhAnh, soSan, moTa, trangThai, giaSan)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    san_data['coSan'],
+                    san_data['diaChi'],
+                    san_data['hinhAnh'],
+                    san_data['soSan'],
+                    san_data['moTa'],
+                    san_data['trangThai'],
+                    san_data['giaSan']
+                )
             )
             self.conn.commit()
             return {"success": True, "idSan": cursor.lastrowid}
@@ -61,8 +77,22 @@ class SanDAO:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "UPDATE san SET coSan = %s, diaChi = %s WHERE idSan = %s",
-                (san_data['coSan'], san_data['diaChi'], id_san)
+                """
+                UPDATE san
+                SET coSan = %s, diaChi = %s, hinhAnh = %s, soSan = %s,
+                    moTa = %s, trangThai = %s, giaSan = %s
+                WHERE idSan = %s
+                """,
+                (
+                    san_data['coSan'],
+                    san_data['diaChi'],
+                    san_data['hinhAnh'],
+                    san_data['soSan'],
+                    san_data['moTa'],
+                    san_data['trangThai'],
+                    san_data['giaSan'],
+                    id_san
+                )
             )
             self.conn.commit()
             return {"success": cursor.rowcount > 0}

@@ -16,15 +16,16 @@ class SanBus:
 
         # Đảm bảo các thuộc tính khác có giá trị mặc định nếu không được cung cấp
         san_data_full = {
-            'coSan': san_data.get('CoSan', 'Có'),
+            'coSan': san_data.get('coSan', '5'),  # Sửa 'CoSan' thành 'coSan' để khớp với main.py
             'diaChi': san_data.get('diaChi', 'Chưa có thông tin'),
             'hinhAnh': san_data.get('hinhAnh', 'default.jpg'),
             'giaSan': san_data.get('giaSan', 0),
-            'sanSo': san_data.get('sanSo', 1),
+            'soSan': san_data.get('soSan', 1),  # Sửa 'sanSo' thành 'soSan' để khớp với main.py
             'moTa': san_data.get('moTa', 'Chưa có mô tả'),
             'trangThai': san_data.get('trangThai', 1)
         }
 
+        print(f"[SanBus] Sending to DAO: {san_data_full}")  # Debug
         # Gọi hàm trong DAO để thêm vào database
         result = self.dao.them_san(san_data_full)
         return result
@@ -34,6 +35,7 @@ class SanBus:
         danh_sach = self.dao.lay_danh_sach_san()
         # Cập nhật danh sách nội bộ (tùy chọn)
         self.danh_sach_san = danh_sach
+        print(f"[SanBus] Retrieved from DAO: {danh_sach}")  # Debug
         return danh_sach
 
     def them_san_to_list(self, san_data: Dict) -> bool:
@@ -50,11 +52,11 @@ class SanBus:
         new_id = max((san.get('IdSan', 0) for san in self.danh_sach_san), default=0) + 1
         self.danh_sach_san.append({
             "IdSan": new_id,
-            "CoSan": san_data.get('coSan', 'Có'),
+            "CoSan": san_data.get('coSan', '5'),
             "DiaChi": san_data.get('diaChi', 'Chưa có thông tin'),
             "HinhAnh": san_data.get('hinhAnh', 'default.jpg'),
             "GiaSan": san_data.get('giaSan', 0),
-            "SanSo": san_data.get('sanSo', 1),
+            "SoSan": san_data.get('soSan', 1),  # Sửa 'sanSo' thành 'soSan'
             "MoTa": san_data.get('moTa', 'Chưa có mô tả'),
             "TrangThai": san_data.get('trangThai', 1)
         })
@@ -77,16 +79,17 @@ class SanBus:
 
         # Đảm bảo các thuộc tính khác có giá trị mặc định nếu không được cung cấp
         san_data_full = {
-            'coSan': san_data.get('coSan', 'Có'),
+            'coSan': san_data.get('coSan', '5'),
             'diaChi': san_data.get('diaChi', 'Chưa có thông tin'),
             'hinhAnh': san_data.get('hinhAnh', 'default.jpg'),
             'giaSan': san_data.get('giaSan', 0),
-            'sanSo': san_data.get('sanSo', 1),
+            'soSan': san_data.get('soSan', 1),
             'moTa': san_data.get('moTa', 'Chưa có mô tả'),
             'trangThai': san_data.get('trangThai', 1)
         }
 
         try:
+            print(f"[SanBus] Sending to DAO for update: {san_data_full}")  # Debug
             result = self.dao.sua_san(id_san, san_data_full)
             # Cập nhật danh sách nội bộ (tùy chọn)
             if result.get('success'):
@@ -99,7 +102,7 @@ class SanBus:
                         san['DiaChi'] = san_data_full['diaChi']
                         san['HinhAnh'] = san_data_full['hinhAnh']
                         san['GiaSan'] = san_data_full['giaSan']
-                        san['SanSo'] = san_data_full['sanSo']
+                        san['SoSan'] = san_data_full['soSan']
                         san['MoTa'] = san_data_full['moTa']
                         san['TrangThai'] = san_data_full['trangThai']
                         break
