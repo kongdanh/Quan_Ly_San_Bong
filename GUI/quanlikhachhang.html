@@ -590,6 +590,7 @@
             const guest = document.getElementById('guess-table')
             let key = document.getElementById('search').value;
             const data = await getData()
+            console.log(data)
             const listkhachhang = data['list']
             const tabs = data['data']
             const totalUser = document.getElementById('totalUser');

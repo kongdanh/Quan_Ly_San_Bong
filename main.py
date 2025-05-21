@@ -259,7 +259,7 @@ def nguoidung(userID: int):
     danh_sach_san = san_bus.lay_danh_sach_san()
     for san in danh_sach_san:
         if isinstance(san, dict):
-            hinh_anh = san.get('HinhAnh', 'default.jpg')
+            hinh_anh = san.get('HinhAnh', 'default.jpg') or 'default.jpg'
             if 'asset/' in hinh_anh:
                 san['HinhAnh'] = url_for('static', filename=hinh_anh)
             else:
@@ -390,7 +390,7 @@ def tim_khachhang(key: str):
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-    return jsonify(listGuest)
+    return jsonify(data)
 
 @app.route('/khachhang/load', methods=['POST'])
 def load_khachhang():
@@ -406,7 +406,7 @@ def load_khachhang():
         x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
     print("HI")
     print(listGuest,flush=True)
-    return jsonify(listGuest)
+    return jsonify(data)
 
 # Báo cáo & Thống kê
 @app.route("/baocao")
@@ -453,10 +453,15 @@ def quanlitaichinh():
 
 @app.route('/quanlitaichinh/timkiem/<key>', methods=['POST'])
 def tim_taichinh(key:str):
-    print(key + ".",flush=True)
     listHD = hoa_don_bus.timkiemHD(key)
-    print(listHD,flush=True)
-    return jsonify(listHD)
+    income:Dict = hoa_don_bus.getMonthlyIncome()
+    tabs = hoa_don_bus.getTabs()
+    total = 0
+    for x in income.values():
+        total += x
+    tabs['total'] = total
+    data = {"list": listHD,"income":income,"fees":tabs}
+    return jsonify(data)
 
 @app.route('/quanlitaichinh/load/', methods=['POST'])
 def load_taichinh():
