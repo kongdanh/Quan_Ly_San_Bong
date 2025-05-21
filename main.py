@@ -233,21 +233,49 @@ def them_nhan_vien():
         taikhoan.xoaTaiKhoan(id_tai_khoan)
     return redirect(url_for('quan_ly_nhan_vien'))
 
-@app.route('/xoa-nhan-vien/<int:id_nhan_vien>')
+@app.route('/xoa-nhan-vien/<int:id_nhan_vien>', methods=['POST'])
 def xoa_nhan_vien(id_nhan_vien):
-    nhanvien_bus.xoa_nhan_vien(id_nhan_vien)
-    return redirect(url_for('quan_ly_nhan_vien'))
+    try:
+        ket_qua = nhanvien_bus.xoa_nhan_vien(id_nhan_vien)
+        if ket_qua.get('success', False):
+            return jsonify({'success': True, 'message': 'Xóa nhân viên thành công'}), 200
+        else:
+            return jsonify({'success': False, 'error': ket_qua.get('error', 'Lỗi khi xóa nhân viên')}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
 @app.route('/sua-nhan-vien/<int:id>', methods=['POST'])
 def sua_nhan_vien(id):
-    ho_ten = request.form.get('hoTen')
-    ngay_sinh = request.form.get('ngaySinh')
-    sdt = request.form.get('sdt')
-    dia_chi = request.form.get('diaChi')
-    id_tai_khoan = request.form.get('idTaiKhoan')
-    du_lieu_moi = {'hoTen': ho_ten, 'ngaySinh': ngay_sinh, 'sdt': sdt, 'diaChi': dia_chi, 'idTaiKhoan': id_tai_khoan}
-    ket_qua = nhanvien_bus.sua_nhan_vien(id, du_lieu_moi)
-    return jsonify(ket_qua)
+    try:
+        du_lieu_moi = {
+            'HoTen': request.form.get('HoTen'),
+            'NgaySinh': request.form.get('NgaySinh'),
+            'SDT': request.form.get('SDT'),
+            'DiaChi': request.form.get('DiaChi'),
+            'cccd': request.form.get('cccd'),
+            'gioitinh': request.form.get('gioitinh'),
+            'chuc_vu': request.form.get('chuc_vu'),
+            'vi_tri': request.form.get('vi_tri'),
+            'ngayvaolam': request.form.get('ngayvaolam'),
+            'hopdong': request.form.get('hopdong'),
+            'hoatdong': request.form.get('hoatdong'),
+            'mota': request.form.get('mota'),
+            'luong': request.form.get('luong'),
+            'phucap': request.form.get('phucap', '0'),
+            'nganhang': request.form.get('nganhang', ''),
+            'IdTaiKhoan': request.form.get('IdTaiKhoan', '0'),
+            'ten_tai_khoan': request.form.get('ten_tai_khoan'),
+            'mat_khau': request.form.get('mat_khau'),
+            'nhom_quyen': request.form.get('nhom_quyen'),
+            'ngay_tao': request.form.get('ngay_tao')
+        }
+        ket_qua = nhanvien_bus.sua_nhan_vien(id, du_lieu_moi)
+        if ket_qua.get('success', False):
+            return jsonify({'success': True, 'message': 'Cập nhật nhân viên thành công'}), 200
+        else:
+            return jsonify({'success': False, 'error': ket_qua.get('error', 'Lỗi không xác định')}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
 # Người dùng
 def get_asset_path():
@@ -492,7 +520,7 @@ def index():
                 san['HinhAnh'] = url_for('static', filename=hinh_anh)
             else:
                 san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
-    return render_template('user.html', san=danh_sach_san)
+    return render_template('dangnhap_dangki.html', san=danh_sach_san)
 
 @app.route('/index')
 def pagemain():

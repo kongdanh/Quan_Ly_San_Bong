@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -177,6 +176,13 @@
             display: block;
         }
 
+        .modal-content select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
         .modal-content button {
             padding: 0.5rem 1rem;
             margin: 0.5rem;
@@ -244,7 +250,6 @@
         }
     </style>
 </head>
-
 <body>
     <header>
         <div class="logo">
@@ -253,6 +258,8 @@
         <nav>
             <ul>
                 <li><a href="/login">Đăng nhập</a></li>
+                <li><a href="/user/{{ userID }}/hoa-don">Lịch sử đặt sân</a></li>
+                <li><a href="/logout">Đăng xuất</a></li>
             </ul>
         </nav>
     </header>
@@ -292,142 +299,199 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Đặt ngày mặc định là hôm nay
             document.getElementById('ngay-dat').valueAsDate = new Date();
-            const PID = 123; // Giá trị giả lập, cần truyền userID từ Flask
-            const sanList = {{ san | tojson}};
+            const PID = {{ userID | safe }};
+            const sanList = {{ san | tojson | safe }};
 
-        // Hàm tạo giao diện danh sách sân
-        function createSanList() {
-            const container = document.getElementById('san-list');
-            const loaiSan = parseInt(document.getElementById('loai-san').value);
-            container.innerHTML = '';
-
-            let filteredSanList = sanList;
-            if (loaiSan !== 0) {
-                filteredSanList = sanList.filter(san => parseInt(san.CoSan) === loaiSan);
+            // Hàm kiểm tra xung đột khung giờ
+            async function checkTimeConflict(sanId, date, startTime, endTime) {
+                try {
+                    const response = await fetch(`/user/${PID}/render-date/${date}`, {
+                        method: 'POST'
+                    });
+                    const bookings = await response.json();
+                    const start = new Date(`1970-01-01T${startTime}:00`);
+                    const end = new Date(`1970-01-01T${endTime}:00`);
+                    return bookings.some(booking => {
+                        if (booking.IdSan !== sanId) return false;
+                        const bookedStart = new Date(`1970-01-01T${booking.KhungGio.split('-')[0]}:00`);
+                        const bookedEnd = new Date(`1970-01-01T${booking.KhungGio.split('-')[1]}:00`);
+                        return start < bookedEnd && end > bookedStart;
+                    });
+                } catch (error) {
+                    console.error('Lỗi khi kiểm tra khung giờ:', error);
+                    return true; // Giả định có xung đột nếu lỗi
+                }
             }
 
-            if (filteredSanList.length === 0) {
-                container.innerHTML = '<p>Không tìm thấy sân phù hợp.</p>';
-                return;
-            }
+            // Hàm tạo giao diện danh sách sân
+            function createSanList() {
+                const container = document.getElementById('san-list');
+                const loaiSan = parseInt(document.getElementById('loai-san').value);
+                container.innerHTML = '';
 
-            filteredSanList.forEach(san => {
-                const card = document.createElement('div');
-                card.className = 'san-card';
-                card.innerHTML = `
-                        <img src="/static/asset/${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 150px; object-fit: cover;">
+                let filteredSanList = sanList;
+                if (loaiSan !== 0) {
+                    filteredSanList = sanList.filter(san => parseInt(san.CoSan) === loaiSan);
+                }
+
+                if (filteredSanList.length === 0) {
+                    container.innerHTML = '<p>Không tìm thấy sân phù hợp.</p>';
+                    return;
+                }
+
+                filteredSanList.forEach(san => {
+                    const card = document.createElement('div');
+                    card.className = 'san-card';
+                    card.innerHTML = `
+                        <img src="${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 150px; object-fit: cover;">
                         <h3>Sân ${san.IdSan} (${san.CoSan} người)</h3>
                         <p>Giá: ${san.GiaSan} VNĐ/giờ</p>
                         <p>Địa chỉ: ${san.DiaChi}</p>
                         <p>Trạng thái: ${san.TrangThai === 1 ? 'Còn trống' : 'Đã đặt'}</p>
                     `;
-                card.addEventListener('click', () => showBookingModal(san));
-                container.appendChild(card);
-            });
-        }
+                    card.addEventListener('click', () => showBookingModal(san));
+                    container.appendChild(card);
+                });
+            }
 
-        // Hàm hiển thị modal đặt sân
-        function showBookingModal(san) {
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            const escapedDiaChi = san.DiaChi.replace(/'/g, "\\'").replace(/"/g, '\\"');
-            modal.innerHTML = `
+            // Hàm hiển thị modal đặt sân
+            function showBookingModal(san) {
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                const escapedDiaChi = san.DiaChi.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                modal.innerHTML = `
                     <div class="modal-content">
                         <span class="close-btn" onclick="this.parentElement.parentElement.remove()">×</span>
-                        <img src="/static/asset/${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 200px; object-fit: cover;">
+                        <img src="${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 200px; object-fit: cover;">
                         <h3>Sân ${san.IdSan} - ${san.CoSan} người</h3>
                         <p>Mô tả: ${san.MoTa}</p>
                         <label>Thời gian bắt đầu: <input type="time" id="start-time" required></label><br>
                         <label>Thời gian kết thúc: <input type="time" id="end-time" required></label><br>
+                        <label>Phương thức thanh toán: <select id="phuong-thuc">
+                            <option value="Chuyển khoản">Chuyển khoản</option>
+                            <option value="Tiền mặt">Tiền mặt</option>
+                        </select></label><br>
                         <p>Thành tiền: <span id="total-cost">0 VNĐ</span></p>
+                        <div id="qr-code" style="display: none;">
+                            <p>Quét mã QR để thanh toán (Chuyển khoản):</p>
+                            <img class="qr-code" src="" alt="QR Code">
+                        </div>
                         <button onclick="confirmBooking(${san.IdSan}, '${escapedDiaChi}', ${san.CoSan}, ${san.GiaSan}, ${PID})">Xác nhận</button>
                         <button onclick="this.parentElement.parentElement.remove()">Hủy</button>
                     </div>
                 `;
-            document.body.appendChild(modal);
+                document.body.appendChild(modal);
 
-            const startTime = document.getElementById('start-time');
-            const endTime = document.getElementById('end-time');
-            const totalCost = document.getElementById('total-cost');
+                const startTime = document.getElementById('start-time');
+                const endTime = document.getElementById('end-time');
+                const totalCost = document.getElementById('total-cost');
+                const phuongThuc = document.getElementById('phuong-thuc');
+                const qrCodeDiv = document.getElementById('qr-code');
+                const qrCodeImg = qrCodeDiv.querySelector('.qr-code');
 
-            [startTime, endTime].forEach(input => {
-                input.addEventListener('change', () => {
-                    const start = new Date(`1970-01-01T${startTime.value}:00`);
-                    const end = new Date(`1970-01-01T${endTime.value}:00`);
-                    if (start < end) {
-                        const diffMs = end - start;
-                        const diffHours = diffMs / (1000 * 60 * 60);
-                        const cost = diffHours * san.GiaSan;
-                        totalCost.textContent = `${cost.toFixed(0)} VNĐ`;
+                [startTime, endTime].forEach(input => {
+                    input.addEventListener('change', () => {
+                        const start = new Date(`1970-01-01T${startTime.value}:00`);
+                        const end = new Date(`1970-01-01T${endTime.value}:00`);
+                        if (start < end) {
+                            const diffMs = end - start;
+                            const diffHours = diffMs / (1000 * 60 * 60);
+                            const cost = diffHours * san.GiaSan;
+                            totalCost.textContent = `${cost.toFixed(0)} VNĐ`;
+                        } else {
+                            totalCost.textContent = '0 VNĐ';
+                        }
+                    });
+                });
+
+                phuongThuc.addEventListener('change', () => {
+                    if (phuongThuc.value === 'Chuyển khoản' && totalCost.textContent !== '0 VNĐ') {
+                        const amount = parseFloat(totalCost.textContent.replace(' VNĐ', '')) || 0;
+                        fetch(`/generate-qr?amount=${amount}&sanId=${san.IdSan}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success && data.qrUrl) {
+                                    qrCodeImg.src = data.qrUrl;
+                                    qrCodeDiv.style.display = 'block';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Lỗi khi tạo QR code:', error);
+                                qrCodeDiv.style.display = 'none';
+                            });
                     } else {
-                        totalCost.textContent = '0 VNĐ';
+                        qrCodeDiv.style.display = 'none';
                     }
                 });
-            });
-        }
-
-        // Hàm xác nhận đặt sân
-        function confirmBooking(sanId, diaChi, coSan, giaSan, userId) {
-            const startTime = document.getElementById('start-time').value;
-            const endTime = document.getElementById('end-time').value;
-            const ngayDat = document.getElementById('ngay-dat').value;
-            const totalCost = parseFloat(document.getElementById('total-cost').textContent.replace(' VNĐ', '')) || 0;
-
-            if (!startTime || !endTime || !ngayDat || totalCost === 0) {
-                alert('Vui lòng nhập đầy đủ thời gian và đảm bảo thành tiền không phải 0.');
-                return;
             }
 
-            const start = new Date(`1970-01-01T${startTime}:00`);
-            const end = new Date(`1970-01-01T${endTime}:00`);
-            if (start >= end) {
-                alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
-                return;
-            }
+            // Hàm xác nhận đặt sân
+            async function confirmBooking(sanId, diaChi, coSan, giaSan, userId) {
+                const startTime = document.getElementById('start-time').value;
+                const endTime = document.getElementById('end-time').value;
+                const ngayDat = document.getElementById('ngay-dat').value;
+                const phuongThuc = document.getElementById('phuong-thuc').value;
+                const totalCost = parseFloat(document.getElementById('total-cost').textContent.replace(' VNĐ', '')) || 0;
 
-            if (confirm(`Xác nhận đặt Sân ${sanId} từ ${startTime} đến ${endTime} vào ${ngayDat}?`)) {
-                const khungGio = `${startTime}-${endTime}`;
-                const bookingData = {
-                    Ngay: ngayDat,
-                    TongTien: totalCost,
-                    PhuongThuc: null, // Có thể để NULL hoặc thêm logic chọn phương thức
-                    TrangThai: "Chờ xác nhận",
-                    IdNhanVien: null, // Có thể để NULL
-                    IdNguoiDung: userId
-                };
+                if (!startTime || !endTime || !ngayDat || totalCost === 0 || !phuongThuc) {
+                    alert('Vui lòng nhập đầy đủ thông tin và chọn phương thức thanh toán.');
+                    return;
+                }
 
-                fetch(`/user/${userId}/dat_san/${sanId}/ngay/${ngayDat}/khung_gio/${khungGio}/gia/${totalCost}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bookingData)
-                })
-                    .then(response => response.json())
-                    .then(data => {
+                const start = new Date(`1970-01-01T${startTime}:00`);
+                const end = new Date(`1970-01-01T${endTime}:00`);
+                if (start >= end) {
+                    alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
+                    return;
+                }
+
+                const hasConflict = await checkTimeConflict(sanId, ngayDat, startTime, endTime);
+                if (hasConflict) {
+                    alert('Khung giờ này đã được đặt. Vui lòng chọn khung giờ khác.');
+                    return;
+                }
+
+                if (confirm(`Xác nhận đặt Sân ${sanId} từ ${startTime} đến ${endTime} vào ${ngayDat} với phương thức ${phuongThuc}?`)) {
+                    const khungGio = `${startTime}-${endTime}`;
+                    const bookingData = {
+                        Ngay: ngayDat,
+                        TongTien: totalCost,
+                        PhuongThuc: phuongThuc,
+                        TrangThai: "Chờ xác nhận",
+                        IdNhanVien: null,
+                        IdNguoiDung: userId,
+                        IdSan: sanId,
+                        KhungGio: khungGio
+                    };
+
+                    try {
+                        const response = await fetch(`/user/${userId}/dat_san/${sanId}/ngay/${ngayDat}/khung_gio/${khungGio}/gia/${totalCost}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(bookingData)
+                        });
+                        const data = await response.json();
                         if (data.success) {
-                            alert('Đặt sân thành công! Thông tin đã được lưu.');
-                            const currentModal = document.querySelector('.modal');
-                            if (currentModal) currentModal.remove();
-                            // Chuyển hướng đến trang hóa đơn hoặc hiển thị thông tin
-                            window.location.href = '/hoa-don';
+                            alert('Đặt sân thành công! Hóa đơn đã được tạo với trạng thái Chờ xác nhận.');
+                            document.querySelector('.modal').remove();
+                            window.location.href = `/user/${userId}/hoa-don`;
                         } else {
                             alert(`Lỗi khi đặt sân: ${data.message || 'Không xác định'}`);
                         }
-                    })
-                    .catch(error => {
+                    } catch (error) {
                         console.error('Lỗi khi gửi yêu cầu:', error);
                         alert('Lỗi khi gửi yêu cầu đặt sân. Vui lòng thử lại.');
-                    });
+                    }
+                }
             }
-        }
 
-        // Khởi tạo giao diện
-        createSanList();
+            // Khởi tạo giao diện
+            createSanList();
 
-        // Cập nhật khi thay đổi ngày hoặc loại sân
-        document.getElementById('ngay-dat').addEventListener('change', createSanList);
-        document.getElementById('loai-san').addEventListener('change', createSanList);
+            // Cập nhật khi thay đổi ngày hoặc loại sân
+            document.getElementById('ngay-dat').addEventListener('change', createSanList);
+            document.getElementById('loai-san').addEventListener('change', createSanList);
         });
     </script>
 </body>
-
 </html>

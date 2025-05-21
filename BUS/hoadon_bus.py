@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Dict, List
 from DAO.hoadon_dao import HoaDonDAO
+
 class HoaDonBUS:
     def __init__(self, dao: HoaDonDAO = None):
         self.dao = dao if dao else HoaDonDAO()
@@ -36,10 +37,10 @@ class HoaDonBUS:
     def timkiemHD(self, key:str) -> List[Dict]:
         return self.dao.timkiemHD(key)
     
-    def editState(self,IdHoaDon:int,State:str)->Dict:
-        return self.dao.editState(IdHoaDon,State)
+    def editState(self, IdHoaDon:int, State:str)->Dict:
+        return self.dao.editState(IdHoaDon, State)
     
-    def addHD(self,Data:Dict)->Dict:
+    def addHD(self, Data:Dict)->Dict:
         return self.dao.add(Data)
     
     def getMonthlyIncome(self)->List[Dict]:
@@ -49,7 +50,7 @@ class HoaDonBUS:
             data[x] = self.dao.getMonthly(x)
         return data
     
-    def getMonthIncome(self,month:int)-> float:
+    def getMonthIncome(self, month:int)-> float:
         return self.dao.getMonthly(month)
     
     def getTabs(self)->List[Dict]:

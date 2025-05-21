@@ -106,3 +106,23 @@ class TaiKhoanBUS:
     
     def status(self,data:Dict) -> Dict:
         return self.accDao.status(data)
+    
+    def updateAcc2(self, data_list: List[Dict]) -> Dict:
+        success_list = []
+        failed_list = []
+
+        for data in data_list:
+            result = self.accDao.update(data)
+            if result.get("success"):
+                success_list.append(data.get("idTaiKhoan"))
+            else:
+                failed_list.append({
+                    "idTaiKhoan": data.get("idTaiKhoan"),
+                    "error": result.get("error", "Lỗi không xác định")
+                })
+
+        return {
+            "success": True,
+            "updated": success_list,
+            "failed": failed_list
+        }

@@ -5,24 +5,34 @@ from DAO.db_config import get_connection
 
 class NhanVienDAO:
     def __init__(self, conn=None):
-        """Khởi tạo DAO với kết nối database tùy chọn"""
         self.conn = conn if conn is not None else get_connection()
 
     def lay_danh_sach_nhan_vien(self) -> List[Dict]:
-        # lay danh sach tu dtb
         try:
             cursor = self.conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM nhanvien")
             return cursor.fetchall()
         except Error as e:
-            print(f"[DAO ERROR] lỗi khi lấy danh sách {e}")
+            print(f"[DAO ERROR] Lỗi khi lấy danh sách: {e}")
             return []
-    
+        finally:
+            cursor.close()
+
+    def lay_nhan_vien_theo_id(self, id_nhan_vien: int) -> Dict:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM nhanvien WHERE IdNhanVien = %s", (id_nhan_vien,))
+            return cursor.fetchone() or {}
+        except Error as e:
+            print(f"[DAO ERROR] Lỗi khi lấy nhân viên theo ID: {e}")
+            return {}
+        finally:
+            cursor.close()
+
     def them_nhan_vien(self, nhan_vien_data: Dict) -> Dict:
-        print(nhan_vien_data)
         required_fields = [
             'HoTen', 'NgaySinh', 'SDT', 'DiaChi', 'IdTaiKhoan', 'luong', 'chuc_vu', 'vi_tri',
-            'ngayvaolam', 'mota', 'hopdong', 'phucap', 'cccd', 'gioitinh', 'nganhang', 'hoatdong'
+            'ngayvaolam', 'hopdong', 'cccd', 'gioitinh', 'hoatdong'
         ]
         missing_fields = [field for field in required_fields if not nhan_vien_data.get(field)]
         if missing_fields:
@@ -43,14 +53,14 @@ class NhanVienDAO:
                     nhan_vien_data['NgaySinh'],
                     nhan_vien_data['SDT'],
                     nhan_vien_data['DiaChi'],
-                    nhan_vien_data['IdTaiKhoan'],  
+                    nhan_vien_data['IdTaiKhoan'],
                     nhan_vien_data['luong'],
                     nhan_vien_data['chuc_vu'],
-                    nhan_vien_data['vi_tri'],                     
+                    nhan_vien_data['vi_tri'],
                     nhan_vien_data['ngayvaolam'],
-                    nhan_vien_data.get('mota', ''), 
-                    nhan_vien_data['hopdong'], 
-                    nhan_vien_data.get('phucap', 0),               
+                    nhan_vien_data.get('mota', ''),
+                    nhan_vien_data['hopdong'],
+                    nhan_vien_data.get('phucap', 0),
                     nhan_vien_data['cccd'],
                     nhan_vien_data['gioitinh'],
                     nhan_vien_data.get('nganhang', ''),
@@ -66,15 +76,26 @@ class NhanVienDAO:
             return {"success": False, "error": str(e)}
         finally:
             cursor.close()
-    
+
     def sua_nhan_vien(self, id_nhan_vien: int, nhan_vien_data: Dict) -> Dict:
-        """Sửa thông tin nhân viên"""
+        required_fields = [
+            'HoTen', 'NgaySinh', 'SDT', 'DiaChi', 'IdTaiKhoan', 'luong', 'chuc_vu', 'vi_tri',
+            'ngayvaolam', 'hopdong', 'cccd', 'gioitinh', 'hoatdong'
+        ]
+        missing_fields = [field for field in required_fields if not nhan_vien_data.get(field)]
+        if missing_fields:
+            print(f"Thiếu trường bắt buộc khi sửa nhân viên (DAO): {missing_fields}")
+            return {"success": False, "error": f"Thiếu thông tin bắt buộc: {', '.join(missing_fields)}"}
+
         try:
             cursor = self.conn.cursor()
             cursor.execute(
                 """
                 UPDATE nhanvien
-                SET HoTen = %s, NgaySinh = %s, SDT = %s, DiaChi = %s, IdTaiKhoan = %s
+                SET HoTen = %s, NgaySinh = %s, SDT = %s, DiaChi = %s, IdTaiKhoan = %s,
+                    luong = %s, chuc_vu = %s, vi_tri = %s, ngayvaolam = %s, mota = %s,
+                    hopdong = %s, phucap = %s, cccd = %s, gioitinh = %s, nganhang = %s,
+                    hoatdong = %s
                 WHERE IdNhanVien = %s
                 """,
                 (
@@ -83,6 +104,17 @@ class NhanVienDAO:
                     nhan_vien_data['SDT'],
                     nhan_vien_data['DiaChi'],
                     nhan_vien_data['IdTaiKhoan'],
+                    nhan_vien_data['luong'],
+                    nhan_vien_data['chuc_vu'],
+                    nhan_vien_data['vi_tri'],
+                    nhan_vien_data['ngayvaolam'],
+                    nhan_vien_data.get('mota', ''),
+                    nhan_vien_data['hopdong'],
+                    nhan_vien_data.get('phucap', 0),
+                    nhan_vien_data['cccd'],
+                    nhan_vien_data['gioitinh'],
+                    nhan_vien_data.get('nganhang', ''),
+                    nhan_vien_data['hoatdong'],
                     id_nhan_vien
                 )
             )
@@ -96,7 +128,6 @@ class NhanVienDAO:
             cursor.close()
 
     def xoa_nhan_vien(self, id_nhan_vien: int) -> Dict:
-        """Xóa nhân viên theo ID"""
         try:
             cursor = self.conn.cursor()
             cursor.execute("DELETE FROM nhanvien WHERE IdNhanVien = %s", (id_nhan_vien,))
@@ -110,7 +141,6 @@ class NhanVienDAO:
             cursor.close()
 
     def __del__(self):
-        """Đóng kết nối khi đối tượng bị hủy"""
         if hasattr(self, 'conn') and self.conn is not None and self.conn.is_connected():
             try:
                 self.conn.close()

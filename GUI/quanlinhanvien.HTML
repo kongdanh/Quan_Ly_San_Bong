@@ -41,7 +41,6 @@
 
         .left-menu li {
             padding: 0;
-            /* Remove padding from li */
             cursor: pointer;
             transition: background-color 0.3s;
         }
@@ -216,12 +215,16 @@
 
         .action-icons {
             display: flex;
+            flex-direction: row;
             gap: 10px;
+            align-items: center;
         }
 
         .action-icons span {
             cursor: pointer;
             font-size: 16px;
+            display: inline-block;
+            /* Đảm bảo span không bị block */
         }
 
         .avatar {
@@ -299,7 +302,7 @@
             font-weight: 500;
         }
 
-        /* Thêm vào phần style hiện có */
+        /* Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -479,9 +482,7 @@
                     <select class="btn btn-outline">
                         <option>Tất cả bộ phận</option>
                         <option>Quản lý</option>
-                        <option>Nhân viên sân</option>
-                        <option>Lễ tân</option>
-                        <option>Bảo vệ</option>
+                        <option>Nhân viên</option>
                     </select>
                     <select class="btn btn-outline">
                         <option>Tất cả trạng thái</option>
@@ -521,10 +522,11 @@
                             <p><span class="status status-active">{{ nv.hoatdong if nv.hoatdong else '' }}</span></p>
                         </td>
                         <td>
-                            <span id="edit" style="cursor: pointer;">✏️</span>
-                            <span id="view" style="cursor: pointer;"
-                                onclick="thongtinv('{{ nv.IdNhanVien }}')">👁️</span>
-                            <span id="delete" style="cursor: pointer;">🗑️</span>
+                            <div class="action-icons">
+                                <span onclick="editEmployee('{{ nv.IdNhanVien }}')">✏️</span>
+                                <span onclick="thongtinv('{{ nv.IdNhanVien }}')">👁️</span>
+                                <span onclick="deleteEmployee('{{ nv.IdNhanVien }}')">🗑️</span>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -533,333 +535,405 @@
         </div>
 
         <div id="xemthongtin"></div>
-        <script>
+    </div>
 
-            // Nếu biến đã tồn tại:
-            const employeeData = JSON.parse('{{ danh_sach_nhan_vien | tojson | safe }}');
-            function themnv() {
-                // Tạo modal overlay
-                const modalOverlay = document.createElement('div');
-                modalOverlay.className = 'modal-overlay';
-                modalOverlay.id = 'employeeModal';
+    <script>
+        const employeeData = JSON.parse('{{ danh_sach_nhan_vien | tojson | safe }}');
 
-                // Tạo nội dung modal
-                modalOverlay.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h2>Thêm nhân viên mới</h2>
-                            <button class="close-btn" onclick="closeModal()">×</button>
+        function themnv() {
+            showEmployeeModal('Thêm nhân viên mới', '/them-nhan-vien', {});
+        }
+
+        function editEmployee(idNhanVien) {
+            const nv = employeeData.find(nv => nv.IdNhanVien == idNhanVien);
+            if (!nv) {
+                alert('Không tìm thấy thông tin nhân viên');
+                return;
+            }
+            // Định dạng ngày cho input type="date"
+            nv.NgaySinh = nv.NgaySinh ? new Date(nv.NgaySinh).toISOString().split('T')[0] : '';
+            nv.ngayvaolam = nv.ngayvaolam ? new Date(nv.ngayvaolam).toISOString().split('T')[0] : '';
+            nv.ngay_tao = nv.ngay_tao ? new Date(nv.ngay_tao).toISOString().split('T')[0] : '2025-04-25';
+            showEmployeeModal('Chỉnh sửa nhân viên', `/sua-nhan-vien/${idNhanVien}`, nv);
+        }
+
+        function showEmployeeModal(title, actionUrl, employee = {}) {
+            const vi_tri_value = employee.vi_tri || '';
+            const isOtherPosition = ![
+                'Nhân viên lễ tân / tiếp tân', 'Nhân viên kỹ thuật / bảo trì', 'Nhân viên giữ xe',
+                'Nhân viên vệ sinh', 'Nhân viên thu ngân', 'Nhân viên chăm sóc khách hàng',
+                'Nhân viên phục vụ', 'Nhân viên quản lý đặt sân', 'Nhân viên an ninh / bảo vệ',
+                'Nhân viên marketing / truyền thông'
+            ].includes(vi_tri_value);
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.id = 'employeeModal';
+
+            modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>${title}</h2>
+                    <button class="close-btn" onclick="closeModal()">×</button>
+                </div>
+                <form id="employeeForm" action="${actionUrl}">
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="HoTen">Họ tên *</label>
+                                <input type="text" id="HoTen" name="HoTen" value="${employee.HoTen || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="NgaySinh">Ngày sinh *</label>
+                                <input type="date" id="NgaySinh" name="NgaySinh" value="${employee.NgaySinh || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="SDT">Số điện thoại *</label>
+                                <input type="tel" id="SDT" name="SDT" value="${employee.SDT || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="DiaChi">Địa chỉ *</label>
+                                <input type="text" id="DiaChi" name="DiaChi" value="${employee.DiaChi || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cccd">CCCD/CMND *</label>
+                                <input type="text" id="cccd" name="cccd" value="${employee.cccd || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="gioitinh">Giới tính *</label>
+                                <select id="gioitinh" name="gioitinh" required>
+                                    <option value="Nam" ${employee.gioitinh === 'Nam' ? 'selected' : ''}>Nam</option>
+                                    <option value="Nữ" ${employee.gioitinh === 'Nữ' ? 'selected' : ''}>Nữ</option>
+                                </select>
+                            </div>
                         </div>
-                        
-                        <form id="addEmployeeForm">
-                            <div class="form-grid">
-                                <!-- Cột 1 -->
-                                <div>
-                                    <div class="form-group">
-                                        <label for="HoTen">Họ tên *</label>
-                                        <input type="text" id="HoTen" name="HoTen" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="NgaySinh">Ngày sinh *</label>
-                                        <input type="date" id="NgaySinh" name="NgaySinh" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="SDT">Số điện thoại *</label>
-                                        <input type="tel" id="SDT" name="SDT" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="DiaChi">Địa chỉ *</label>
-                                        <input type="text" id="DiaChi" name="DiaChi" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="cccd">CCCD/CMND *</label>
-                                        <input type="text" id="cccd" name="cccd" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="gioitinh">Giới tính *</label>
-                                        <select id="gioitinh" name="gioitinh" required>
-                                            <option value="Nam">Nam</option>
-                                            <option value="Nữ">Nữ</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <!-- Cột 2 -->
-                                <div>
-                                    <div class="form-group">
-                                        <label for="chuc_vu">Chức vụ *</label>
-                                        <select id="chuc_vu" name="chuc_vu" required>
-                                            <option value="Nhân viên" selected>Nhân viên</option>
-                                            <option value="Quản lý">Quản lý</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="vi_tri">Vị trí *</label>
-                                        <select id="vi_tri" name="vi_tri" required onchange="toggleOtherPosition()">
-                                            <option value="Nhân viên lễ tân / tiếp tân">Nhân viên lễ tân / tiếp tân</option>
-                                            <option value="Nhân viên kỹ thuật / bảo trì">Nhân viên kỹ thuật / bảo trì</option>
-                                            <option value="Nhân viên giữ xe">Nhân viên giữ xe</option>
-                                            <option value="Nhân viên vệ sinh">Nhân viên vệ sinh</option>
-                                            <option value="Nhân viên thu ngân">Nhân viên thu ngân</option>
-                                            <option value="Nhân viên chăm sóc khách hàng">Nhân viên chăm sóc khách hàng</option>
-                                            <option value="Nhân viên phục vụ">Nhân viên phục vụ</option>
-                                            <option value="Nhân viên quản lý đặt sân">Nhân viên quản lý đặt sân</option>
-                                            <option value="Nhân viên an ninh / bảo vệ">Nhân viên an ninh / bảo vệ</option>
-                                            <option value="Nhân viên marketing / truyền thông">Nhân viên marketing / truyền thông</option>
-                                            <option value="Khác">Khác</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group" id="otherPositionGroup" style="display: none;">
-                                        <label for="vi_tri_khac">Vị trí khác *</label>
-                                        <input type="text" id="vi_tri_khac" name="vi_tri_khac">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="ten_tai_khoan">Tên tài khoản *</label>
-                                        <input type="text" id="ten_tai_khoan" name="ten_tai_khoan" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="mat_khau">Mật khẩu *</label>
-                                        <input type="text" id="mat_khau" name="mat_khau" required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="ngay_tao">Ngày tạo *</label>
-                                        <input type="date" id="ngay_tao" name="ngay_tao" value="2025-04-25" readonly required>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="nhom_quyen">Nhóm quyền *</label>
-                                        <select id="nhom_quyen" name="nhom_quyen" required>
-                                            <option value="Nhân viên" selected>Nhân viên</option>
-                                            <option value="Quản lý">Quản lý</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="ngayvaolam">Ngày vào làm *</label>
-                                        <input type="date" id="ngayvaolam" name="ngayvaolam" required min="2025-04-25">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="hopdong">Hợp đồng *</label>
-                                        <select id="hopdong" name="hopdong" required>
-                                            <option value="Dài hạn">Dài hạn</option>
-                                            <option value="Trung hạn">Trung hạn</option>
-                                            <option value="Ngắn hạn">Ngắn hạn</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="hoatdong">Trạng thái *</label>
-                                        <select id="hoatdong" name="hoatdong" required>
-                                            <option value="Hoạt động" selected>Hoạt động</option>
-                                            <option value="Nghỉ phép">Nghỉ phép</option>
-                                            <option value="Nghỉ việc">Nghỉ việc</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <!-- Full width -->
-                                <div class="form-group full-width">
-                                    <label for="mota">Mô tả</label>
-                                    <textarea id="mota" name="mota" placeholder="Nhập mô tả về nhân viên..."></textarea>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="luong">Lương cơ bản *</label>
-                                    <input type="number" id="luong" name="luong" required>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="phucap">Phụ cấp</label>
-                                    <input type="number" id="phucap" name="phucap" value="0">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="nganhang">Ngân hàng</label>
-                                    <input type="text" id="nganhang" name="nganhang" placeholder="Tên ngân hàng - Số tài khoản">
-                                </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="chuc_vu">Chức vụ *</label>
+                                <select id="chuc_vu" name="chuc_vu" required>
+                                    <option value="Nhân viên" ${employee.chuc_vu === 'Nhân viên' ? 'selected' : ''}>Nhân viên</option>
+                                    <option value="Quản lý" ${employee.chuc_vu === 'Quản lý' ? 'selected' : ''}>Quản lý</option>
+                                </select>
                             </div>
-                            
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-outline" onclick="closeModal()">Hủy</button>
-                                <button type="button" class="btn btn-primary" onclick="submitEmployeeForm()">Lưu thông tin</button>
+                            <div class="form-group">
+                                <label for="vi_tri">Vị trí *</label>
+                                <select id="vi_tri" name="vi_tri" required onchange="toggleOtherPosition()">
+                                    <option value="Nhân viên lễ tân / tiếp tân" ${vi_tri_value === 'Nhân viên lễ tân / tiếp tân' ? 'selected' : ''}>Nhân viên lễ tân / tiếp tân</option>
+                                    <option value="Nhân viên kỹ thuật / bảo trì" ${vi_tri_value === 'Nhân viên kỹ thuật / bảo trì' ? 'selected' : ''}>Nhân viên kỹ thuật / bảo trì</option>
+                                    <option value="Nhân viên giữ xe" ${vi_tri_value === 'Nhân viên giữ xe' ? 'selected' : ''}>Nhân viên giữ xe</option>
+                                    <option value="Nhân viên vệ sinh" ${vi_tri_value === 'Nhân viên vệ sinh' ? 'selected' : ''}>Nhân viên vệ sinh</option>
+                                    <option value="Nhân viên thu ngân" ${vi_tri_value === 'Nhân viên thu ngân' ? 'selected' : ''}>Nhân viên thu ngân</option>
+                                    <option value="Nhân viên chăm sóc khách hàng" ${vi_tri_value === 'Nhân viên chăm sóc khách hàng' ? 'selected' : ''}>Nhân viên chăm sóc khách hàng</option>
+                                    <option value="Nhân viên phục vụ" ${vi_tri_value === 'Nhân viên phục vụ' ? 'selected' : ''}>Nhân viên phục vụ</option>
+                                    <option value="Nhân viên quản lý đặt sân" ${vi_tri_value === 'Nhân viên quản lý đặt sân' ? 'selected' : ''}>Nhân viên quản lý đặt sân</option>
+                                    <option value="Nhân viên an ninh / bảo vệ" ${vi_tri_value === 'Nhân viên an ninh / bảo vệ' ? 'selected' : ''}>Nhân viên an ninh / bảo vệ</option>
+                                    <option value="Nhân viên marketing / truyền thông" ${vi_tri_value === 'Nhân viên marketing / truyền thông' ? 'selected' : ''}>Nhân viên marketing / truyền thông</option>
+                                    <option value="Khác" ${isOtherPosition ? 'selected' : ''}>Khác</option>
+                                </select>
                             </div>
-                        </form>
+                            <div class="form-group" id="otherPositionGroup" style="display: ${isOtherPosition ? 'block' : 'none'};">
+                                <label for="vi_tri_khac">Vị trí khác *</label>
+                                <input type="text" id="vi_tri_khac" name="vi_tri_khac" value="${isOtherPosition ? vi_tri_value : ''}" ${isOtherPosition ? 'required' : ''}>
+                            </div>
+                            <div class="form-group">
+                                <label for="ten_tai_khoan">Tên tài khoản *</label>
+                                <input type="text" id="ten_tai_khoan" name="ten_tai_khoan" value="${employee.ten_tai_khoan || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mat_khau">Mật khẩu *</label>
+                                <input type="text" id="mat_khau" name="mat_khau" value="${employee.mat_khau || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ngay_tao">Ngày tạo *</label>
+                                <input type="date" id="ngay_tao" name="ngay_tao" value="${employee.ngay_tao || '2025-04-25'}" readonly required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nhom_quyen">Nhóm quyền *</label>
+                                <select id="nhom_quyen" name="nhom_quyen" required>
+                                    <option value="Nhân viên" ${employee.nhom_quyen === 'Nhân viên' ? 'selected' : ''}>Nhân viên</option>
+                                    <option value="Quản lý" ${employee.nhom_quyen === 'Quản lý' ? 'selected' : ''}>Quản lý</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ngayvaolam">Ngày vào làm *</label>
+                                <input type="date" id="ngayvaolam" name="ngayvaolam" value="${employee.ngayvaolam || ''}" required">
+                            </div>
+                            <div class="form-group">
+                                <label for="hopdong">Hợp đồng *</label>
+                                <select id="hopdong" name="hopdong" required>
+                                    <option value="Dài hạn" ${employee.hopdong === 'Dài hạn' ? 'selected' : ''}>Dài hạn</option>
+                                    <option value="Trung hạn" ${employee.hopdong === 'Trung hạn' ? 'selected' : ''}>Trung hạn</option>
+                                    <option value="Ngắn hạn" ${employee.hopdong === 'Ngắn hạn' ? 'selected' : ''}>Ngắn hạn</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="hoatdong">Trạng thái *</label>
+                                <select id="hoatdong" name="hoatdong" required>
+                                    <option value="Hoạt động" ${employee.hoatdong === 'Hoạt động' ? 'selected' : ''}>Hoạt động</option>
+                                    <option value="Nghỉ phép" ${employee.hoatdong === 'Nghỉ phép' ? 'selected' : ''}>Nghỉ phép</option>
+                                    <option value="Nghỉ việc" ${employee.hoatdong === 'Nghỉ việc' ? 'selected' : ''}>Nghỉ việc</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="mota">Mô tả</label>
+                            <textarea id="mota" name="mota" placeholder="Nhập mô tả về nhân viên...">${employee.mota || ''}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="luong">Lương cơ bản *</label>
+                            <input type="number" id="luong" name="luong" value="${employee.luong || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phucap">Phụ cấp</label>
+                            <input type="number" id="phucap" name="phucap" value="${employee.phucap || '0'}">
+                        </div>
+                        <div class="form-group">
+                            <label for="nganhang">Ngân hàng</label>
+                            <input type="text" id="nganhang" name="nganhang" value="${employee.nganhang || ''}" placeholder="Tên ngân hàng - Số tài khoản">
+                        </div>
+                        <input type="hidden" id="IdTaiKhoan" name="IdTaiKhoan" value="${employee.IdTaiKhoan || '0'}">
                     </div>
-                `;
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeModal()">Hủy</button>
+                        <button type="button" class="btn btn-primary" onclick="submitEmployeeForm()">Lưu thông tin</button>
+                    </div>
+                </form>
+            </div>
+        `;
 
-                document.body.appendChild(modalOverlay);
+            document.body.appendChild(modalOverlay);
+            document.body.style.overflow = 'hidden';
+        }
 
-                // Ngăn chặn scroll khi modal mở
-                document.body.style.overflow = 'hidden';
+        function closeModal() {
+            const modal = document.getElementById('employeeModal');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function toggleOtherPosition() {
+            const positionSelect = document.getElementById('vi_tri');
+            const otherPositionGroup = document.getElementById('otherPositionGroup');
+            const otherPositionInput = document.getElementById('vi_tri_khac');
+
+            if (positionSelect.value === 'Khác') {
+                otherPositionGroup.style.display = 'block';
+                otherPositionInput.required = true;
+            } else {
+                otherPositionGroup.style.display = 'none';
+                otherPositionInput.required = false;
+            }
+        }
+
+        function submitEmployeeForm() {
+            const form = document.getElementById('employeeForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
             }
 
-            function closeModal() {
-                const modal = document.getElementById('employeeModal');
-                if (modal) {
-                    modal.remove();
-                    document.body.style.overflow = 'auto';
-                }
+            const formData = new FormData(form);
+            if (formData.get('vi_tri') === 'Khác') {
+                formData.set('vi_tri', formData.get('vi_tri_khac'));
+                formData.delete('vi_tri_khac');
             }
 
-            function toggleOtherPosition() {
-                const positionSelect = document.getElementById('vi_tri');
-                const otherPositionGroup = document.getElementById('otherPositionGroup');
-                const otherPositionInput = document.getElementById('vi_tri_khac');
-
-                if (positionSelect.value === 'Khác') {
-                    otherPositionGroup.style.display = 'block';
-                    otherPositionInput.required = true;
-                } else {
-                    otherPositionGroup.style.display = 'none';
-                    otherPositionInput.required = false;
-                }
-            }
-
-            function submitEmployeeForm() {
-                const form = document.getElementById('addEmployeeForm');
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                const formData = new FormData(form);
-
-                // Xử lý vị trí nếu chọn "Khác"
-                if (formData.get('vi_tri') === 'Khác') {
-                    formData.set('vi_tri', formData.get('vi_tri_khac'));
-                    formData.delete('vi_tri_khac');
-                }
-
-                // Thêm IdTaiKhoan
-                formData.set('IdTaiKhoan', '0');
-
-                // Gửi dữ liệu đến Flask endpoint
-                fetch('/them-nhan-vien', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        // Không cần parse JSON vì Flask trả về redirect
-                        return response;
-                    })
-                    .then(() => {
-                        console.log('Thêm nhân viên thành công');
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Thao tác thành công!');
                         closeModal();
-                        // Redirect sẽ được xử lý bởi trình duyệt do Flask trả về redirect
+                        window.location.reload();
+                    } else {
+                        alert('Lỗi: ' + (data.error || 'Không xác định'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xử lý yêu cầu!');
+                });
+        }
+
+        function deleteEmployee(idNhanVien) {
+            if (confirm(`Bạn có chắc chắn muốn xóa nhân viên ID ${idNhanVien}?`)) {
+                fetch(`/xoa-nhan-vien/${idNhanVien}`, {
+                    method: 'POST'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message || 'Xóa nhân viên thành công!');
+                            window.location.reload();
+                        } else {
+                            alert('Lỗi: ' + (data.error || 'Không xác định'));
+                        }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Có lỗi xảy ra khi thêm nhân viên!');
+                        alert('Có lỗi xảy ra khi xóa nhân viên!');
                     });
-                window.location.reload()
             }
+        }
 
-
-
-            function thongtinv(maNV) {
-                const nv = employeeData.find(nv => nv.IdNhanVien == maNV);
-                const formattedDate = new Date(nv.NgaySinh).toISOString().split('T')[0];
-                const formattedDateNVL = new Date(nv.NgaySinh).toISOString().split('T')[0];
-                const htmlContent = `
-                        <!-- Employee Details -->
-                    <div class="employee-details">
-                        <div class="detail-card">
-                            <h3>Thông tin cá nhân</h3>
-                            <div class="employee-info">
-                                <img src="https://randomuser.me/api/portraits/men/${nv.IdNhanVien}.jpg" alt="Nguyễn Văn A">
-                                <div class="employee-info-text">
-                                    <h4>${nv.HoTen}</h4>
-                                    <p>ID: ${nv.IdNhanVien}</p>
-                                </div>
-                            </div>
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <label>Ngày sinh</label>
-                                    <p>${formattedDate}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Giới tính</label>
-                                    <p>${nv.gioitinh}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Số điện thoại</label>
-                                    <p>${nv.SDT}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Email</label>
-                                    <p>xxxxxxxxxxxx</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Địa chỉ</label>
-                                    <p>${nv.DiaChi}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>CMND/CCCD</label>
-                                    <p>${nv.cccd}</p>
-                                </div>
-                            </div>
+        function thongtinv(maNV) {
+            const nv = employeeData.find(nv => nv.IdNhanVien == maNV);
+            const formattedDate = nv.NgaySinh ? new Date(nv.NgaySinh).toISOString().split('T')[0] : '';
+            const formattedDateNVL = nv.ngayvaolam ? new Date(nv.ngayvaolam).toISOString().split('T')[0] : '';
+            const htmlContent = `
+            <div class="employee-details">
+                <div class="detail-card">
+                    <h3>Thông tin cá nhân</h3>
+                    <div class="employee-info">
+                        <img src="https://randomuser.me/api/portraits/men/${nv.IdNhanVien}.jpg" alt="Nguyễn Văn A">
+                        <div class="employee-info-text">
+                            <h4>${nv.HoTen}</h4>
+                            <p>ID: ${nv.IdNhanVien}</p>
                         </div>
-
-                        <div class="detail-card">
-                            <h3>Thông tin công việc</h3>
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <label>Bộ phận</label>
-                                    <p>${nv.chuc_vu}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Vị trí</label>
-                                    <p>${nv.vi_tri}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Ngày vào làm</label>
-                                    <p>${formattedDateNVL}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Hợp đồng</label>
-                                    <p>${nv.hopdong}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Lương cơ bản</label>
-                                    <p>${nv.luong}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Phụ cấp</label>
-                                    <p>${nv.phucap}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Ngân hàng</label>
-                                    <p>${nv.nganhang}</p>
-                                </div>
-                                <div class="info-item">
-                                    <label>Trạng thái</label>
-                                    <p><span class="status status-active">${nv.hoatdong}</span></p>
-                                </div>
-                            </div>
-
-                            <h3 style="margin-top: 20px;">Ghi chú</h3>
-                            <p style="color: #7f8c8d; font-size: 14px;">${nv.mota}</p>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Ngày sinh</label>
+                            <p>${formattedDate}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Giới tính</label>
+                            <p>${nv.gioitinh}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Số điện thoại</label>
+                            <p>${nv.SDT}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Email</label>
+                            <p>xxxxxxxxxxxx</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Địa chỉ</label>
+                            <p>${nv.DiaChi}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>CMND/CCCD</label>
+                            <p>${nv.cccd}</p>
                         </div>
                     </div>
                 </div>
-                `;
-                document.getElementById("xemthongtin").innerHTML = htmlContent
+                <div class="detail-card">
+                    <h3>Thông tin công việc</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Bộ phận</label>
+                            <p>${nv.chuc_vu}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Vị trí</label>
+                            <p>${nv.vi_tri}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Ngày vào làm</label>
+                            <p>${formattedDateNVL}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Hợp đồng</label>
+                            <p>${nv.hopdong}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Lương cơ bản</label>
+                            <p>${nv.luong}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Phụ cấp</label>
+                            <p>${nv.phucap}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Ngân hàng</label>
+                            <p>${nv.nganhang}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Trạng thái</label>
+                            <p><span class="status status-active">${nv.hoatdong}</span></p>
+                        </div>
+                    </div>
+                    <h3 style="margin-top: 20px;">Ghi chú</h3>
+                    <p style="color: #7f8c8d; font-size: 14px;">${nv.mota}</p>
+                </div>
+            </div>
+        `;
+            document.getElementById("xemthongtin").innerHTML = htmlContent;
+        }
+        // Dữ liệu nhân viên từ server (đã có sẵn)
+        const data1 = JSON.parse('{{ danh_sach_nhan_vien | tojson | safe }}');
+
+        // Lấy tham chiếu các input và select
+        const searchInput = document.querySelector('.search-bar input[type="text"]');
+        const selectBoPhan = document.querySelector('.search-bar select:nth-of-type(1)');
+        const selectTrangThai = document.querySelector('.search-bar select:nth-of-type(2)');
+        const tbody = document.querySelector('.employees-table tbody');
+
+        // Hàm render lại bảng nhân viên dựa trên mảng dữ liệu đầu vào
+        function renderTable(filteredData) {
+            tbody.innerHTML = '';
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Không tìm thấy nhân viên phù hợp</td></tr>`;
+                return;
             }
-        </script>
+            filteredData.forEach(nv => {
+                tbody.innerHTML += `
+                <tr>
+                    <td>${nv.IdNhanVien}</td>
+                    <td>${nv.HoTen}</td>
+                    <td>${nv.chuc_vu || ''}</td>
+                    <td>${nv.vi_tri || ''}</td>
+                    <td>${nv.ngayvaolam || ''}</td>
+                    <td>${nv.luong || ''}</td>
+                    <td><p><span class="status status-active">${nv.hoatdong || ''}</span></p></td>
+                    <td>
+                        <div class="action-icons">
+                            <span onclick="editEmployee('${nv.IdNhanVien}')">✏️</span>
+                            <span onclick="thongtinv('${nv.IdNhanVien}')">👁️</span>
+                            <span onclick="deleteEmployee('${nv.IdNhanVien}')">🗑️</span>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        // Hàm lọc dữ liệu theo điều kiện tìm kiếm và filter
+        function filterEmployees() {
+            const searchText = searchInput.value.trim().toLowerCase();
+            const boPhan = selectBoPhan.value;
+            const trangThai = selectTrangThai.value;
+
+            const filtered = data1.filter(nv => {
+                // Tìm kiếm theo tên
+                const matchName = nv.HoTen.toLowerCase().includes(searchText);
+
+                // Lọc bộ phận (chức vụ)
+                const matchBoPhan = (boPhan === 'Tất cả bộ phận') || (nv.chuc_vu === boPhan);
+
+                // Lọc trạng thái (hoạt động)
+                // Giả sử nv.hoatdong là trạng thái (ví dụ: "Hoạt động", "Nghỉ phép", "Nghỉ việc")
+                const matchTrangThai = (trangThai === 'Tất cả trạng thái') || (nv.hoatdong === trangThai);
+
+                return matchName && matchBoPhan && matchTrangThai;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Gắn sự kiện input và change để lọc khi người dùng thao tác
+        searchInput.addEventListener('input', filterEmployees);
+        selectBoPhan.addEventListener('change', filterEmployees);
+        selectTrangThai.addEventListener('change', filterEmployees);
+
+        // Khởi tạo bảng khi load trang
+        renderTable(data1);
+    </script>
 </body>
 
 </html>
