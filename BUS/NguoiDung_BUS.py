@@ -49,6 +49,35 @@ class NguoiDung_BUS:
         return self.nguoidungDAO.search(key)
     
     def suaNguoiDung(self, data:Dict) -> Dict:
+        oldData = self.timKhachHang(data['IdNguoiDung'])
+        oldData = oldData[0]
+        print("Check old data",flush=True)
+        print(oldData,flush=True)
+        flag = 0
+        sets = ['SDT','Email','TenTaiKhoan']
+        case={
+            'SDT':'Số điện thoại đã tồn tại',
+            'Email':'Email đã tồn tại',
+            'TenTaiKhoan':'Tên tài khoản đã tồn tại'
+        }
+        
+        for x in sets:
+            if data[x] != oldData[x]:
+                flag += 1
+                
+        if flag > 0 and flag < 3:
+            result = self.nguoidungDAO.checkValidation(data,ignore= data['IdNguoiDung'])
+            if result['amount'] > 1:
+                for x in sets:
+                    if data[x] == result[x]:
+                        return {'success':False,'message':case[x]}
+        elif flag == 3:
+            result = self.nguoidungDAO.checkValidation(data)
+            if result is not None:
+                for x in sets:
+                    if data[x] == result[x]:
+                        return {'success':False,'message':case[x]}
+                    
         result = self.taiKhoanBUS.updateAcc(data)
         print(result,flush=True)
         if result['success']:
@@ -58,10 +87,26 @@ class NguoiDung_BUS:
     
     def themNguoiDung(self, data:Dict) -> Dict:
         data['AccType'] = 'user'
-        result = self.taiKhoanBUS.addND(data)
-        print(result,flush=True)
-        if result['success']:    
-            data['IdTaiKhoan'] = result['idTaiKhoan']
-            result = self.nguoidungDAO.add(data)
+        # print("Check input data",flush=True)
+        # print(data,flush=True)
+        result = self.nguoidungDAO.checkValidation(data)
+        # print("Check validation result",flush=True)
+        # print(result,flush=True)
+        if result is None:
+            result = self.taiKhoanBUS.addND(data)
             print(result,flush=True)
-        return result
+            if result['success']:    
+                data['IdTaiKhoan'] = result['idTaiKhoan']
+                result = self.nguoidungDAO.add(data)
+                print(result,flush=True)
+            return result
+        else:
+            sets = ['SDT','Email','TenTaiKhoan']
+            for x in sets:
+                if data[x] == result[x]:
+                    case={
+                        'SDT':'Số điện thoại đã tồn tại',
+                        'Email':'Email đã tồn tại',
+                        'TenTaiKhoan':'Tên tài khoản đã tồn tại'
+                    }
+                    return {'success':False,'message':case[x]}

@@ -659,13 +659,13 @@
                 const formData = new FormData(form);
                 const response = await fetch(`/khachhang/them`,{method:'POST', body:formData})
                 const data = await response.json()
-                closeForm()
                 if(data['success']){ 
                     alert("Đã thành công thêm người dùng")
                     loadData()
+                    closeForm()
                 }
                 else{
-                    alert("Đã xảy ra lỗi khi thêm người dùng")
+                    alert(`Đã xảy ra lỗi khi thêm người dùng, ${data['message']}`)
                 }
             }
         }
@@ -679,13 +679,13 @@
                 const response = await fetch(`/khachhang/sua`,{method:'POST', body:formData})
                 const data = await response.json()
                 console.log(PID,UID)
-                closeForm()
                 if(data['success']){ 
                     alert("Đã thành công cập nhật người dùng")
                     loadData()
+                    closeForm()
                 }
                 else{
-                    alert("Đã xảy ra lỗi khi cập nhật người dùng")
+                    alert(`Đã xảy ra lỗi khi cập nhật người dùng, ${data.message}`)
                 }
             }
         }
