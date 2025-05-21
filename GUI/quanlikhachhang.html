@@ -610,7 +610,13 @@
             returnUser.textContent = tabs['return'] + "%"
             let content = ``
             console.log(listkhachhang)
-            listkhachhang.forEach(x => {
+            if (listkhachhang.length == 0){
+                content +=`
+                    <tr>
+                        <td colspan="8" style="text-align: center;">Không có dữ liệu</td>
+                    </tr>`
+            }
+            else {listkhachhang.forEach(x => {
                 content += `
                 <tr>
                     <td>${x.IdNguoiDung}</td>
@@ -639,7 +645,7 @@
                     </td>
                 </tr>
                 `
-            })
+            })}
             guest.innerHTML = content
         }
         loadData()
