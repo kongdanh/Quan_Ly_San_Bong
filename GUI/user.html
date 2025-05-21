@@ -301,7 +301,15 @@
             const loaiSan = parseInt(document.getElementById('loai-san').value);
             container.innerHTML = '';
 
-            const filteredSanList = loaiSan === 0 ? sanList : sanList.filter(san => san.CoSan === loaiSan);
+            let filteredSanList = sanList;
+            if (loaiSan !== 0) {
+                filteredSanList = sanList.filter(san => parseInt(san.CoSan) === loaiSan);
+            }
+
+            if (filteredSanList.length === 0) {
+                container.innerHTML = '<p>Không tìm thấy sân phù hợp.</p>';
+                return;
+            }
 
             filteredSanList.forEach(san => {
                 const card = document.createElement('div');
@@ -322,7 +330,6 @@
         function showBookingModal(san) {
             const modal = document.createElement('div');
             modal.className = 'modal';
-            // Thoát các ký tự đặc biệt trong địa chỉ để tránh lỗi JavaScript
             const escapedDiaChi = san.DiaChi.replace(/'/g, "\\'").replace(/"/g, '\\"');
             modal.innerHTML = `
                     <div class="modal-content">
@@ -333,7 +340,7 @@
                         <label>Thời gian bắt đầu: <input type="time" id="start-time" required></label><br>
                         <label>Thời gian kết thúc: <input type="time" id="end-time" required></label><br>
                         <p>Thành tiền: <span id="total-cost">0 VNĐ</span></p>
-                        <button onclick="confirmBooking(${san.IdSan}, '${escapedDiaChi}', ${san.CoSan}, ${san.GiaSan})">Xác nhận</button>
+                        <button onclick="confirmBooking(${san.IdSan}, '${escapedDiaChi}', ${san.CoSan}, ${san.GiaSan}, ${PID})">Xác nhận</button>
                         <button onclick="this.parentElement.parentElement.remove()">Hủy</button>
                     </div>
                 `;
@@ -359,123 +366,56 @@
             });
         }
 
-        // Hàm hiển thị modal thông tin đặt sân
-        function showBookingInfoModal(sanId, diaChi, coSan, startTime, endTime, ngayDat, gia) {
-            console.log('Hiển thị modal thông tin đặt sân:', { sanId, diaChi, coSan, startTime, endTime, ngayDat, gia });
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.innerHTML = `
-                    <div class="modal-content">
-                        <span class="close-btn" onclick="this.parentElement.parentElement.remove()">×</span>
-                        <h3>Thông tin đặt sân</h3>
-                        <div class="booking-info">
-                            <p><strong>Tên khách hàng:</strong> Nguyễn Văn A</p>
-                            <p><strong>Khung giờ đặt:</strong> ${startTime} - ${endTime}, ${ngayDat}</p>
-                            <p><strong>Địa chỉ sân:</strong> ${diaChi}</p>
-                            <p><strong>Cỡ sân:</strong> ${coSan} người</p>
-                            <p><strong>Sân số:</strong> ${sanId}</p>
-                            <p><strong>Thông tin thanh toán:</strong></p>
-                            <p>Số tài khoản: XXX123456789</p>
-                            <p>Ngân hàng: XXX Bank</p>
-                            <img src="https://via.placeholder.com/150" alt="QR Code" class="qr-code">
-                        </div>
-                        <div class="button-group">
-                            <button onclick="completeBooking()">Hoàn thành</button>
-                            <button onclick="cancelBooking(${sanId}, '${ngayDat}', '${startTime}', '${endTime}')">Hủy</button>
-                        </div>
-                    </div>
-                `;
-            document.body.appendChild(modal);
-        }
-
         // Hàm xác nhận đặt sân
-        function confirmBooking(sanId, diaChi, coSan, giaSan) {
-            console.log('confirmBooking được gọi với:', { sanId, diaChi, coSan, giaSan });
+        function confirmBooking(sanId, diaChi, coSan, giaSan, userId) {
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const ngayDat = document.getElementById('ngay-dat').value;
+            const totalCost = parseFloat(document.getElementById('total-cost').textContent.replace(' VNĐ', '')) || 0;
 
-            const startTime = document.getElementById('start-time')?.value;
-            const endTime = document.getElementById('end-time')?.value;
-            const ngayDat = document.getElementById('ngay-dat')?.value;
-            const totalCost = document.getElementById('total-cost')?.textContent.replace(' VNĐ', '');
-
-            if (!startTime || !endTime || !ngayDat || totalCost === '0') {
-                console.error('Thiếu thông tin hoặc giá trị không hợp lệ:', { startTime, endTime, ngayDat, totalCost });
-                alert('Vui lòng nhập đầy đủ thời gian bắt đầu, thời gian kết thúc và đảm bảo thành tiền không phải 0.');
+            if (!startTime || !endTime || !ngayDat || totalCost === 0) {
+                alert('Vui lòng nhập đầy đủ thời gian và đảm bảo thành tiền không phải 0.');
                 return;
             }
 
-            // Kiểm tra thời gian hợp lệ
             const start = new Date(`1970-01-01T${startTime}:00`);
             const end = new Date(`1970-01-01T${endTime}:00`);
             if (start >= end) {
-                console.error('Thời gian không hợp lệ:', { startTime, endTime });
                 alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
                 return;
             }
 
             if (confirm(`Xác nhận đặt Sân ${sanId} từ ${startTime} đến ${endTime} vào ${ngayDat}?`)) {
-                console.log('Gửi yêu cầu đặt sân:', { sanId, ngayDat, startTime, endTime, totalCost });
-                // Mô phỏng yêu cầu fetch (thay bằng URL thực tế của server)
-                fetch(`/user/${PID}/dat_san/${sanId}/ngay/${ngayDat}/start/${startTime}/end/${endTime}/gia/${totalCost}`, {
+                const khungGio = `${startTime}-${endTime}`;
+                const bookingData = {
+                    Ngay: ngayDat,
+                    TongTien: totalCost,
+                    PhuongThuc: null, // Có thể để NULL hoặc thêm logic chọn phương thức
+                    TrangThai: "Chờ xác nhận",
+                    IdNhanVien: null, // Có thể để NULL
+                    IdNguoiDung: userId
+                };
+
+                fetch(`/user/${userId}/dat_san/${sanId}/ngay/${ngayDat}/khung_gio/${khungGio}/gia/${totalCost}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingData)
                 })
-                    .then(response => {
-                        console.log('Phản hồi từ server:', response);
-                        if (!response.ok) {
-                            throw new Error(`Lỗi HTTP! Trạng thái: ${response.status}`);
-                        }
-                        return response.json();
-                    })
+                    .then(response => response.json())
                     .then(data => {
-                        console.log('Dữ liệu từ server:', data);
                         if (data.success) {
-                            console.log('Đặt sân thành công, hiển thị modal thông tin');
+                            alert('Đặt sân thành công! Thông tin đã được lưu.');
                             const currentModal = document.querySelector('.modal');
                             if (currentModal) currentModal.remove();
-                            showBookingInfoModal(sanId, diaChi, coSan, startTime, endTime, ngayDat, totalCost);
+                            // Chuyển hướng đến trang hóa đơn hoặc hiển thị thông tin
+                            window.location.href = '/hoa-don';
                         } else {
-                            console.error('Đặt sân thất bại:', data.message);
                             alert(`Lỗi khi đặt sân: ${data.message || 'Không xác định'}`);
                         }
                     })
                     .catch(error => {
                         console.error('Lỗi khi gửi yêu cầu:', error);
                         alert('Lỗi khi gửi yêu cầu đặt sân. Vui lòng thử lại.');
-                    });
-            } else {
-                console.log('Người dùng hủy xác nhận đặt sân');
-            }
-        }
-
-        // Hàm hoàn thành đặt sân
-        function completeBooking() {
-            console.log('Hoàn thành đặt sân');
-            alert('Đặt sân thành công! Vui lòng đến thanh toán trước giờ đá 30 phút.');
-            const modal = document.querySelector('.modal');
-            if (modal) modal.remove();
-        }
-
-        // Hàm hủy đặt sân
-        function cancelBooking(sanId, ngayDat, startTime, endTime) {
-            console.log('cancelBooking được gọi với:', { sanId, ngayDat, startTime, endTime });
-            if (confirm('Bạn có chắc muốn hủy đặt sân này?')) {
-                fetch(`/user/${PID}/huy_dat_san/${sanId}/ngay/${ngayDat}/start/${startTime}/end/${endTime}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Hủy đặt sân thành công!');
-                            const modal = document.querySelector('.modal');
-                            if (modal) modal.remove();
-                        } else {
-                            alert('Lỗi khi hủy đặt sân!');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Lỗi khi hủy đặt sân:', error);
-                        alert('Lỗi khi hủy đặt sân. Vui lòng thử lại.');
                     });
             }
         }

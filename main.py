@@ -11,7 +11,6 @@ from DAO.hoadon_dao import HoaDonDAO
 from BUS.hoadon_bus import HoaDonBUS
 from BUS.NguoiDung_BUS import NguoiDung_BUS
 from BUS.phieughiBUS import PhieuGhiBUS
-from datetime import datetime
 import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -19,95 +18,183 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 # Khởi tạo Flask app
 app = Flask(__name__, template_folder='GUI')
 
-# Khởi tạo connection, DAO và BUS trước khi định nghĩa route
+# Tạo thư mục lưu trữ ảnh nếu chưa tồn tại
+if not os.path.exists('GUI/static/asset'):
+    os.makedirs('GUI/static/asset')
+
+# Khởi tạo connection, DAO và BUS
 conn = get_connection()
-dao = SanDAO(conn)  # Truyền conn từ get_connection()
+dao = SanDAO(conn)
 san_bus = SanBus(dao)
 taikhoan = TaiKhoanBUS()
 khachhang = NguoiDung_BUS()
 phieughi = PhieuGhiBUS()
+hoa_don_dao = HoaDonDAO(conn)
+hoa_don_bus = HoaDonBUS(hoa_don_dao)
 
-# sân
-# khi nhấn quản lý sân ( chức năng của quản lý or nhân viên) ======================================
-# region sân
+# Sân
 @app.route('/san')
 def quan_ly_san():
     danh_sach_san = san_bus.lay_danh_sach_san()
     for san in danh_sach_san:
-        san['HinhAnh'] = url_for('static', filename='asset/' + san['HinhAnh'])
+        if isinstance(san, dict):
+            hinh_anh = san.get('HinhAnh')
+            if hinh_anh is None or not hinh_anh:
+                san['HinhAnh'] = url_for('static', filename='asset/default.jpg')
+            else:
+                # Chỉ thêm 'asset/' nếu chưa có trong hinh_anh
+                if 'asset/' in hinh_anh:
+                    san['HinhAnh'] = url_for('static', filename=hinh_anh)
+                else:
+                    san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
     return render_template('san.html', danh_sach_san=danh_sach_san)
 
-
-# route thêm sân
 @app.route('/them-san', methods=['POST'])
 def them_san():
-    # lấy thông tin sân từ from thêm sân
-    co_san = request.form.get('coSan')
-    dia_chi = request.form.get('diaChi')
-    # gọi bus
-    result = san_bus.them_san({'coSan': co_san, 'diaChi': dia_chi})
-    if isinstance(result, dict) and 'idSan' in result:
-        danh_sach_san = san_bus.lay_danh_sach_san()
-        print(f"Danh sách sân sau khi thêm: {danh_sach_san}")
-    else :
-        print(f"Thêm sân thất bại, result: {result}")
-    return redirect(url_for('quan_ly_san'))
+    try:
+        co_san = request.form.get('CoSan')
+        dia_chi = request.form.get('DiaChi')
+        hinh_anh = request.files.get('HinhAnh')
+        so_san = request.form.get('SoSan')
+        mo_ta = request.form.get('MoTa')
+        trang_thai = request.form.get('TrangThai')
+        gia_san = request.form.get('GiaSan')
 
-# route xóa sân ( sử dụng id san ) ==================================================================
+        # Debug dữ liệu nhận được
+        print(f"Received data - CoSan: {co_san}, DiaChi: {dia_chi}, HinhAnh: {hinh_anh}, SoSan: {so_san}, MoTa: {mo_ta}, TrangThai: {trang_thai}, GiaSan: {gia_san}", flush=True)
+
+        # Kiểm tra dữ liệu đầu vào
+        if not co_san or co_san not in ['5', '7', '9', '11']:
+            return jsonify({'success': False, 'error': 'Cỡ sân không hợp lệ'}), 400
+        if not dia_chi:
+            return jsonify({'success': False, 'error': 'Địa chỉ không được để trống'}), 400
+        if not so_san or so_san not in ['1', '2', '3', '4']:
+            return jsonify({'success': False, 'error': 'Số sân không hợp lệ'}), 400
+        if not trang_thai or trang_thai not in ['0', '1']:
+            return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
+        try:
+            gia_san = int(gia_san)
+            if gia_san <= 0:
+                return jsonify({'success': False, 'error': 'Giá sân phải là số nguyên dương'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Giá sân phải là số nguyên'}), 400
+
+        # Xử lý file upload
+        hinh_anh_path = None
+        if hinh_anh and hinh_anh.filename:
+            if not hinh_anh.mimetype.startswith('image/'):
+                return jsonify({'success': False, 'error': 'Định dạng ảnh không hợp lệ'}), 400
+            filename = hinh_anh.filename
+            hinh_anh_path = f"asset/{filename}"
+            hinh_anh.save(os.path.join('GUI/static', hinh_anh_path))
+        else:
+            hinh_anh_path = 'default.jpg'
+
+        # Gửi dữ liệu đến BUS
+        du_lieu_san = {
+            'coSan': co_san,
+            'diaChi': dia_chi,
+            'hinhAnh': hinh_anh_path,
+            'soSan': so_san,
+            'moTa': mo_ta if mo_ta else None,
+            'trangThai': trang_thai,
+            'giaSan': gia_san
+        }
+        print(f"Sending to SanBus: {du_lieu_san}", flush=True)
+        result = san_bus.them_san(du_lieu_san)
+        if isinstance(result, dict) and 'idSan' in result:
+            return jsonify({'success': True, 'idSan': result['idSan']})
+        else:
+            return jsonify({'success': False, 'error': str(result)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
+
 @app.route('/xoa-san/<int:id_san>')
 def xoa_san(id_san):
-    # gọi bus
     san_bus.xoa_san(id_san)
     return redirect(url_for('quan_ly_san'))
 
-# sửa sân ( thông qua id lấy tại bảng sân )
 @app.route('/sua-san/<int:id>', methods=['POST'])
 def sua_san(id):
-    # lấy dữ liệu mới từ from
-    co_san = request.form.get('coSan')
-    dia_chi = request.form.get('diaChi')
-    du_lieu_moi = {
-        'coSan': co_san,
-        'diaChi': dia_chi
-    }
-    # gọi bus
-    ket_qua = san_bus.sua_san(id, du_lieu_moi)
-    return jsonify(ket_qua)
+    try:
+        co_san = request.form.get('CoSan')
+        dia_chi = request.form.get('DiaChi')
+        hinh_anh = request.files.get('HinhAnh')
+        so_san = request.form.get('SoSan')
+        mo_ta = request.form.get('MoTa')
+        trang_thai = request.form.get('TrangThai')
+        gia_san = request.form.get('GiaSan')
 
-# endregion
-###################################################################################
-# region nhân viên
-# nhân viên
-# tạo bus dao của nhân viên
+        # Debug dữ liệu nhận được
+        print(f"Received data - Id: {id}, CoSan: {co_san}, DiaChi: {dia_chi}, HinhAnh: {hinh_anh}, SoSan: {so_san}, MoTa: {mo_ta}, TrangThai: {trang_thai}, GiaSan: {gia_san}", flush=True)
+
+        # Kiểm tra dữ liệu đầu vào
+        if not co_san or co_san not in ['5', '7', '9', '11']:
+            return jsonify({'success': False, 'error': 'Cỡ sân không hợp lệ'}), 400
+        if not dia_chi:
+            return jsonify({'success': False, 'error': 'Địa chỉ không được để trống'}), 400
+        if not so_san or so_san not in ['1', '2', '3', '4']:
+            return jsonify({'success': False, 'error': 'Số sân không hợp lệ'}), 400
+        if not trang_thai or trang_thai not in ['0', '1']:
+            return jsonify({'success': False, 'error': 'Trạng thái không hợp lệ'}), 400
+        try:
+            gia_san = int(gia_san)
+            if gia_san <= 0:
+                return jsonify({'success': False, 'error': 'Giá sân phải là số nguyên dương'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Giá sân phải là số nguyên'}), 400
+
+        # Xử lý file upload
+        hinh_anh_path = None
+        if hinh_anh and hinh_anh.filename:
+            if not hinh_anh.mimetype.startswith('image/'):
+                return jsonify({'success': False, 'error': 'Định dạng ảnh không hợp lệ'}), 400
+            filename = hinh_anh.filename
+            hinh_anh_path = f"asset/{filename}"
+            hinh_anh.save(os.path.join('GUI/static', hinh_anh_path))
+        # Nếu không upload ảnh mới, giữ nguyên giá trị cũ (cần lấy từ CSDL hoặc không thay đổi)
+
+        # Gửi dữ liệu đến BUS
+        du_lieu_moi = {
+            'coSan': co_san,
+            'diaChi': dia_chi,
+            'hinhAnh': hinh_anh_path,
+            'soSan': so_san,
+            'moTa': mo_ta if mo_ta else None,
+            'trangThai': trang_thai,
+            'giaSan': gia_san
+        }
+        print(f"Sending to SanBus for update: {du_lieu_moi}", flush=True)
+        ket_qua = san_bus.sua_san(id, du_lieu_moi)
+        if ket_qua.get('success', False):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': ket_qua.get('error', 'Lỗi không xác định')}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
+
+# Nhân viên
 nhanvien_bus = NhanVienBus()
-
-# khi nhấn quản lý nhân viên ( quyền của quản lý hoặc chủ sân ) ========================================
 
 @app.route('/nhanvien')
 def quan_ly_nhan_vien():
-    # Lấy danh sách nhân viên
     danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
     tong_nhan_vien = len(danh_sach_nhan_vien)
     so_luong_hd = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Hoạt động')
     so_luong_np = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Nghỉ phép')
-
     now = datetime.now()
     thang_hien_tai = now.month
     nam_hien_tai = now.year
     so_nv_moi = sum(
-    1 for nv in danh_sach_nhan_vien
-    if 'ngayvaolam' in nv
-    and isinstance(nv['ngayvaolam'], str)
-    and datetime.strptime(nv['ngayvaolam'], '%Y-%m-%d').month == thang_hien_tai
-    and datetime.strptime(nv['ngayvaolam'], '%Y-%m-%d').year == nam_hien_tai
-)
-    # Truyền danh sách nhân viên vào template nhanvien.html
-    return render_template('quanlinhanvien.html', danh_sach_nhan_vien=danh_sach_nhan_vien, soluongnv = tong_nhan_vien, slhd = so_luong_hd, nvm = so_nv_moi, nvnp = so_luong_np)
+        1 for nv in danh_sach_nhan_vien
+        if 'ngayvaolam' in nv and isinstance(nv['ngayvaolam'], str)
+        and datetime.strptime(nv['ngayvaolam'], '%Y-%m-%d').month == thang_hien_tai
+        and datetime.strptime(nv['ngayvaolam'], '%Y-%m-%d').year == nam_hien_tai
+    )
+    return render_template('quanlinhanvien.html', danh_sach_nhan_vien=danh_sach_nhan_vien, soluongnv=tong_nhan_vien, slhd=so_luong_hd, nvm=so_nv_moi, nvnp=so_luong_np)
 
-# route thêm nhân viên
 @app.route('/them-nhan-vien', methods=['POST'])
 def them_nhan_vien():
-    # Lấy thông tin từ form
     ho_ten = request.form.get('HoTen')
     ngay_sinh = request.form.get('NgaySinh')
     sdt = request.form.get('SDT')
@@ -127,39 +214,15 @@ def them_nhan_vien():
     mat_khau = request.form.get('mat_khau')
     ngay_tao = request.form.get('ngay_tao')
     acc_type = request.form.get('nhom_quyen')
-
-    # Tạo dictionary cho tài khoản
-    du_lieu_tai_khoan = {
-        'TenTaiKhoan': ten_tai_khoan,
-        'MatKhau': mat_khau,
-        'NgayTao': ngay_tao,
-        'AccType': acc_type
-    }
-
+    du_lieu_tai_khoan = {'TenTaiKhoan': ten_tai_khoan, 'MatKhau': mat_khau, 'NgayTao': ngay_tao, 'AccType': acc_type}
     result_taikhoan = taikhoan.them_tknv(du_lieu_tai_khoan)
-    id_tai_khoan = taikhoan.get_max_id_taikhoan()    
-
-    # Tạo dictionary cho nhân viên
+    id_tai_khoan = taikhoan.get_max_id_taikhoan()
     du_lieu_nhan_vien = {
-        'HoTen': ho_ten,
-        'NgaySinh': ngay_sinh,
-        'SDT': sdt,
-        'DiaChi': dia_chi,
-        'IdTaiKhoan': id_tai_khoan,
-        'cccd': cccd,
-        'gioitinh': gioitinh,
-        'chuc_vu': chuc_vu,
-        'vi_tri': vi_tri,
-        'ngayvaolam': ngay_vao_lam,
-        'hopdong': hop_dong,
-        'hoatdong': hoat_dong,
-        'mota': mo_ta,
-        'luong': luong,
-        'phucap': phu_cap if phu_cap else 0,
+        'HoTen': ho_ten, 'NgaySinh': ngay_sinh, 'SDT': sdt, 'DiaChi': dia_chi, 'IdTaiKhoan': id_tai_khoan,
+        'cccd': cccd, 'gioitinh': gioitinh, 'chuc_vu': chuc_vu, 'vi_tri': vi_tri, 'ngayvaolam': ngay_vao_lam,
+        'hopdong': hop_dong, 'hoatdong': hoat_dong, 'mota': mo_ta, 'luong': luong, 'phucap': phu_cap if phu_cap else 0,
         'nganhang': ngan_hang if ngan_hang else ''
     }
-
-    # Thêm nhân viên vào bảng nhanvien
     result_nhanvien = nhanvien_bus.them_nhan_vien(du_lieu_nhan_vien)
     print(f"Kết quả thêm nhân viên từ BUS: {result_nhanvien}")
     if result_nhanvien.get('success'):
@@ -168,17 +231,13 @@ def them_nhan_vien():
     else:
         print(f"Thêm nhân viên thất bại: {result_nhanvien.get('error', 'Không có thông tin lỗi')}")
         taikhoan.xoaTaiKhoan(id_tai_khoan)
-
     return redirect(url_for('quan_ly_nhan_vien'))
 
-# Route xóa nhân viên ( thông qua id nhân viên )
 @app.route('/xoa-nhan-vien/<int:id_nhan_vien>')
 def xoa_nhan_vien(id_nhan_vien):
-    # gọi bus
     nhanvien_bus.xoa_nhan_vien(id_nhan_vien)
     return redirect(url_for('quan_ly_nhan_vien'))
 
-# Route sửa thông tin nhân viên ( lấy id nhân viên tại bảng )
 @app.route('/sua-nhan-vien/<int:id>', methods=['POST'])
 def sua_nhan_vien(id):
     ho_ten = request.form.get('hoTen')
@@ -186,110 +245,82 @@ def sua_nhan_vien(id):
     sdt = request.form.get('sdt')
     dia_chi = request.form.get('diaChi')
     id_tai_khoan = request.form.get('idTaiKhoan')
-    
-    # tạo Dict từ dữ liệu trên
-    du_lieu_moi = {
-        'hoTen': ho_ten,
-        'ngaySinh': ngay_sinh,
-        'sdt': sdt,
-        'diaChi': dia_chi,
-        'idTaiKhoan': id_tai_khoan
-    }
-    
-    # gọi bus
-    ket_qua = NhanVienBus.sua_nhan_vien(id, du_lieu_moi)
+    du_lieu_moi = {'hoTen': ho_ten, 'ngaySinh': ngay_sinh, 'sdt': sdt, 'diaChi': dia_chi, 'idTaiKhoan': id_tai_khoan}
+    ket_qua = nhanvien_bus.sua_nhan_vien(id, du_lieu_moi)
     return jsonify(ket_qua)
-# endregion
-###################################################################################
-# region người dùng
-# trang người dùng
+
+# Người dùng
 def get_asset_path():
     return os.path.join(current_app.root_path, 'static', 'asset')
-
 
 @app.route('/user/<userID>')
 def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
     danh_sach_san = san_bus.lay_danh_sach_san()
     for san in danh_sach_san:
-        san['HinhAnh'] = url_for('static', filename='asset/' + san['HinhAnh'])
+        if isinstance(san, dict):
+            hinh_anh = san.get('HinhAnh', 'default.jpg')
+            if 'asset/' in hinh_anh:
+                san['HinhAnh'] = url_for('static', filename=hinh_anh)
+            else:
+                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+    return render_template('user.html', userID=userID, san=danh_sach_san)
 
-    return render_template('user.html',
-                           userID = userID,
-                           san = danh_sach_san)
-
-@app.route('/user/<int:userID>/render-date/<date>', methods = ['POST'])
-def renderBooking(userID:int, date):
+@app.route('/user/<int:userID>/render-date/<date>', methods=['POST'])
+def renderBooking(userID: int, date):
     date_obj = datetime.strptime(date, '%Y-%m-%d').date()
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(date_obj)
-    print(PhieuGhiBUS.danhSachPhieuGhi,flush=True)
+    print(PhieuGhiBUS.danhSachPhieuGhi, flush=True)
     return jsonify(PhieuGhiBUS.danhSachPhieuGhi)
 
-@app.route('/user/<int:userID>/dat_san/<int:sanID>/ngay/<date>/khung_gio/<khung_gio>/gia/<gia>', methods = ['POST'])
-def datsan(userID:int, sanID:int, date, khung_gio, gia):
-    date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-    order={
-        'Ngay' : date_obj,
-        'TongTien' : gia,
-        'PhuongThuc' : None,
-        'IdNhanVien': None,
-        'IdNguoiDung': userID,
-        'TrangThai': "Chờ xác nhận"
-    }
-    data={
-        'Ngay' : date_obj,
-        'KhungGio' : khung_gio,
-        'GiaTien' : gia,
-        'IdSan' : sanID,
-    }
-    result = hoa_don_bus.addHD(order)
-    if result['success']:
-        data['IdHoaDon'] = result['IdHoaDon']
-        print(data,flush=True)
-        result = phieughi.themPhieuGhi(data)
-        
-    return jsonify(result)
+@app.route('/user/<int:userID>/dat_san/<int:sanID>/ngay/<date>/khung_gio/<khung_gio>/gia/<gia>', methods=['POST'])
+def datsan(userID: int, sanID: int, date, khung_gio, gia):
+    try:
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+        data = request.get_json()
+        order = {
+            'Ngay': date_obj,
+            'TongTien': float(gia),
+            'PhuongThuc': data.get('PhuongThuc'),
+            'TrangThai': data.get('TrangThai', 'Chờ xác nhận'),
+            'IdNhanVien': data.get('IdNhanVien'),
+            'IdNguoiDung': userID
+        }
+        result = hoa_don_bus.them_hoa_don(order)
+        if result.get('success'):
+            return jsonify({'success': True, 'message': 'Đặt sân thành công', 'IdHoaDon': result.get('IdHoaDon')})
+        else:
+            return jsonify({'success': False, 'message': result.get('error', 'Lỗi không xác định')})
+    except Exception as e:
+        print(f"Lỗi khi xử lý đặt sân: {e}", flush=True)
+        return jsonify({'success': False, 'message': str(e)})
 
-# endregion
-############################################################################################
-# region đăng nhập & đăng ký
-#thiết lập route cho login page
+# Đăng nhập & Đăng ký
 @app.route('/login')
 def dangNhap():
     return render_template('dangnhap_dangki.html')
 
 def render_index_template(context=None):
-    # Context mặc định
     default_context = {
-        'pg': [],
-        'san': [],
-        'today_date': datetime.now().strftime("%Y-%m-%d"),
-        'today_revenue': 0,
-        'booked_fields': 0,
-        'total_fields': 0
+        'pg': [], 'san': [], 'today_date': datetime.now().strftime("%Y-%m-%d"),
+        'today_revenue': 0, 'booked_fields': 0, 'total_fields': 0
     }
-    
-    # Merge với context truyền vào
     if context:
         default_context.update(context)
-    
     return render_template('index.html', **default_context)
 
-#đăng nhập
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
-    print(request.form.to_dict(),flush=True)
+    print(request.form.to_dict(), flush=True)
     result = taikhoan.dangNhapTaiKhoan(request.form.to_dict())
     if result.get('success'):
-        # dẫn vào trang người dùng
         if result.get('AccType') == "user":
-            return redirect(url_for('nguoidung',userID = result.get('IdTaiKhoan')))    
-        # dẫn tới quản lí sân
+            return redirect(url_for('nguoidung', userID=result.get('IdTaiKhoan')))
         else:
             return render_index_template()
     else:
         return redirect('/login')
-        
+
 @app.route('/signUp', methods=['POST'])
 def xuliDangKi():
     birth = request.form.to_dict()['date']
@@ -297,79 +328,48 @@ def xuliDangKi():
     adjDatas = request.form.to_dict()
     adjDatas['date'] = date_obj
     return taikhoan.dangKiTaiKhoan(adjDatas)
-# endregion 
-########################################################################################       
-# region Hóa Đơn
-# Khởi tạo DAO và BUS cho hóa đơn
-hoa_don_dao = HoaDonDAO(conn)  # conn là kết nối database đã được thiết lập
-hoa_don_bus = HoaDonBUS(hoa_don_dao)
 
-# Route hiển thị danh sách hóa đơn
+# Hóa đơn
 @app.route('/hoa-don')
 def quan_ly_hoa_don():
-    # Lấy danh sách hóa đơn
     danh_sach_hoa_don = hoa_don_bus.lay_danh_sach_hoa_don()
-    # Truyền danh sách hóa đơn vào template hoa_don.html
     return render_template('hoadon.html', danh_sach_hoa_don=danh_sach_hoa_don)
 
-# Route thêm hóa đơn
 @app.route('/them-hoa-don', methods=['POST'])
 def them_hoa_don():
-    # Lấy thông tin hóa đơn từ request
     data = request.get_json()
     ngay = data.get('Ngay')
     tong_tien = data.get('TongTien')
     id_nhan_vien = data.get('IdNhanVien')
-
-    # Tạo dict từ thông tin
-    du_lieu_hoa_don = {
-        'Ngay': ngay,
-        'TongTien': tong_tien,
-        'IdNhanVien': id_nhan_vien
-    }
-
-    # Gọi bus để thêm hóa đơn
+    du_lieu_hoa_don = {'Ngay': ngay, 'TongTien': tong_tien, 'IdNhanVien': id_nhan_vien}
     result = hoa_don_bus.them_hoa_don(du_lieu_hoa_don)
     if isinstance(result, dict) and 'IdHoaDon' in result:
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': str(result)})
 
-# Route xóa hóa đơn
 @app.route('/xoa-hoa-don/<int:id_hoa_don>', methods=['POST'])
 def xoa_hoa_don(id_hoa_don):
-    # Gọi bus để xóa hóa đơn
     result = hoa_don_bus.xoa_hoa_don(id_hoa_don)
     if result:
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Không thể xóa hóa đơn'})
 
-# Route sửa hóa đơn
 @app.route('/sua-hoa-don/<int:id>', methods=['POST'])
 def sua_hoa_don(id):
-    # Lấy dữ liệu mới từ request
     data = request.get_json()
     ngay = data.get('Ngay')
     tong_tien = data.get('TongTien')
     id_nhan_vien = data.get('IdNhanVien')
-
-    # Tạo dict từ dữ liệu mới
-    du_lieu_moi = {
-        'Ngay': ngay,
-        'TongTien': tong_tien,
-        'IdNhanVien': id_nhan_vien
-    }
-
-    # Gọi bus để sửa hóa đơn
+    du_lieu_moi = {'Ngay': ngay, 'TongTien': tong_tien, 'IdNhanVien': id_nhan_vien}
     ket_qua = hoa_don_bus.sua_hoa_don(id, du_lieu_moi)
     if ket_qua:
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Không thể sửa hóa đơn'})
-# endregion
-########################################################################################
-# region quản lí khách hàng
+
+# Quản lý khách hàng
 @app.route('/khachhang')
 def quanlikhachhang():
     return render_template('quanlikhachhang.html')
@@ -380,7 +380,7 @@ def xoa_khachhang(IdNguoiDung: int):
     return jsonify(result)
 
 @app.route('/khachhang/timkiem/<key>', methods=['POST'])
-def tim_khachhang(key:str):
+def tim_khachhang(key: str):
     listGuest = khachhang.timKhachHang(key)
     today = datetime.today().date()
     data = {"list": listGuest, 'data':{'total':len(listGuest),
@@ -403,43 +403,17 @@ def load_khachhang():
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-    return jsonify(data)
+        x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
+    print("HI")
+    print(listGuest,flush=True)
+    return jsonify(listGuest)
 
-@app.route('/khachhang/sua', methods=['POST'])
-def editKhachHang():
-    # birth = request.form.to_dict()['date']
-    # date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
-    adjDatas = request.form.to_dict()
-    adjDatas['NgaySinh'] = None
-    print(adjDatas,flush=True)
-    return jsonify(khachhang.suaNguoiDung(adjDatas))
-
-@app.route('/khachhang/them', methods=['POST'])
-def addKhachHang():
-    adjDatas = request.form.to_dict()
-    adjDatas['NgaySinh'] = None
-    adjDatas['NgayTao'] = datetime.today().date()
-    print(adjDatas,flush=True)
-    return jsonify(khachhang.themNguoiDung(adjDatas))
-
-@app.route('/khachhang/status', methods=['POST'])
-def statusUpdate():
-    adjDatas = request.get_json()
-    print(adjDatas,flush=True)
-    return jsonify(taikhoan.status(adjDatas))
-
-# endregion
-########################################################################################
-# region báo cáo & thống kê
+# Báo cáo & Thống kê
 @app.route("/baocao")
 def baocao():
     from collections import defaultdict
     import datetime
-
-    # Gọi phương thức để lấy danh sách hóa đơn
     hd = hoa_don_bus.lay_danh_sach_hoa_don() or []
-    
-    # Tính tổng doanh thu theo tháng trong năm 2025
     monthly_revenue = defaultdict(float)
     for invoice in hd:
         ngay_value = invoice.get('Ngay')
@@ -447,56 +421,42 @@ def baocao():
             if isinstance(ngay_value, datetime.date):
                 ngay = ngay_value
             else:
-                ngay = datetime.datetime.strptime(ngay_value, '%Y-%m-%d').date()
+                ngay = datetime.strptime(ngay_value, '%Y-%m-%d').date()
             if ngay.year == 2025:
                 month = ngay.month
                 monthly_revenue[month] += float(invoice.get('TongTien', 0))
-
-    # Lấy danh sách phiếu ghi
     phieu_ghi = phieughi.getListPhieuGhi(None)
-    print("phieu_ghi in main.py:", phieu_ghi)  # Debug dữ liệu
-
-    # Tính số lần xuất hiện của từng sân (IdSan)
+    print("phieu_ghi in main.py:", phieu_ghi)
     field_counts = defaultdict(int)
     for item in phieu_ghi:
         id_san = item.get('IdSan')
         if id_san is not None:
             field_counts[id_san] += 1
-    print("field_counts:", dict(field_counts))  # Debug kết quả đếm
-
-    # Chuẩn bị dữ liệu cho biểu đồ
+    print("field_counts:", dict(field_counts))
     months = range(1, 13)
     revenue_data = [monthly_revenue.get(month, 0) for month in months]
-
     total_revenue = sum(revenue_data) if revenue_data else 0
     total_orders = len(hd) if hd else 0
-
-    return render_template("baocao.html", 
-                           invoices=hd, 
-                           total_revenue=total_revenue, 
+    return render_template("baocao.html",
+                           invoices=hd,
+                           total_revenue=total_revenue,
                            total_orders=total_orders,
                            monthly_revenue=revenue_data,
                            phieu_ghi=phieu_ghi,
-                           field_counts=dict(field_counts),  # Truyền field_counts vào template
+                           field_counts=dict(field_counts),
                            months=[f'Tháng {m}' for m in months])
-# endregion
-########################################################################################
-# region quản lý tài chính
+
+# Quản lý tài chính
 @app.route('/quanlitaichinh')
 def quanlitaichinh():
     return render_template('quanlitaichinh.html')
 
 @app.route('/quanlitaichinh/timkiem/<key>', methods=['POST'])
 def tim_taichinh(key:str):
+    print(key + ".",flush=True)
     listHD = hoa_don_bus.timkiemHD(key)
-    income:Dict = hoa_don_bus.getMonthlyIncome()
-    tabs = hoa_don_bus.getTabs()
-    total = 0
-    for x in income.values():
-        total += x
-    tabs['total'] = total
-    data = {"list": listHD,"income":income,"fees":tabs}
-    return jsonify(data)
+    print(listHD,flush=True)
+    return jsonify(listHD)
 
 @app.route('/quanlitaichinh/load/', methods=['POST'])
 def load_taichinh():
@@ -511,91 +471,54 @@ def load_taichinh():
     return jsonify(data)
 
 @app.route('/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
-def editState(IDHD:int,Status):
-    result = hoa_don_bus.editState(IDHD,Status)
+def editState(IDHD: int, Status):
+    result = hoa_don_bus.editState(IDHD, Status)
     return jsonify(result)
-# endregion 
-########################################################################################
-# region phiếu ghi
+
+# Phiếu ghi
 @app.route('/them-phieu-ghi')
 def themphieughi():
-    phieughi = PhieuGhiBUS.themPhieuGhi()
-    return
-# trang mở đầu ====================================================================================
+    result = PhieuGhiBUS.themPhieuGhi()
+    return jsonify({'success': True, 'result': result})
+
+# Trang mở đầu
 @app.route('/')
 def index():
     danh_sach_san = san_bus.lay_danh_sach_san()
-    return render_template('user.html', san = danh_sach_san)
+    for san in danh_sach_san:
+        if isinstance(san, dict):
+            hinh_anh = san.get('HinhAnh', 'default.jpg')
+            if 'asset/' in hinh_anh:
+                san['HinhAnh'] = url_for('static', filename=hinh_anh)
+            else:
+                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+    return render_template('user.html', san=danh_sach_san)
 
 @app.route('/index')
-def render_index_template(context=None):
-    """Hàm render template với các giá trị mặc định"""
-    default_context = {
-        'pg': [],
-        'san': [],
-        'today_date': datetime.now().strftime("%Y-%m-%d"),
-        'today_revenue': 0.0,
-        'booked_fields': 0,
-        'total_fields': 0
-    }
-    if context:
-        default_context.update(context)
-    return render_template('index.html', **default_context)
-
 def pagemain():
-    """Lấy dữ liệu đặt sân hôm nay và hiển thị trang chủ"""
     try:
-        # 1. Lấy dữ liệu thô từ database
-        raw_bookings = phieughi.getListPhieuGhi(None) or []
-        fields = san_bus.danh_sach_san() or []
-        
-        # 2. Chuẩn bị dữ liệu
-        today = datetime.now().strftime("%Y-%m-%d")
-        filtered_bookings = []
-        revenue = Decimal('0')
-        booked_field_ids = set()
-        
-        # 3. Xử lý từng booking
-        for booking in raw_bookings:
-            try:
-                # Kiểm tra booking hợp lệ
-                if not all(hasattr(booking, attr) for attr in ['Ngay', 'TrangThai', 'GiaTien', 'IdSan']):
-                    continue
-                    
-                # Kiểm tra ngày booking
-                if not hasattr(booking.Ngay, 'strftime') or booking.Ngay.strftime("%Y-%m-%d") != today:
-                    continue
-                    
-                filtered_bookings.append(booking)
-                
-                # Tính toán doanh thu và sân đã đặt
-                if booking.TrangThai.lower() != 'huy':
-                    revenue += Decimal(str(booking.GiaTien))
-                    booked_field_ids.add(booking.IdSan)
-                    
-            except (AttributeError, TypeError, ValueError) as e:
-                print(f"Lỗi xử lý booking {getattr(booking, 'IdPhieuGhi', 'unknown')}: {str(e)}")
-                continue
-        
-        # 4. Chuẩn bị dữ liệu trả về
-        context = {
-            'pg': filtered_bookings,
-            'san': fields,
-            'today_date': today,
-            'today_revenue': float(revenue),  # Chuyển Decimal sang float để tương thích JSON
-            'booked_fields': len(booked_field_ids),
-            'total_fields': len(fields)
-        }
-        
-        return render_index_template(context)
-        
+        danh_sach_san = san_bus.lay_danh_sach_san() or []
+        print("Danh sách sân trong /index:", danh_sach_san)
+        for san in danh_sach_san:
+            print("Sân:", san)
+            hinh_anh = san.get('HinhAnh', 'default.jpg')
+            if 'asset/' in hinh_anh:
+                san['HinhAnh'] = url_for('static', filename=hinh_anh)
+            else:
+                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+        ds_pg = phieughi.getListByDate(datetime.now().date()) or []
+        print("Danh sách phiếu ghi:", ds_pg)
+        booked_fields = len([pg for pg in ds_pg if pg.get('TrangThai', '').lower() == 'dat'])
+        return render_template('index.html',
+                               san=danh_sach_san,
+                               pg=ds_pg,
+                               today_date=datetime.now().strftime("%Y-%m-%d"),
+                               today_revenue=0,
+                               booked_fields=booked_fields,
+                               total_fields=len(danh_sach_san) if danh_sach_san else 0)
     except Exception as e:
-        print(f"Lỗi nghiêm trọng trong pagemain: {str(e)}")
-        # Ghi log lỗi đầy đủ ở đây
-        return render_index_template()  # Trả về trang với dữ liệu mặc định
-        
+        print("Lỗi trong route /index:", str(e))
+        return "Có lỗi xảy ra: " + str(e), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    
-
+    app.run(debug=True, host='0.0.0.0', port=5000)

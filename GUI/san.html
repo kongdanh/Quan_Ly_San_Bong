@@ -92,7 +92,9 @@
 
         input[type="text"],
         input[type="file"],
-        select {
+        input[type="number"],
+        select,
+        textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -103,7 +105,9 @@
 
         input[type="text"]:focus,
         input[type="file"]:focus,
-        select:focus {
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
@@ -349,7 +353,7 @@
             <!-- Form thêm sân -->
             <div class="form-container" id="formThemSan">
                 <h2>Thêm sân mới</h2>
-                <form method="POST" action="/them-san" enctype="multipart/form-data">
+                <form id="themSanForm" method="POST" action="/them-san" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="CoSan">Cỡ sân:</label>
                         <select id="CoSan" name="CoSan" required>
@@ -360,17 +364,40 @@
                             <option value="11">11 vs 11</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="DiaChi">Địa chỉ:</label>
                         <input type="text" id="DiaChi" name="DiaChi" required placeholder="Nhập địa chỉ sân">
                     </div>
-
                     <div class="form-group">
                         <label for="HinhAnh">Hình ảnh sân:</label>
-                        <input type="file" id="HinhAnh" name="HinhAnh" accept="image/*">
+                        <input type="file" id="HinhAnh" name="HinhAnh" accept="image/*" required>
                     </div>
-
+                    <div class="form-group">
+                        <label for="SoSan">Số sân:</label>
+                        <select id="SoSan" name="SoSan" required>
+                            <option value="" disabled selected>Chọn số sân</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="MoTa">Mô tả:</label>
+                        <textarea id="MoTa" name="MoTa" placeholder="Nhập mô tả sân"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="TrangThai">Trạng thái:</label>
+                        <select id="TrangThai" name="TrangThai" required>
+                            <option value="" disabled selected>Chọn trạng thái</option>
+                            <option value="1">Hoạt động</option>
+                            <option value="0">Không hoạt động</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="GiaSan">Giá sân (VND):</label>
+                        <input type="number" id="GiaSan" name="GiaSan" required min="0" placeholder="Nhập giá sân">
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn-secondary" onclick="toggleFormThemSan()">Hủy</button>
                         <button type="submit" class="btn-primary">Thêm sân</button>
@@ -427,6 +454,10 @@
                             <th>Cỡ sân</th>
                             <th>Địa chỉ</th>
                             <th>Hình ảnh</th>
+                            <th>Số sân</th>
+                            <th>Mô tả</th>
+                            <th>Trạng thái</th>
+                            <th>Giá sân (VND)</th>
                             <th>Thao tác</th>
                         </tr>
                     </thead>
@@ -438,16 +469,18 @@
                             <td>{{ san.DiaChi }}</td>
                             <td>
                                 {% if san.HinhAnh %}
-                                <img src="{{ san.HinhAnh }}" alt="Hình sân"
-                                    style="max-width: 100px; border-radius: 4px;">
+                                <img src="{{ san.HinhAnh }}" alt="Hình sân" style="max-width: 100px; border-radius: 4px;" onerror="this.src='/static/asset/default.jpg';">
                                 {% else %}
-                                Chưa có hình
+                                Chưatwice có hình
                                 {% endif %}
                             </td>
+                            <td>{{ san.SoSan }}</td>
+                            <td>{{ san.MoTa or 'Chưa có mô tả' }}</td>
+                            <td>{{ 'Hoạt động' if san.TrangThai == 1 else 'Không hoạt động' }}</td>
+                            <td>{{ san.GiaSan }}</td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="btn btn-warning"
-                                        onclick="moFormSua('{{ san.IdSan }}', '{{ san.CoSan }}', '{{ san.DiaChi }}')">Sửa</button>
+                                    <button class="btn btn-warning" onclick="moFormSua('{{ san.IdSan }}', '{{ san.CoSan }}', '{{ san.DiaChi }}', '{{ san.HinhAnh }}', '{{ san.SoSan }}', '{{ san.MoTa }}', '{{ san.TrangThai }}', '{{ san.GiaSan }}')">Sửa</button>
                                     <button class="btn btn-danger" onclick="xoaSan('{{ san.IdSan }}')">Xóa</button>
                                 </div>
                             </td>
@@ -463,24 +496,52 @@
                     <div class="modal-header">
                         <h3>Sửa thông tin sân</h3>
                     </div>
-                    <form id="suaForm" method="POST">
+                    <form id="suaForm" method="POST" action="" enctype="multipart/form-data">
                         <input type="hidden" name="IdSan" id="suaId">
-
                         <div class="form-group">
                             <label for="suaCoSan">Cỡ sân:</label>
                             <select id="suaCoSan" name="CoSan" required>
-                                <option value="5 vs 5">5 vs 5</option>
-                                <option value="7 vs 7">7 vs 7</option>
-                                <option value="9 vs 9">9 vs 9</option>
-                                <option value="11 vs 11">11 vs 11</option>
+                                <option value="" disabled>Chọn cỡ sân</option>
+                                <option value="5">5 vs 5</option>
+                                <option value="7">7 vs 7</option>
+                                <option value="9">9 vs 9</option>
+                                <option value="11">11 vs 11</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="suaDiaChi">Địa chỉ:</label>
                             <input type="text" id="suaDiaChi" name="DiaChi" required>
                         </div>
-
+                        <div class="form-group">
+                            <label for="suaHinhAnh">Hình ảnh sân:</label>
+                            <input type="file" id="suaHinhAnh" name="HinhAnh" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label for="suaSoSan">Số sân:</label>
+                            <select id="suaSoSan" name="SoSan" required>
+                                <option value="" disabled>Chọn số sân</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="suaMoTa">Mô tả:</label>
+                            <textarea id="suaMoTa" name="MoTa"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="suaTrangThai">Trạng thái:</label>
+                            <select id="suaTrangThai" name="TrangThai" required>
+                                <option value="" disabled>Chọn trạng thái</option>
+                                <option value="1">Hoạt động</option>
+                                <option value="0">Không hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="suaGiaSan">Giá sân (VND):</label>
+                            <input type="number" id="suaGiaSan" name="GiaSan" required min="0">
+                        </div>
                         <div class="modal-footer">
                             <button type="button" class="btn-secondary" onclick="dongForm()">Hủy</button>
                             <button type="submit" class="btn-primary">Lưu thay đổi</button>
@@ -499,10 +560,14 @@
         }
 
         // Mở form sửa
-        function moFormSua(id, CoSan, DiaChi) {
+        function moFormSua(id, coSan, diaChi, hinhAnh, soSan, moTa, trangThai, giaSan) {
             document.getElementById('suaId').value = id;
-            document.getElementById('suaDiaChi').value = DiaChi;
-            document.getElementById('suaCoSan').value = CoSan;
+            document.getElementById('suaCoSan').value = coSan;
+            document.getElementById('suaDiaChi').value = diaChi;
+            document.getElementById('suaSoSan').value = soSan;
+            document.getElementById('suaMoTa').value = moTa || '';
+            document.getElementById('suaTrangThai').value = trangThai;
+            document.getElementById('suaGiaSan').value = giaSan;
             document.getElementById('formSua').style.display = 'flex';
         }
 
@@ -518,26 +583,129 @@
             }
         }
 
+        // Gửi form thêm sân
+        document.getElementById('themSanForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const coSan = document.getElementById('CoSan').value;
+            const diaChi = document.getElementById('DiaChi').value.trim();
+            const hinhAnh = document.getElementById('HinhAnh').files[0];
+            const soSan = document.getElementById('SoSan').value;
+            const moTa = document.getElementById('MoTa').value.trim();
+            const trangThai = document.getElementById('TrangThai').value;
+            const giaSan = document.getElementById('GiaSan').value;
+
+            console.log('Form data:', { coSan, diaChi, hinhAnh, soSan, moTa, trangThai, giaSan });
+
+            if (!coSan || !['5', '7', '9', '11'].includes(coSan)) {
+                alert('Vui lòng chọn cỡ sân hợp lệ!');
+                return;
+            }
+            if (!diaChi) {
+                alert('Vui lòng nhập địa chỉ!');
+                return;
+            }
+            if (!hinhAnh) {
+                alert('Vui lòng chọn hình ảnh!');
+                return;
+            }
+            if (!hinhAnh.type.startsWith('image/')) {
+                alert('Hình ảnh phải là định dạng ảnh (jpg, png, gif)!');
+                return;
+            }
+            if (!soSan || !['1', '2', '3', '4'].includes(soSan)) {
+                alert('Vui lòng chọn số sân hợp lệ!');
+                return;
+            }
+            if (!trangThai || !['0', '1'].includes(trangThai)) {
+                alert('Vui lòng chọn trạng thái hợp lệ!');
+                return;
+            }
+            if (!giaSan || giaSan <= 0 || isNaN(giaSan)) {
+                alert('Vui lòng nhập giá sân hợp lệ (số nguyên dương)!');
+                return;
+            }
+
+            const formData = new FormData(this);
+            try {
+                const response = await fetch('/them-san', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Lỗi server: ${response.status} - ${text.substring(0, 100)}...`);
+                }
+                const json = await response.json();
+                if (json.success) {
+                    alert('Thêm sân thành công!');
+                    window.location.reload();
+                } else {
+                    alert('Lỗi khi thêm sân: ' + (json.error || 'Không rõ'));
+                }
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            }
+        });
+
         // Gửi form sửa
-        document.getElementById('suaForm').addEventListener('submit', function (e) {
+        document.getElementById('suaForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const id = document.getElementById('suaId').value;
-            const data = new FormData(this);
+            const coSan = document.getElementById('suaCoSan').value;
+            const diaChi = document.getElementById('suaDiaChi').value.trim();
+            const hinhAnh = document.getElementById('suaHinhAnh').files[0];
+            const soSan = document.getElementById('suaSoSan').value;
+            const moTa = document.getElementById('suaMoTa').value.trim();
+            const trangThai = document.getElementById('suaTrangThai').value;
+            const giaSan = document.getElementById('suaGiaSan').value;
 
-            fetch(`/sua-san/${id}`, {
-                method: 'POST',
-                body: data
-            }).then(res => res.json())
-                .then(json => {
-                    if (json.success) {
-                        window.location.reload();
-                    } else {
-                        alert("Lỗi khi cập nhật sân: " + (json.error || "Không rõ"));
-                    }
-                })
-                .catch(error => {
-                    alert("Lỗi kết nối: " + error.message);
+            console.log('Form data (sua):', { id, coSan, diaChi, hinhAnh, soSan, moTa, trangThai, giaSan });
+
+            if (!coSan || !['5', '7', '9', '11'].includes(coSan)) {
+                alert('Vui lòng chọn cỡ sân hợp lệ!');
+                return;
+            }
+            if (!diaChi) {
+                alert('Vui lòng nhập địa chỉ!');
+                return;
+            }
+            if (hinhAnh && !hinhAnh.type.startsWith('image/')) {
+                alert('Hình ảnh phải là định dạng ảnh (jpg, png, gif)!');
+                return;
+            }
+            if (!soSan || !['1', '2', '3', '4'].includes(soSan)) {
+                alert('Vui lòng chọn số sân hợp lệ!');
+                return;
+            }
+            if (!trangThai || !['0', '1'].includes(trangThai)) {
+                alert('Vui lòng chọn trạng thái hợp lệ!');
+                return;
+            }
+            if (!giaSan || giaSan <= 0 || isNaN(giaSan)) {
+                alert('Vui lòng nhập giá sân hợp lệ (số nguyên dương)!');
+                return;
+            }
+
+            const formData = new FormData(this);
+            try {
+                const response = await fetch(`/sua-san/${id}`, {
+                    method: 'POST',
+                    body: formData
                 });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Lỗi server: ${response.status} - ${text.substring(0, 100)}...`);
+                }
+                const json = await response.json();
+                if (json.success) {
+                    alert('Cập nhật sân thành công!');
+                    window.location.reload();
+                } else {
+                    alert('Lỗi khi cập nhật sân: ' + (json.error || 'Không rõ'));
+                }
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            }
         });
 
         // Đóng modal khi click bên ngoài
