@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, time
 import os
+import re
 from typing import Dict
 from flask import Flask, current_app, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
@@ -42,7 +43,6 @@ def quan_ly_san():
             if hinh_anh is None or not hinh_anh:
                 san['HinhAnh'] = url_for('static', filename='asset/default.jpg')
             else:
-                # Chỉ thêm 'asset/' nếu chưa có trong hinh_anh
                 if 'asset/' in hinh_anh:
                     san['HinhAnh'] = url_for('static', filename=hinh_anh)
                 else:
@@ -60,10 +60,8 @@ def them_san():
         trang_thai = request.form.get('TrangThai')
         gia_san = request.form.get('GiaSan')
 
-        # Debug dữ liệu nhận được
         print(f"Received data - CoSan: {co_san}, DiaChi: {dia_chi}, HinhAnh: {hinh_anh}, SoSan: {so_san}, MoTa: {mo_ta}, TrangThai: {trang_thai}, GiaSan: {gia_san}", flush=True)
 
-        # Kiểm tra dữ liệu đầu vào
         if not co_san or co_san not in ['5', '7', '9', '11']:
             return jsonify({'success': False, 'error': 'Cỡ sân không hợp lệ'}), 400
         if not dia_chi:
@@ -79,7 +77,6 @@ def them_san():
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'Giá sân phải là số nguyên'}), 400
 
-        # Xử lý file upload
         hinh_anh_path = None
         if hinh_anh and hinh_anh.filename:
             if not hinh_anh.mimetype.startswith('image/'):
@@ -90,7 +87,6 @@ def them_san():
         else:
             hinh_anh_path = 'default.jpg'
 
-        # Gửi dữ liệu đến BUS
         du_lieu_san = {
             'coSan': co_san,
             'diaChi': dia_chi,
@@ -125,10 +121,8 @@ def sua_san(id):
         trang_thai = request.form.get('TrangThai')
         gia_san = request.form.get('GiaSan')
 
-        # Debug dữ liệu nhận được
         print(f"Received data - Id: {id}, CoSan: {co_san}, DiaChi: {dia_chi}, HinhAnh: {hinh_anh}, SoSan: {so_san}, MoTa: {mo_ta}, TrangThai: {trang_thai}, GiaSan: {gia_san}", flush=True)
 
-        # Kiểm tra dữ liệu đầu vào
         if not co_san or co_san not in ['5', '7', '9', '11']:
             return jsonify({'success': False, 'error': 'Cỡ sân không hợp lệ'}), 400
         if not dia_chi:
@@ -144,7 +138,6 @@ def sua_san(id):
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'Giá sân phải là số nguyên'}), 400
 
-        # Xử lý file upload
         hinh_anh_path = None
         if hinh_anh and hinh_anh.filename:
             if not hinh_anh.mimetype.startswith('image/'):
@@ -152,9 +145,7 @@ def sua_san(id):
             filename = hinh_anh.filename
             hinh_anh_path = f"asset/{filename}"
             hinh_anh.save(os.path.join('GUI/static', hinh_anh_path))
-        # Nếu không upload ảnh mới, giữ nguyên giá trị cũ (cần lấy từ CSDL hoặc không thay đổi)
 
-        # Gửi dữ liệu đến BUS
         du_lieu_moi = {
             'coSan': co_san,
             'diaChi': dia_chi,
@@ -304,25 +295,106 @@ def renderBooking(userID: int, date):
 @app.route('/user/<int:userID>/dat_san/<int:sanID>/ngay/<date>/khung_gio/<khung_gio>/gia/<gia>', methods=['POST'])
 def datsan(userID: int, sanID: int, date, khung_gio, gia):
     try:
+        # Chuyển đổi ngày từ chuỗi thành datetime.date
         date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-        data = request.get_json()
-        order = {
+
+        # Kiểm tra ngày phải từ hôm nay trở đi
+        today = datetime.now().date()
+        if date_obj < today:
+            return jsonify({'success': False, 'error': 'Không thể đặt sân cho ngày đã qua'}), 400
+
+        # Kiểm tra khung giờ hợp lệ (HH:MM-HH:MM)
+        if not re.match(r'^\d{2}:\d{2}-\d{2}:\d{2}$', khung_gio):
+            return jsonify({'success': False, 'error': 'Định dạng khung giờ không hợp lệ'}), 400
+
+        start_time_str, end_time_str = khung_gio.split('-')
+        start_datetime = datetime.strptime(f"{date} {start_time_str}", '%Y-%m-%d %H:%M')
+        end_datetime = datetime.strptime(f"{date} {end_time_str}", '%Y-%m-%d %H:%M')
+
+        # Kiểm tra thời gian bắt đầu phải sau hiện tại ít nhất 15 phút
+        now = datetime.now()
+        time_diff = (start_datetime - now).total_seconds() / 60
+        if time_diff < 15:
+            return jsonify({'success': False, 'error': 'Không thể đặt sân trong vòng 15 phút tới'}), 400
+
+        # Kiểm tra thời gian kết thúc phải sau thời gian bắt đầu
+        if end_datetime <= start_datetime:
+            return jsonify({'success': False, 'error': 'Thời gian kết thúc phải sau thời gian bắt đầu'}), 400
+
+        # Kiểm tra giá
+        try:
+            gia_value = float(gia)
+            if gia_value <= 0:
+                return jsonify({'success': False, 'error': 'Giá phải lớn hơn 0'}), 400
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Giá không hợp lệ'}), 400
+
+        # Lấy thông tin người dùng từ IdNguoiDung
+        nguoi_dung = khachhang.getNguoiDungById(userID)
+        if not nguoi_dung:
+            return jsonify({'success': False, 'error': 'Không tìm thấy thông tin người dùng'}), 400
+
+        # Xử lý trường HoTen
+        ho_ten = nguoi_dung.get('HoTen', 'Khách')
+        if not ho_ten:
+            ho_ten = 'Khách'  # Giá trị mặc định nếu HoTen rỗng
+
+        # Tạo hóa đơn trước
+        du_lieu_hoa_don = {
             'Ngay': date_obj,
-            'TongTien': float(gia),
-            'PhuongThuc': data.get('PhuongThuc'),
-            'TrangThai': data.get('TrangThai', 'Chờ xác nhận'),
-            'IdNhanVien': data.get('IdNhanVien'),
-            'IdNguoiDung': userID
+            'TongTien': gia_value,
+            'PhuongThuc': 'Tiền mặt',  # Giá trị mặc định, có thể thay đổi tùy logic
+            'TrangThai': 'Chờ xác nhận',  # Khớp với mặc định của bảng
+            'IdNhanVien': None,  # Có thể để NULL
+            'IdNguoiDung': userID  # Gán IdNguoiDung từ userID
         }
-        result = hoa_don_bus.them_hoa_don(order)
-        if result.get('success'):
-            return jsonify({'success': True, 'message': 'Đặt sân thành công', 'IdHoaDon': result.get('IdHoaDon')})
+        result_hoa_don = hoa_don_bus.them_hoa_don(du_lieu_hoa_don)
+        if not result_hoa_don.get('success', False):
+            return jsonify({'success': False, 'error': 'Không thể tạo hóa đơn: ' + result_hoa_don.get('error', 'Lỗi không xác định')}), 400
+
+        # Lấy IdHoaDon từ kết quả
+        id_hoa_don = result_hoa_don.get('IdHoaDon')
+        if not id_hoa_don:
+            return jsonify({'success': False, 'error': 'Không thể lấy IdHoaDon sau khi tạo hóa đơn'}), 500
+
+        # Dữ liệu phiếu ghi với IdHoaDon
+        du_lieu_phieu_ghi = {
+            'Ngay': date_obj,
+            'KhungGio': khung_gio,
+            'GiaTien': gia_value,
+            'IdSan': sanID,
+            'IdHoaDon': id_hoa_don,
+            'HoTen': ho_ten,  # Lưu ý: Cột này không có trong bảng phieughi, có thể cần bỏ hoặc sửa bảng
+            'TrangThai': 'Chờ xác nhận',  # Lưu ý: Cột này không có trong bảng phieughi, có thể cần bỏ hoặc sửa bảng
+            'IdNguoiDung': userID  # Lưu ý: Cột này không có trong bảng phieughi, có thể cần bỏ hoặc sửa bảng
+        }
+
+        print(f"Dữ liệu phiếu ghi: {du_lieu_phieu_ghi}", flush=True)
+
+        # Gọi BUS để thêm phiếu ghi
+        result = phieughi.themPhieuGhi(du_lieu_phieu_ghi)
+        if result.get('success', False):
+            return jsonify({
+                'success': True,
+                'message': 'Đặt sân thành công, phiếu ghi đã được tạo với trạng thái Chờ xác nhận',
+                'IdPhieuGhi': result.get('IdPhieuGhi'),
+                'IdHoaDon': id_hoa_don
+            })
         else:
-            return jsonify({'success': False, 'message': result.get('error', 'Lỗi không xác định')})
+            # Nếu thêm phiếu ghi thất bại, xóa hóa đơn vừa tạo để tránh dữ liệu thừa
+            hoa_don_bus.xoa_hoa_don(id_hoa_don)
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Lỗi không xác định')
+            }), 400
+
+    except ValueError as ve:
+        print(f"Lỗi định dạng dữ liệu: {ve}", flush=True)
+        return jsonify({'success': False, 'error': 'Dữ liệu đầu vào không hợp lệ'}), 400
     except Exception as e:
         print(f"Lỗi khi xử lý đặt sân: {e}", flush=True)
-        return jsonify({'success': False, 'message': str(e)})
-
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
 # Đăng nhập & Đăng ký
 @app.route('/login')
 def dangNhap():
@@ -335,7 +407,7 @@ def render_index_template(context=None):
     }
     if context:
         default_context.update(context)
-    return render_template('index.html', **default_context)
+    return render_template('quanlitaichinh.html', **default_context)
 
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
@@ -436,14 +508,11 @@ def load_khachhang(type: str):
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
         x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
-    # print("HI")
     print(listGuest, flush=True)
     return jsonify(data)
 
 @app.route('/khachhang/sua', methods=['POST'])
 def editKhachHang():
-    # birth = request.form.to_dict()['date']
-    # date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
     adjDatas = request.form.to_dict()
     adjDatas['NgaySinh'] = None
     print(adjDatas, flush=True)
@@ -547,17 +616,15 @@ def themphieughi():
         gia = float(data.get('gia'))
         trang_thai = data.get('trangThai', 'Chờ xác nhận')
 
-        # Dữ liệu phiếu ghi không cần IdNguoiDung, lưu trực tiếp HoTen
         du_lieu_phieu_ghi = {
-            'HoTen': ho_ten,  # Lưu trực tiếp tên khách hàng
+            'HoTen': ho_ten,
             'IdSan': id_san,
             'KhungGio': khung_gio,
             'Gia': gia,
             'TrangThai': trang_thai,
-            'Ngay': datetime.now().date()  # Ngày tạo phiếu ghi là ngày hiện tại
+            'Ngay': datetime.now().date()
         }
 
-        # Gọi BUS để thêm phiếu ghi
         result = phieughi.themPhieuGhi(du_lieu_phieu_ghi)
         if result.get('success', False):
             return jsonify({'success': True})
@@ -579,125 +646,6 @@ def index():
                 san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
     return render_template('dangnhap_dangki.html', san=danh_sach_san)
 
-@app.route('/index')
-def pagemain():
-    today = datetime.now()
-    ds_phieughi = phieughi.getListByDate(today)
-    danh_sach_san = san_bus.lay_danh_sach_san()
-    if danh_sach_san is None or not isinstance(danh_sach_san, list):
-        print("Lỗi: danh_sach_san không phải danh sách, giá trị:", danh_sach_san)
-        danh_sach_san = []
-    for san in danh_sach_san:
-        hinh_anh = san.get('HinhAnh', 'default.jpg')
-        if 'asset/' in hinh_anh:
-            san['HinhAnh'] = url_for('static', filename=hinh_anh)
-        else:
-            san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
-
-    total_bookings = len(ds_phieughi)
-    confirmed_bookings = len([pg for pg in ds_phieughi if pg['TrangThai'] == 'Đã xác nhận'])
-    today_revenue = sum(pg['Gia'] for pg in ds_phieughi if pg['TrangThai'] == 'Đã xác nhận')
-
-    return render_template('index.html', today_date=today.strftime('%Y-%m-%d'), pg=ds_phieughi, 
-                          total_bookings=total_bookings, confirmed_bookings=confirmed_bookings, 
-                          today_revenue=today_revenue, danh_sach_san=danh_sach_san)
-
-@app.route('/phieughi-theo-ngay', methods=['GET', 'POST'])
-def phieughi_theo_ngay():
-    try:
-        # Lấy ngày từ form (nếu là POST) hoặc mặc định là ngày hiện tại (nếu là GET)
-        if request.method == 'POST':
-            ngay_str = request.form.get('ngay')
-            ngay = datetime.strptime(ngay_str, '%Y-%m-%d')
-        else:
-            ngay = datetime.now()
-
-        ngay_str = ngay.strftime("%Y-%m-%d")
-        print(f"DEBUG: Ngày được chọn = {ngay_str}")
-
-        # Lấy danh sách phiếu ghi theo ngày
-        ds_pg = phieughi.getListByDate(ngay)
-        if ds_pg is None or not isinstance(ds_pg, list):
-            print("Lỗi: ds_pg không phải danh sách, giá trị:", ds_pg)
-            ds_pg = []
-
-        # Lấy danh sách sân
-        danh_sach_san = san_bus.lay_danh_sach_san()
-        if danh_sach_san is None or not isinstance(danh_sach_san, list):
-            print("Lỗi: danh_sach_san không phải danh sách, giá trị:", danh_sach_san)
-            danh_sach_san = []
-        for san in danh_sach_san:
-            hinh_anh = san.get('HinhAnh', 'default.jpg')
-            if 'asset/' in hinh_anh:
-                san['HinhAnh'] = url_for('static', filename=hinh_anh)
-            else:
-                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
-
-        # Lấy danh sách người dùng
-        ds_nguoidung = khachhang.getListNguoiDung()
-        if ds_nguoidung is None or not isinstance(ds_nguoidung, list):
-            print("Lỗi: ds_nguoidung không phải danh sách, giá trị:", ds_nguoidung)
-            ds_nguoidung = []
-
-        # Duyệt danh sách phiếu ghi và ghép dữ liệu
-        for pg in ds_pg:
-            pg.setdefault('IdSan', 0)
-            pg.setdefault('IdNguoiDung', 0)
-            pg.setdefault('KhungGio', '')
-            pg.setdefault('Gia', 0)
-            pg.setdefault('TrangThai', 'Chưa xác định')
-
-            san = next((s for s in danh_sach_san if s.get('IdSan') == pg.get('IdSan')), {})
-            pg['CoSan'] = san.get('CoSan', 'Không xác định')
-            pg['DiaChi'] = san.get('DiaChi', '')
-
-            nguoidung = next((nd for nd in ds_nguoidung if nd.get('IdNguoiDung') == pg.get('IdNguoiDung')), {})
-            pg['HoTen'] = nguoidung.get('HoTen', 'Không xác định')
-
-            try:
-                pg['Gia'] = float(pg.get('Gia', 0) or 0)
-            except (TypeError, ValueError):
-                print(f"Cảnh báo: Gia không hợp lệ cho phiếu ghi {pg.get('IdPhieuGhi')}: {pg.get('Gia')}")
-                pg['Gia'] = 0
-
-        # Tính toán các số liệu thống kê
-        total_bookings = len(ds_pg)
-        confirmed_bookings = sum(1 for pg in ds_pg if pg.get('TrangThai') == 'Đã xác nhận')
-        today_revenue = sum(pg.get('Gia', 0) for pg in ds_pg if pg.get('TrangThai') == 'Đã xác nhận')
-
-        # Xác định các phiếu sắp tới (nếu ngày được chọn là hôm nay)
-        current_time = datetime.now().time()
-        upcoming_bookings = []
-        if ngay.date() == datetime.now().date():  # Chỉ tính nếu ngày được chọn là hôm nay
-            for pg in ds_pg:
-                khung_gio = pg.get('KhungGio', '')
-                if '-' in khung_gio:
-                    start_time_str = khung_gio.split('-')[0]
-                    try:
-                        start_time = datetime.strptime(start_time_str, '%H:%M').time()
-                        start_datetime = datetime.combine(ngay.date(), start_time)
-                        time_diff = (start_datetime - datetime.now()).total_seconds() / 60
-                        if 0 <= time_diff <= 60:
-                            upcoming_bookings.append(pg)
-                    except ValueError:
-                        print(f"Cảnh báo: Khung giờ không hợp lệ {khung_gio} cho phiếu {pg.get('IdPhieuGhi')}")
-                        continue
-        else:
-            upcoming_bookings = []  # Nếu không phải hôm nay, không có phiếu sắp tới
-
-        # Truyền dữ liệu vào index.html
-        return render_template('index.html',
-                              san=danh_sach_san,
-                              pg=ds_pg,
-                              today_date=ngay_str,
-                              today_revenue=today_revenue or 0,
-                              total_bookings=total_bookings,
-                              confirmed_bookings=confirmed_bookings,
-                              upcoming_bookings=upcoming_bookings,
-                              total_fields=len(danh_sach_san))
-    except Exception as e:
-        print("Lỗi trong route /phieughi-theo-ngay:", str(e))
-        return "Có lỗi xảy ra: " + str(e), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

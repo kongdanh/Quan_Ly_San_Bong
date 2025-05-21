@@ -275,7 +275,6 @@
     <div class="left-menu">
         <h1>Quản Lí Sân Bóng</h1>
         <ul>
-            <li><a href="/index">Dashboard</a></li>
             <li><a href="/san">Quản lí sân</a></li>
             <li><a href="/khachhang">Quản lí khách hàng</a></li>
             <li><a href="/quanlitaichinh">Quản lí tài chính</a></li>
@@ -470,6 +469,57 @@
                 }
             }
         });
+        // Xử lý sự kiện cho nút Xuất báo cáo
+        document.querySelector('.dashboard-header .btn-primary').addEventListener('click', function () {
+            alert('Chức năng xuất báo cáo đang được phát triển');
+            // Trong thực tế, bạn có thể thêm code để xuất file PDF hoặc Excel ở đây
+        });
+
+        // Xử lý sự kiện cho nút Áp dụng bộ lọc
+        document.querySelector('.filter-group .btn-primary').addEventListener('click', function () {
+            const startDate = document.querySelector('.date-filter input[type="date"]:first-of-type').value;
+            const endDate = document.querySelector('.date-filter input[type="date"]:last-of-type').value;
+            const fieldSelect = document.querySelector('.filter-group select:first-of-type');
+            const reportTypeSelect = document.querySelector('.filter-group select:last-of-type');
+
+            const selectedField = fieldSelect.options[fieldSelect.selectedIndex].text;
+            const selectedReportType = reportTypeSelect.options[reportTypeSelect.selectedIndex].text;
+
+            console.log('Áp dụng bộ lọc:', {
+                startDate,
+                endDate,
+                selectedField,
+                selectedReportType
+            });
+
+            // Trong thực tế, bạn sẽ gửi yêu cầu AJAX đến server để lấy dữ liệu mới
+            alert(`Đã áp dụng bộ lọc:\nTừ ${startDate} đến ${endDate}\nSân: ${selectedField}\nLoại báo cáo: ${selectedReportType}`);
+        });
+
+        // Xử lý sự kiện cho menu điều hướng
+        document.querySelectorAll('.left-menu li').forEach(item => {
+            item.addEventListener('click', function () {
+                // Loại bỏ class active khỏi tất cả các mục menu
+                document.querySelectorAll('.left-menu li').forEach(li => {
+                    li.classList.remove('active');
+                });
+
+                // Thêm class active vào mục menu được chọn
+                this.classList.add('active');
+
+                // Trong thực tế, bạn có thể chuyển hướng trang tại đây
+                // window.location.href = this.querySelector('a').href;
+            });
+        });
+
+        // Đặt ngày mặc định là ngày hiện tại
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelector('.date-filter input[type="date"]:last-of-type').value = today;
+
+        // Đặt ngày bắt đầu mặc định là 1 tháng trước
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        document.querySelector('.date-filter input[type="date"]:first-of-type').value = oneMonthAgo.toISOString().split('T')[0];
     </script>
 </body>
 

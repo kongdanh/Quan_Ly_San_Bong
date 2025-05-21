@@ -85,6 +85,16 @@ class NguoiDung_BUS:
             print(result,flush=True)
         return result
     
+    def getNguoiDungById(self, idNguoiDung: int) -> Dict:
+        """
+        Lấy thông tin người dùng dựa trên IdNguoiDung.
+        Trả về dictionary chứa thông tin người dùng hoặc None nếu không tìm thấy.
+        """
+        result = self.nguoidungDAO.timKiemNguoiDung(idNguoiDung)
+        if result and isinstance(result, dict) and 'IdNguoiDung' in result:
+            return result
+        return None
+    
     def themNguoiDung(self, data:Dict) -> Dict:
         data['AccType'] = 'user'
         # print("Check input data",flush=True)

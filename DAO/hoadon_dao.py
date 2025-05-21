@@ -26,28 +26,45 @@ class HoaDonDAO:
             return list
     
     def them_hoa_don(self, hd_data: Dict) -> Dict:
-        if not hd_data.get('IdHoaDon') or not hd_data.get('IdNhanVien'):
-            return {"success": False, "error": "Thiếu thông tin bắt buộc"}
-
         try:
             cursor = self.conn.cursor()
-            cursor.execute(
-                "INSERT INTO hoadon (IdHoaDon, Ngay, TongTien, IdNhanVien) VALUES (%s, %s, %s, %s)",
-                (
-                    hd_data['IdHoaDon'],
-                    hd_data['Ngay'],
-                    hd_data['TongTien'],
-                    hd_data['IdNhanVien']
-                )
+            query = """
+            INSERT INTO hoadon (Ngay, TongTien, PhuongThuc, TrangThai, IdNhanVien, IdNguoiDung)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            values = (
+                hd_data['Ngay'],
+                hd_data['TongTien'],
+                hd_data['PhuongThuc'],
+                hd_data['TrangThai'],
+                hd_data.get('IdNhanVien'),
+                hd_data['IdNguoiDung']
             )
+            cursor.execute(query, values)
             self.conn.commit()
-            return {"success": True, "insert_id": cursor.lastrowid}
-        except Error as e:
-            self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi thêm hóa đơn: {e}")
-            return {"success": False, "error": str(e)}
-        finally:
             cursor.close()
+            return {'success': True}
+        except Exception as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi thêm hóa đơn: {e}", flush=True)
+            return {'success': False, 'error': str(e)}
+
+    def editState(self, IdHoaDon: int, State: str) -> Dict:
+        try:
+            cursor = self.conn.cursor()
+            query = """
+            UPDATE hoadon 
+            SET TrangThai = %s
+            WHERE IdHoaDon = %s
+            """
+            cursor.execute(query, (State, IdHoaDon))
+            self.conn.commit()
+            cursor.close()
+            return {'success': True}
+        except Exception as e:
+            self.conn.rollback()
+            print(f"[DAO ERROR] Lỗi khi cập nhật trạng thái hóa đơn: {e}", flush=True)
+            return {'success': False, 'error': str(e)}
             
     def sua_hoa_don(self, id_hoa_don: int, hd_data:Dict) -> Dict:
         try:
