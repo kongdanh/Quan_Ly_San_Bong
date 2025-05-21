@@ -482,10 +482,16 @@
                     <i class="fas fa-search"></i>
                     <input type="text" placeholder="Tìm kiếm khách hàng..." id="search" onchange="loadData()">
                 </div>
-                <div>
+                <span>
+                    <select class="btn btn-outline" id="typeSelect" onchange="loadData()" style="margin-bottom: 0px;">
+                        <option value="all">Tất cả</option>
+                        <option value="user">Hoạt động</option>
+                        <option value="blocked">Ngưng hoạt động</option>
+                    </select>
                     <!-- <button class="btn btn-primary"><i class="fas fa-filter"></i> Lọc</button>
                     <button class="btn btn-success"><i class="fas fa-plus"></i> Thêm khách hàng</button> -->
-                </div>
+                </span>
+                
             </div>
 
             <!-- Customer Table -->
@@ -580,9 +586,10 @@
                     })
         }
         async function getData() {
+            const type = document.getElementById('typeSelect').value;
             const key = document.getElementById('search').value;
-            const response = key == '' ? await fetch(`/khachhang/load`, { method: 'POST' }) :
-                await fetch(`/khachhang/timkiem/${key}`, { method: 'POST' })
+            const response = key == '' ? await fetch(`/khachhang/load/${type}`, { method: 'POST' }) :
+                await fetch(`/khachhang/timkiem/${key}/${type}`, { method: 'POST' })
             const data = await response.json()
             return data
         }

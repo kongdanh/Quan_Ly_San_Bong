@@ -35,7 +35,7 @@ class NguoiDung_BUS:
         list = self.hoaDonBUS.lay_danh_sach_hoa_don(idNguoiDung)
         sum = 0
         for x in list:
-            print(x,flush=True)
+            # print(x,flush=True)
             if x['TrangThai'] == "Đã thanh toán":
                 sum+= x['TongTien'] 
         return sum
@@ -45,8 +45,8 @@ class NguoiDung_BUS:
         if result['success']:
             return result['AccType']
     
-    def timKhachHang(self, key:str) -> List[Dict]:
-        return self.nguoidungDAO.search(key)
+    def timKhachHang(self, key:str, type:str = None) -> List[Dict]:
+        return self.nguoidungDAO.search(key, type)
     
     def suaNguoiDung(self, data:Dict) -> Dict:
         oldData = self.timKhachHang(data['IdNguoiDung'])

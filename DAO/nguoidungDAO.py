@@ -116,17 +116,25 @@ class NguoiDungDAO:
             except Error as e:
                 print(f"Lỗi khi đóng kết nối: {e}")
                 
-    def search(self, key:str) -> List[Dict]:
+    def search(self, key:str, type:str = None) -> List[Dict]:
+        
         result = []
+        if type is None or type == "all":
+            type = ""
+        type =  "%" + type + "%"
+        print(key,flush=True)
+        print(type,flush=True)    
         try:
             cursor = self.conn.cursor(dictionary=True)
             try:
                 self.conn.commit()
                 key = int(key)
-                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE IdNguoiDung = %s OR SDT = %s", (key, key))
+                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE ( IdNguoiDung = %s OR SDT = %s ) AND AccType LIKE %s",
+                               (key, key, type))
             except ValueError as e:
                 key = "%" + key + "%"
-                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE HoTen Like %s OR Email Like %s", (key, key))
+                cursor.execute("SELECT * FROM nguoidung LEFT JOIN Taikhoan On nguoidung.idTaiKhoan = Taikhoan.idTaiKhoan WHERE ( HoTen Like %s OR Email Like %s ) AND AccType LIKE %s",
+                               (key, key, type))
             result = cursor.fetchall()
         except Error as e:
             self.conn.rollback()
