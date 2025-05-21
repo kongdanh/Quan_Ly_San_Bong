@@ -570,11 +570,11 @@
             //     });
             //     chartLoad = true
             // }
-            // tabs = data['fees']
-            // document.getElementById('total').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['total'])} VNĐ`
-            // document.getElementById('curr').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['curr'])} VNĐ`
-            // document.getElementById('prev').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['prev'])} VNĐ`
-            // document.getElementById('rate').textContent = tabs['rate']
+            tabs = data['fees']
+            document.getElementById('total').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['total'])} VNĐ`
+            document.getElementById('curr').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['curr'])} VNĐ`
+            document.getElementById('prev').textContent = `${Intl.NumberFormat('vi-VN').format(tabs['prev'])} VNĐ`
+            document.getElementById('rate').textContent = tabs['rate']
         }
 
         loadData()
