@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import os
 from typing import Dict
 from flask import Flask, current_app, jsonify, render_template, request, redirect, url_for
@@ -408,9 +408,9 @@ def xoa_khachhang(IdNguoiDung: int):
     return jsonify(result)
 
 @app.route('/khachhang/timkiem/<key>/<type>', methods=['POST'])
-def tim_khachhang(key: str,type: str):
+def tim_khachhang(key: str, type: str):
     total = khachhang.timKhachHang("")
-    listGuest = khachhang.timKhachHang(key,type)
+    listGuest = khachhang.timKhachHang(key, type)
     today = datetime.today().date()
     data = {"list": listGuest, 'data':{'total':len(total),
                                        'month':len(taikhoan.getListByDate(today - timedelta(days=30),'user')),
@@ -424,20 +424,20 @@ def tim_khachhang(key: str,type: str):
 @app.route('/khachhang/load/<type>', methods=['POST'])
 def load_khachhang(type: str):
     total = khachhang.timKhachHang("")
-    listGuest = khachhang.timKhachHang("",type)
-    print("1",flush=True)
+    listGuest = khachhang.timKhachHang("", type)
+    print("1", flush=True)
     today = datetime.today().date()
     data = {"list": listGuest, 'data':{'total':len(total),
                                        'month':len(taikhoan.getListByDate(today - timedelta(days=30),'user')),
                                        'week':len(taikhoan.getListByDate(today - timedelta(days=7),'user')),
                                        'return':len(phieughi.getReturn())/len(total)}}
-    print("1",flush=True)
+    print("1", flush=True)
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
         x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
     # print("HI")
-    print(listGuest,flush=True)
+    print(listGuest, flush=True)
     return jsonify(data)
 
 @app.route('/khachhang/sua', methods=['POST'])
@@ -446,7 +446,7 @@ def editKhachHang():
     # date_obj = datetime.strptime(birth, '%Y-%m-%d').date()
     adjDatas = request.form.to_dict()
     adjDatas['NgaySinh'] = None
-    print(adjDatas,flush=True)
+    print(adjDatas, flush=True)
     return jsonify(khachhang.suaNguoiDung(adjDatas))
 
 @app.route('/khachhang/them', methods=['POST'])
@@ -454,15 +454,14 @@ def addKhachHang():
     adjDatas = request.form.to_dict()
     adjDatas['NgaySinh'] = None
     adjDatas['NgayTao'] = datetime.today().date()
-    print(adjDatas,flush=True)
+    print(adjDatas, flush=True)
     return jsonify(khachhang.themNguoiDung(adjDatas))
 
 @app.route('/khachhang/status', methods=['POST'])
 def statusUpdate():
     adjDatas = request.get_json()
-    print(adjDatas,flush=True)
+    print(adjDatas, flush=True)
     return jsonify(taikhoan.status(adjDatas))
-
 
 # Báo cáo & Thống kê
 @app.route("/baocao")
@@ -508,29 +507,29 @@ def quanlitaichinh():
     return render_template('quanlitaichinh.html')
 
 @app.route('/quanlitaichinh/timkiem/<key>/<type>', methods=['POST'])
-def tim_taichinh(key:str, type:str):
+def tim_taichinh(key: str, type: str):
     listHD = hoa_don_bus.timkiemHD(key, type)
-    income:Dict = hoa_don_bus.getMonthlyIncome()
+    income: Dict = hoa_don_bus.getMonthlyIncome()
     tabs = hoa_don_bus.getTabs()
     total = 0
     for x in income.values():
         total += x
     tabs['total'] = total
-    data = {"list": listHD,"income":income,"fees":tabs}
+    data = {"list": listHD, "income": income, "fees": tabs}
     return jsonify(data)
 
 @app.route('/quanlitaichinh/load/<type>', methods=['POST'])
-def load_taichinh(type:str):
+def load_taichinh(type: str):
     listHD = hoa_don_bus.timkiemHD("", type)
     for x in listHD:
         x['Ngay'] = str(x['Ngay'])
-    income:Dict = hoa_don_bus.getMonthlyIncome()
+    income: Dict = hoa_don_bus.getMonthlyIncome()
     tabs = hoa_don_bus.getTabs()
     total = 0
     for x in income.values():
         total += x
     tabs['total'] = total
-    data = {"list": listHD,"income":income,"fees":tabs}
+    data = {"list": listHD, "income": income, "fees": tabs}
     return jsonify(data)
 
 @app.route('/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
@@ -538,11 +537,34 @@ def editState(IDHD: int, Status):
     result = hoa_don_bus.editState(IDHD, Status)
     return jsonify(result)
 
-# Phiếu ghi
-@app.route('/them-phieu-ghi')
+@app.route('/them-phieu-ghi', methods=['POST'])
 def themphieughi():
-    result = PhieuGhiBUS.themPhieuGhi()
-    return jsonify({'success': True, 'result': result})
+    try:
+        data = request.get_json()
+        ho_ten = data.get('hoTen')
+        id_san = int(data.get('idSan'))
+        khung_gio = data.get('khungGio')
+        gia = float(data.get('gia'))
+        trang_thai = data.get('trangThai', 'Chờ xác nhận')
+
+        # Dữ liệu phiếu ghi không cần IdNguoiDung, lưu trực tiếp HoTen
+        du_lieu_phieu_ghi = {
+            'HoTen': ho_ten,  # Lưu trực tiếp tên khách hàng
+            'IdSan': id_san,
+            'KhungGio': khung_gio,
+            'Gia': gia,
+            'TrangThai': trang_thai,
+            'Ngay': datetime.now().date()  # Ngày tạo phiếu ghi là ngày hiện tại
+        }
+
+        # Gọi BUS để thêm phiếu ghi
+        result = phieughi.themPhieuGhi(du_lieu_phieu_ghi)
+        if result.get('success', False):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': result.get('error', 'Lỗi không xác định')}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
 # Trang mở đầu
 @app.route('/')
@@ -559,28 +581,122 @@ def index():
 
 @app.route('/index')
 def pagemain():
+    today = datetime.now()
+    ds_phieughi = phieughi.getListByDate(today)
+    danh_sach_san = san_bus.lay_danh_sach_san()
+    if danh_sach_san is None or not isinstance(danh_sach_san, list):
+        print("Lỗi: danh_sach_san không phải danh sách, giá trị:", danh_sach_san)
+        danh_sach_san = []
+    for san in danh_sach_san:
+        hinh_anh = san.get('HinhAnh', 'default.jpg')
+        if 'asset/' in hinh_anh:
+            san['HinhAnh'] = url_for('static', filename=hinh_anh)
+        else:
+            san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+
+    total_bookings = len(ds_phieughi)
+    confirmed_bookings = len([pg for pg in ds_phieughi if pg['TrangThai'] == 'Đã xác nhận'])
+    today_revenue = sum(pg['Gia'] for pg in ds_phieughi if pg['TrangThai'] == 'Đã xác nhận')
+
+    return render_template('index.html', today_date=today.strftime('%Y-%m-%d'), pg=ds_phieughi, 
+                          total_bookings=total_bookings, confirmed_bookings=confirmed_bookings, 
+                          today_revenue=today_revenue, danh_sach_san=danh_sach_san)
+
+@app.route('/phieughi-theo-ngay', methods=['GET', 'POST'])
+def phieughi_theo_ngay():
     try:
-        danh_sach_san = san_bus.lay_danh_sach_san() or []
-        print("Danh sách sân trong /index:", danh_sach_san)
+        # Lấy ngày từ form (nếu là POST) hoặc mặc định là ngày hiện tại (nếu là GET)
+        if request.method == 'POST':
+            ngay_str = request.form.get('ngay')
+            ngay = datetime.strptime(ngay_str, '%Y-%m-%d')
+        else:
+            ngay = datetime.now()
+
+        ngay_str = ngay.strftime("%Y-%m-%d")
+        print(f"DEBUG: Ngày được chọn = {ngay_str}")
+
+        # Lấy danh sách phiếu ghi theo ngày
+        ds_pg = phieughi.getListByDate(ngay)
+        if ds_pg is None or not isinstance(ds_pg, list):
+            print("Lỗi: ds_pg không phải danh sách, giá trị:", ds_pg)
+            ds_pg = []
+
+        # Lấy danh sách sân
+        danh_sach_san = san_bus.lay_danh_sach_san()
+        if danh_sach_san is None or not isinstance(danh_sach_san, list):
+            print("Lỗi: danh_sach_san không phải danh sách, giá trị:", danh_sach_san)
+            danh_sach_san = []
         for san in danh_sach_san:
-            print("Sân:", san)
             hinh_anh = san.get('HinhAnh', 'default.jpg')
             if 'asset/' in hinh_anh:
                 san['HinhAnh'] = url_for('static', filename=hinh_anh)
             else:
                 san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
-        ds_pg = phieughi.getListByDate(datetime.now().date()) or []
-        print("Danh sách phiếu ghi:", ds_pg)
-        booked_fields = len([pg for pg in ds_pg if pg.get('TrangThai', '').lower() == 'dat'])
+
+        # Lấy danh sách người dùng
+        ds_nguoidung = khachhang.getListNguoiDung()
+        if ds_nguoidung is None or not isinstance(ds_nguoidung, list):
+            print("Lỗi: ds_nguoidung không phải danh sách, giá trị:", ds_nguoidung)
+            ds_nguoidung = []
+
+        # Duyệt danh sách phiếu ghi và ghép dữ liệu
+        for pg in ds_pg:
+            pg.setdefault('IdSan', 0)
+            pg.setdefault('IdNguoiDung', 0)
+            pg.setdefault('KhungGio', '')
+            pg.setdefault('Gia', 0)
+            pg.setdefault('TrangThai', 'Chưa xác định')
+
+            san = next((s for s in danh_sach_san if s.get('IdSan') == pg.get('IdSan')), {})
+            pg['CoSan'] = san.get('CoSan', 'Không xác định')
+            pg['DiaChi'] = san.get('DiaChi', '')
+
+            nguoidung = next((nd for nd in ds_nguoidung if nd.get('IdNguoiDung') == pg.get('IdNguoiDung')), {})
+            pg['HoTen'] = nguoidung.get('HoTen', 'Không xác định')
+
+            try:
+                pg['Gia'] = float(pg.get('Gia', 0) or 0)
+            except (TypeError, ValueError):
+                print(f"Cảnh báo: Gia không hợp lệ cho phiếu ghi {pg.get('IdPhieuGhi')}: {pg.get('Gia')}")
+                pg['Gia'] = 0
+
+        # Tính toán các số liệu thống kê
+        total_bookings = len(ds_pg)
+        confirmed_bookings = sum(1 for pg in ds_pg if pg.get('TrangThai') == 'Đã xác nhận')
+        today_revenue = sum(pg.get('Gia', 0) for pg in ds_pg if pg.get('TrangThai') == 'Đã xác nhận')
+
+        # Xác định các phiếu sắp tới (nếu ngày được chọn là hôm nay)
+        current_time = datetime.now().time()
+        upcoming_bookings = []
+        if ngay.date() == datetime.now().date():  # Chỉ tính nếu ngày được chọn là hôm nay
+            for pg in ds_pg:
+                khung_gio = pg.get('KhungGio', '')
+                if '-' in khung_gio:
+                    start_time_str = khung_gio.split('-')[0]
+                    try:
+                        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+                        start_datetime = datetime.combine(ngay.date(), start_time)
+                        time_diff = (start_datetime - datetime.now()).total_seconds() / 60
+                        if 0 <= time_diff <= 60:
+                            upcoming_bookings.append(pg)
+                    except ValueError:
+                        print(f"Cảnh báo: Khung giờ không hợp lệ {khung_gio} cho phiếu {pg.get('IdPhieuGhi')}")
+                        continue
+        else:
+            upcoming_bookings = []  # Nếu không phải hôm nay, không có phiếu sắp tới
+
+        # Truyền dữ liệu vào index.html
         return render_template('index.html',
-                               san=danh_sach_san,
-                               pg=ds_pg,
-                               today_date=datetime.now().strftime("%Y-%m-%d"),
-                               today_revenue=0,
-                               booked_fields=booked_fields,
-                               total_fields=len(danh_sach_san) if danh_sach_san else 0)
+                              san=danh_sach_san,
+                              pg=ds_pg,
+                              today_date=ngay_str,
+                              today_revenue=today_revenue or 0,
+                              total_bookings=total_bookings,
+                              confirmed_bookings=confirmed_bookings,
+                              upcoming_bookings=upcoming_bookings,
+                              total_fields=len(danh_sach_san))
     except Exception as e:
-        print("Lỗi trong route /index:", str(e))
+        print("Lỗi trong route /phieughi-theo-ngay:", str(e))
         return "Có lỗi xảy ra: " + str(e), 500
 
 if __name__ == '__main__':

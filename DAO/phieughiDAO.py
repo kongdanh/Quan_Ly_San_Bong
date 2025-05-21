@@ -1,7 +1,7 @@
 from DAO.db_config import get_connection
 from typing import List, Dict
 from mysql.connector import Error
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 class PhieuGhiDAO:
     def __init__(self, conn=None):
@@ -69,18 +69,19 @@ class PhieuGhiDAO:
     def getListByDate(self, date: datetime) -> List[Dict]:
         try:
             cursor = self.conn.cursor(dictionary=True)
-            if date is None:
-                # Truy vấn tất cả phiếu ghi nếu date là None
-                cursor.execute("SELECT * FROM phieughi")
-            else:
-                # Truy vấn theo ngày
-                cursor.execute("SELECT * FROM phieughi WHERE Ngay = %s", (date.strftime('%Y-%m-%d'),))
+            start_of_day = datetime.combine(date, time.min)
+            end_of_day = datetime.combine(date, time.max)
+            query = """
+                SELECT p.IdPhieuGhi, p.IdSan, p.IdNguoiDung, p.Ngay, p.KhungGio, COALESCE(p.GiaTien, 0) AS Gia, p.TrangThai
+                FROM phieughi p
+                WHERE p.Ngay >= %s AND p.Ngay <= %s
+            """
+            cursor.execute(query, (start_of_day, end_of_day))
             result = cursor.fetchall()
-            result = sorted(result, key=lambda x: x['IdSan'])
-            print("DAO result:", result)  # Debug
+            print(f"DEBUG: Kết quả truy vấn get_by_date = {result}")
             return result
         except Error as e:
-            print(f"Error: {e}")
+            print(f"[DAO ERROR] Lỗi khi lấy phiếu ghi theo ngày: {e}")
             return []
         finally:
             cursor.close()

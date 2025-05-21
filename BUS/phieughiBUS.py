@@ -28,31 +28,28 @@ class PhieuGhiBUS:
     
     def getListByDate(self, date: datetime) -> List[Dict]:
         try:
-            # Xử lý trường hợp date là None
-            if date is None:
-                list_from_dao = self.phieuGhiDAO.getListByDate(None) or []
-            else:
-                list_from_dao = self.phieuGhiDAO.getListByDate(date)
-
-            # Kiểm tra nếu list_from_dao là None hoặc không phải danh sách
-            if not list_from_dao or not isinstance(list_from_dao, list):
-                list_from_dao = []
-
-            print("list_from_dao:", list_from_dao)  # Debug dữ liệu từ DAO
-
-            new_list = [dict(item) for item in self.danhSachKhungGio]  # Tạo bản sao để tránh thay đổi trực tiếp
-            for y in new_list:
-                y['list'] = []
-                for x in list_from_dao:
-                    if x.get('KhungGio') == y['KhungGio']:  # Sử dụng get để tránh KeyError
-                        y['list'].append(x.get('IdSan', None))
-            print("new_list:", new_list)  # Debug dữ liệu trả về
-            return new_list
-        except ValueError as e:
-            print(f"[BUS ERROR] Lỗi khi chuyển đổi định dạng ngày: {e}")
-            return []
+            print(f"DEBUG: Gọi getListByDate với date = {date}")
+            result = self.phieuGhiDAO.getListByDate(date)  # Sửa: Gọi phương thức từ DAO
+            print(f"DEBUG: Kết quả từ DAO.get_by_date = {result}")
+            if not isinstance(result, list):
+                print(f"Cảnh báo: get_by_date trả về {type(result)}, chuyển thành []")
+                return []
+            for item in result:
+                item.setdefault('IdPhieuGhi', 0)
+                item.setdefault('IdSan', 0)
+                item.setdefault('IdNguoiDung', 0)
+                item.setdefault('Ngay', date.strftime("%Y-%m-%d"))
+                item.setdefault('KhungGio', '')
+                item.setdefault('Gia', 0)
+                item.setdefault('TrangThai', 'Chưa xác định')
+                try:
+                    item['Gia'] = float(item.get('Gia', 0) or 0)
+                except (TypeError, ValueError):
+                    print(f"Cảnh báo: Gia không hợp lệ cho IdPhieuGhi {item.get('IdPhieuGhi')}: {item.get('Gia')}")
+                    item['Gia'] = 0
+            return result
         except Exception as e:
-            print(f"[BUS ERROR] Lỗi không xác định: {e}")
+            print(f"Lỗi trong getListByDate: {e}")
             return []
         
     def getReturn(self):
