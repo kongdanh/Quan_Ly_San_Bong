@@ -54,3 +54,6 @@ class PhieuGhiBUS:
         except Exception as e:
             print(f"[BUS ERROR] Lỗi không xác định: {e}")
             return []
+        
+    def getReturn(self):
+        return self.phieuGhiDAO.getReturn()

@@ -293,8 +293,7 @@
             // Đặt ngày mặc định là hôm nay
             document.getElementById('ngay-dat').valueAsDate = new Date();
             const PID = 123; // Giá trị giả lập, cần truyền userID từ Flask
-            const sanList = {{ san | tojson
-        }};
+            const sanList = {{ san | tojson}};
 
         // Hàm tạo giao diện danh sách sân
         function createSanList() {

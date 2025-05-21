@@ -1,6 +1,6 @@
+from datetime import datetime
 from typing import Dict, List
 from DAO.hoadon_dao import HoaDonDAO
-
 class HoaDonBUS:
     def __init__(self, dao: HoaDonDAO = None):
         self.dao = dao if dao else HoaDonDAO()
@@ -41,3 +41,21 @@ class HoaDonBUS:
     
     def addHD(self,Data:Dict)->Dict:
         return self.dao.add(Data)
+    
+    def getMonthlyIncome(self)->List[Dict]:
+        date = datetime.today().date()
+        data = {}
+        for x in range(1,13):
+            data[x] = self.dao.getMonthly(x)
+        return data
+    
+    def getMonthIncome(self,month:int)-> float:
+        return self.dao.getMonthly(month)
+    
+    def getTabs(self)->List[Dict]:
+        data = {}
+        date = datetime.today().date()
+        data['curr'] = self.getMonthIncome(date.month) 
+        data['prev'] = self.getMonthIncome(date.month - 1)
+        data['rate'] = str(((data['curr'] / data['prev']) - 1 )* 100) + "%" if data['prev'] != 0 else 'Chưa xác định'
+        return data

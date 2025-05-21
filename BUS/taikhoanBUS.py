@@ -98,4 +98,11 @@ class TaiKhoanBUS:
     def getAcc(self, ID:int )-> Dict:
         return self.accDao.getAcc(ID)
     
+    def updateAcc(self,Data:Dict)-> Dict:
+        return self.accDao.update(Data)
     
+    def addND(self, data:Dict) -> Dict:
+        return self.accDao.them_TaiKhoan(data)
+    
+    def status(self,data:Dict) -> Dict:
+        return self.accDao.status(data)

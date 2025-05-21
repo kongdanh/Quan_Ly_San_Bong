@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os
+from typing import Dict
 from flask import Flask, current_app, jsonify, render_template, request, redirect, url_for
 from BUS.san_bus import SanBus
 from DAO.san_dao import SanDAO
@@ -261,30 +262,39 @@ def quanlikhachhang():
 @app.route('/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
 def xoa_khachhang(IdNguoiDung: int):
     result = khachhang.xoaNguoiDung(IdNguoiDung)
-    print(result, flush=True)
     return jsonify(result)
 
 @app.route('/khachhang/timkiem/<key>', methods=['POST'])
 def tim_khachhang(key: str):
     listGuest = khachhang.timKhachHang(key)
+    today = datetime.today().date()
+    data = {"list": listGuest, 'data':{'total':len(listGuest),
+                                       'month':len(taikhoan.getListByDate(today - timedelta(days=30),'user')),
+                                       'week':len(taikhoan.getListByDate(today - timedelta(days=7),'user')),
+                                       'return':len(phieughi.getReturn())/len(listGuest)}}
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
-        x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
     return jsonify(listGuest)
 
 @app.route('/khachhang/load', methods=['POST'])
 def load_khachhang():
     listGuest = khachhang.timKhachHang("")
+    today = datetime.today().date()
+    data = {"list": listGuest, 'data':{'total':len(listGuest),
+                                       'month':len(taikhoan.getListByDate(today - timedelta(days=30),'user')),
+                                       'week':len(taikhoan.getListByDate(today - timedelta(days=7),'user')),
+                                       'return':len(phieughi.getReturn())/len(listGuest)}}
     for x in listGuest:
         x['SoLuong'] = len(hoa_don_bus.lay_danh_sach_hoa_don(x['IdNguoiDung']))
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
         x['TrangThai'] = khachhang.getTrangThai(x['IdNguoiDung'])
     print("HI")
-    print(listGuest, flush=True)
+    print(listGuest,flush=True)
     return jsonify(listGuest)
-
-# báo cáo & thống kê
+# endregion
+########################################################################################
+# region báo cáo & thống kê
 @app.route("/baocao")
 def baocao():
     from collections import defaultdict
@@ -328,16 +338,23 @@ def quanlitaichinh():
     return render_template('quanlitaichinh.html')
 
 @app.route('/quanlitaichinh/timkiem/<key>', methods=['POST'])
-def tim_taichinh(key: str):
-    print(key + ".", flush=True)
+def tim_taichinh(key:str):
+    print(key + ".",flush=True)
     listHD = hoa_don_bus.timkiemHD(key)
-    print(listHD, flush=True)
+    print(listHD,flush=True)
     return jsonify(listHD)
 
 @app.route('/quanlitaichinh/load/', methods=['POST'])
 def load_taichinh():
     listHD = hoa_don_bus.timkiemHD("")
-    return jsonify(listHD)
+    income:Dict = hoa_don_bus.getMonthlyIncome()
+    tabs = hoa_don_bus.getTabs()
+    total = 0
+    for x in income.values():
+        total += x
+    tabs['total'] = total
+    data = {"list": listHD,"income":income,"fees":tabs}
+    return jsonify(data)
 
 @app.route('/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
 def editState(IDHD: int, Status):
@@ -380,3 +397,4 @@ def pagemain():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
