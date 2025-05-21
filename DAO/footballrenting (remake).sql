@@ -1,8 +1,5 @@
--- SQL DUMP: Football Database with Users and Staff
--- Version: Updated - Full Sample Data
-
-CREATE DATABASE IF NOT EXISTS football;
-USE football;
+CREATE DATABASE IF NOT EXISTS footballrenting;
+USE footballrenting;
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -60,8 +57,13 @@ CREATE TABLE `san` (
   `IdSan` int(11) NOT NULL AUTO_INCREMENT,
   `CoSan` varchar(20) DEFAULT NULL,
   `DiaChi` varchar(255) DEFAULT NULL,
+  `HinhAnh` varchar(255) DEFAULT NULL,
+  `SoSan` int(11) DEFAULT NULL,
+  `MoTa` text DEFAULT 'Chưa có mô tả',
+  `TrangThai` tinyint(4) DEFAULT 1,
+  `GiaSan` int(11) DEFAULT NULL,
   PRIMARY KEY (`IdSan`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `hoadon` (
   `IdHoaDon` int(11) NOT NULL AUTO_INCREMENT,
@@ -73,7 +75,9 @@ CREATE TABLE `hoadon` (
   `IdNguoiDung` int(11) DEFAULT NULL,
   PRIMARY KEY (`IdHoaDon`),
   KEY `IdNhanVien` (`IdNhanVien`),
-  KEY `IdNguoiDung` (`IdNguoiDung`)
+  KEY `IdNguoiDung` (`IdNguoiDung`),
+  CONSTRAINT `hoadon_ibfk_1` FOREIGN KEY (`IdNhanVien`) REFERENCES `nhanvien` (`IdNhanVien`),
+  CONSTRAINT `hoadon_ibfk_2` FOREIGN KEY (`IdNguoiDung`) REFERENCES `nguoidung` (`IdNguoiDung`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `phieughi` (
@@ -111,6 +115,7 @@ INSERT INTO `taikhoan` (`TenTaiKhoan`, `MatKhau`, `NgayTao`, `AccType`) VALUES
 ('staff8', 'password8', '2025-04-21', 'staff'),
 ('staff9', 'password9', '2025-04-21', 'staff'),
 ('staff10', 'password10', '2025-04-21', 'staff');
+
 -- NGUOIDUNG
 INSERT INTO `nguoidung` (`HoTen`, `NgaySinh`, `SDT`, `Email`, `IdTaiKhoan`) VALUES
 ('Tran Van B', '1998-06-12', '0911002200', 'tranvanb@example.com', 1),
@@ -136,10 +141,10 @@ INSERT INTO `nhanvien` (
 ('Pham Van K', '1994-06-06', '0990123456', '23 Điện Biên Phủ, Vinh', 5, 15500000, 'Quản lý', 'Quản lý sân', '2019-12-01', NULL, 'Dài hạn', 2200000, '741852963', 'Nam', 'TPBank-7418529630', 'Nghỉ phép');
 
 -- SAN
-INSERT INTO `san` (`CoSan`, `DiaChi`) VALUES
-('11', '123 Lê Lợi'),
-('7', '456 Trần Phú'),
-('5', '789 Nguyễn Huệ');
+INSERT INTO `san` (`CoSan`, `DiaChi`, `HinhAnh`, `SoSan`, `MoTa`, `TrangThai`, `GiaSan`) VALUES
+('11', '123 Lê Lợi', NULL, NULL, 'Chưa có mô tả', 1, NULL),
+('7', '456 Trần Phú', NULL, NULL, 'Chưa có mô tả', 1, NULL),
+('5', '789 Nguyễn Huệ', NULL, NULL, 'Chưa có mô tả', 1, NULL);
 
 -- HOADON
 INSERT INTO `hoadon` (`Ngay`, `TongTien`, `PhuongThuc`, `TrangThai`, `IdNhanVien`, `IdNguoiDung`) VALUES
