@@ -7,6 +7,9 @@
     <title>Quản Lí Sân Bóng - Báo Cáo</title>
     <!-- Thêm Chart.js từ CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <!-- Thêm jsPDF và html2canvas cho xuất PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -20,7 +23,6 @@
             background-color: #f5f5f5;
         }
 
-        /* Left Menu */
         .left-menu {
             width: 250px;
             background-color: #2c3e50;
@@ -67,7 +69,6 @@
             font-weight: bold;
         }
 
-        /* Right Content */
         .right-content {
             margin-left: 250px;
             width: calc(100% - 250px);
@@ -86,7 +87,6 @@
             font-size: 24px;
         }
 
-        /* Report Controls */
         .report-controls {
             background-color: white;
             border-radius: 8px;
@@ -99,12 +99,6 @@
         }
 
         .date-filter {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filter-group {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -136,7 +130,6 @@
             color: #3498db;
         }
 
-        /* Report Cards */
         .report-cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -178,7 +171,6 @@
             color: #dc3545;
         }
 
-        /* Charts Section */
         .charts-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -196,7 +188,9 @@
             height: 400px;
         }
 
-        #fieldUsageBarChart {
+        #fieldUsageBarChart,
+        #timeSlotBarChart,
+        #loyalCustomerBarChart {
             width: 100% !important;
             height: 100% !important;
         }
@@ -211,7 +205,6 @@
             height: 350px;
         }
 
-        /* Report Tables */
         .report-tables {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -271,7 +264,6 @@
 </head>
 
 <body>
-    <!-- Left Menu -->
     <div class="left-menu">
         <h1>Quản Lí Sân Bóng</h1>
         <ul>
@@ -283,58 +275,37 @@
         </ul>
     </div>
 
-    <!-- Right Content -->
     <div class="right-content">
         <div class="dashboard-header">
             <h2>Báo cáo và thống kê</h2>
-            <button class="btn btn-primary">Xuất báo cáo</button>
+            <button class="btn btn-primary" id="exportReport">Xuất báo cáo</button>
         </div>
 
-        <!-- Report Controls -->
         <div class="report-controls">
             <div class="date-filter">
                 <span>Xem báo cáo từ</span>
                 <input type="date" value="2025-01-01">
                 <span>đến</span>
                 <input type="date" value="2025-05-01">
-            </div>
-
-            <div class="filter-group">
-                <select>
-                    <option>Tất cả sân</option>
-                    <option>Sân 1</option>
-                    <option>Sân 2</option>
-                    <option>Sân 3</option>
-                    <option>Sân 5</option>
-                    <option>Sân 7</option>
-                </select>
-                <select>
-                    <option>Tất cả loại báo cáo</option>
-                    <option>Doanh thu</option>
-                    <option>Khách hàng</option>
-                    <option>Nhân viên</option>
-                </select>
-                <button class="btn btn-primary">Áp dụng</button>
+                <button class="btn btn-primary" id="applyFilter">Áp dụng</button>
             </div>
         </div>
 
-        <!-- Report Cards -->
         <div class="report-cards">
             <div class="report-card">
                 <h3>Tổng doanh thu</h3>
-                <p>{{ total_revenue }}đ</p>
+                <p id="totalRevenue">{{ total_revenue }}đ</p>
                 <div class="trend up">
                 </div>
             </div>
             <div class="report-card">
                 <h3>Tổng số đặt sân</h3>
-                <p>{{ total_orders }}</p>
+                <p id="totalOrders">{{ total_orders }}</p>
                 <div class="trend up">
                 </div>
             </div>
         </div>
 
-        <!-- Charts Section -->
         <div class="charts-section">
             <div class="chart-container">
                 <h3>Tổng doanh thu</h3>
@@ -344,44 +315,48 @@
                 <h3>Số lần thuê theo sân</h3>
                 <canvas id="fieldUsageBarChart" class="chart-placeholder"></canvas>
             </div>
+            <div class="chart-container">
+                <h3>Đặt sân theo khung giờ</h3>
+                <canvas id="timeSlotBarChart" class="chart-placeholder"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Khách hàng thân thiết</h3>
+                <canvas id="loyalCustomerBarChart" class="chart-placeholder"></canvas>
+            </div>
         </div>
     </div>
 
     <script>
-        // Lấy dữ liệu từ Flask
-        const monthlyRevenue = {{ monthly_revenue | tojson | default ('[]') | safe }};
-        const fieldCounts = {{ field_counts | tojson | default ('{}') | safe }};
+        // Kiểm tra dữ liệu từ Flask
+        let originalInvoices = {{ invoices | tojson | default ('[]') | safe }};
+        let originalPhieuGhi = {{ phieu_ghi | tojson | default ('[]') | safe }};
         const months = {{ months | tojson | default ('["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"]') | safe }};
 
-        // Debug dữ liệu
-        console.log("fieldCounts:", fieldCounts);
+        // Kiểm tra dữ liệu hợp lệ
+        if (!Array.isArray(originalInvoices)) {
+            console.error('Dữ liệu invoices không phải là mảng:', originalInvoices);
+            originalInvoices = [];
+        }
+        if (!Array.isArray(originalPhieuGhi)) {
+            console.error('Dữ liệu phieu_ghi không phải là mảng:', originalPhieuGhi);
+            originalPhieuGhi = [];
+        }
 
-        // 1. Xử lý dữ liệu cho biểu đồ hình tròn (Tổng doanh thu theo tháng)
+        const revenueCtx = document.getElementById('revenuePieChart')?.getContext('2d');
+        const fieldCtx = document.getElementById('fieldUsageBarChart')?.getContext('2d');
+        const timeSlotCtx = document.getElementById('timeSlotBarChart')?.getContext('2d');
+        const customerCtx = document.getElementById('loyalCustomerBarChart')?.getContext('2d');
+
+        // Kiểm tra canvas
+        if (!revenueCtx || !fieldCtx || !timeSlotCtx || !customerCtx) {
+            console.error('Không tìm thấy canvas cho biểu đồ');
+        }
+
         const monthColors = [
             '#FF6B6B', '#FF8E53', '#FFCA28', '#66BB6A', '#4CAF50',
             '#26A69A', '#29B6F6', '#0288D1', '#AB47BC', '#7E57C2',
             '#EC407A', '#F06292'
         ];
-
-        const revenueData = {
-            labels: months,
-            datasets: [{
-                data: monthlyRevenue,
-                backgroundColor: monthColors,
-                hoverBackgroundColor: monthColors.map(color => color.replace('0.6', '0.8')),
-                borderWidth: 1
-            }]
-        };
-
-        // 2. Xử lý dữ liệu cho biểu đồ cột (Số lần thuê theo sân)
-        const fieldLabels = Object.keys(fieldCounts);
-        const fieldValues = Object.values(fieldCounts);
-
-        // Nếu không có dữ liệu, hiển thị thông báo mặc định
-        if (fieldLabels.length === 0) {
-            fieldLabels.push("aaaaaaaa");
-            fieldValues.push(0);
-        }
 
         const fieldColors = [
             '#FF6B6B', '#FFCA28', '#66BB6A', '#29B6F6', '#AB47BC',
@@ -391,135 +366,417 @@
             '#FF6347'
         ];
 
-        const fieldData = {
-            labels: fieldLabels.map(label => label === 'undefined' ? 'Chưa xác định' : `Sân ${label}`),
-            datasets: [{
-                label: 'Số lần thuê',
-                data: fieldValues,
-                backgroundColor: fieldLabels.map((_, index) => fieldColors[index % fieldColors.length]),
-                borderColor: fieldLabels.map((_, index) => fieldColors[index % fieldColors.length].replace('0.6', '0.8')),
-                borderWidth: 1
-            }]
-        };
+        let revenueChart, fieldChart, timeSlotChart, customerChart;
 
-        // 3. Vẽ biểu đồ hình tròn (Pie Chart)
-        const revenueCtx = document.getElementById('revenuePieChart').getContext('2d');
-        new Chart(revenueCtx, {
-            type: 'pie',
-            data: revenueData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                let label = context.label || '';
-                                let value = context.raw || 0;
-                                return `${label}: ${value.toLocaleString()}đ`;
+        function updateCharts(startDate, endDate) {
+            try {
+                const filteredInvoices = originalInvoices.filter(invoice => {
+                    const invoiceDate = new Date(invoice.Ngay);
+                    return (!startDate || invoiceDate >= new Date(startDate)) &&
+                        (!endDate || invoiceDate <= new Date(endDate));
+                });
+
+                const filteredPhieuGhi = originalPhieuGhi.filter(item => {
+                    const itemDate = new Date(item.Ngay);
+                    return (!startDate || itemDate >= new Date(startDate)) &&
+                        (!endDate || itemDate <= new Date(endDate));
+                });
+
+                const totalRevenue = filteredInvoices.reduce((sum, invoice) => sum + (parseFloat(invoice.TongTien) || 0), 0);
+                const totalOrders = filteredPhieuGhi.length;
+                document.getElementById('totalRevenue').textContent = `${totalRevenue.toLocaleString()}đ`;
+                document.getElementById('totalOrders').textContent = totalOrders;
+
+                // 1. Biểu đồ Tổng doanh thu
+                const monthlyRevenue = Array(12).fill(0);
+                filteredInvoices.forEach(invoice => {
+                    const month = new Date(invoice.Ngay).getMonth();
+                    monthlyRevenue[month] += parseFloat(invoice.TongTien) || 0;
+                });
+
+                const revenueData = {
+                    labels: months,
+                    datasets: [{
+                        data: monthlyRevenue,
+                        backgroundColor: monthColors,
+                        hoverBackgroundColor: monthColors.map(color => color.replace('0.6', '0.8')),
+                        borderWidth: 1
+                    }]
+                };
+
+                if (revenueChart) {
+                    revenueChart.data = revenueData;
+                    revenueChart.update();
+                } else if (revenueCtx) {
+                    revenueChart = new Chart(revenueCtx, {
+                        type: 'pie',
+                        data: revenueData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { position: 'top' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            let label = context.label || '';
+                                            let value = context.raw || 0;
+                                            return `${label}: ${value.toLocaleString()}đ`;
+                                        }
+                                    }
+                                }
                             }
                         }
+                    });
+                }
+
+                // 2. Biểu đồ Số lần thuê theo sân
+                const fieldCounts = {};
+                filteredPhieuGhi.forEach(item => {
+                    const idSan = item.IdSan || 'Không xác định';
+                    fieldCounts[idSan] = (fieldCounts[idSan] || 0) + 1;
+                });
+
+                let fieldLabels = Object.keys(fieldCounts);
+                let fieldValues = Object.values(fieldCounts);
+
+                if (fieldLabels.length === 0) {
+                    fieldLabels = ["Không có dữ liệu"];
+                    fieldValues = [0];
+                }
+
+                const fieldData = {
+                    labels: fieldLabels.map(label => label === 'Không xác định' ? label : `Sân ${label}`),
+                    datasets: [{
+                        label: 'Số lần thuê',
+                        data: fieldValues,
+                        backgroundColor: fieldLabels.map((_, index) => fieldColors[index % fieldColors.length]),
+                        borderColor: fieldLabels.map((_, index) => fieldColors[index % fieldColors.length].replace('0.6', '0.8')),
+                        borderWidth: 1
+                    }]
+                };
+
+                if (fieldChart) {
+                    fieldChart.data = fieldData;
+                    fieldChart.update();
+                } else if (fieldCtx) {
+                    fieldChart = new Chart(fieldCtx, {
+                        type: 'bar',
+                        data: fieldData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Số lần thuê' },
+                                    ticks: { stepSize: 5 }
+                                },
+                                x: { title: { display: true, text: 'Sân' } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            let label = context.label || '';
+                                            let value = context.raw || 0;
+                                            return `${label}: ${value} lần`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 3. Biểu đồ Đặt sân theo khung giờ
+                const timeSlotCounts = {};
+                filteredPhieuGhi.forEach(item => {
+                    const khungGio = item.KhungGio || 'Không xác định';
+                    const startHour = khungGio.split('-')[0]?.trim() || 'Không xác định';
+                    timeSlotCounts[startHour] = (timeSlotCounts[startHour] || 0) + 1;
+                });
+
+                let timeSlotLabels = Object.keys(timeSlotCounts).sort();
+                let timeSlotValues = timeSlotLabels.map(label => timeSlotCounts[label]);
+
+                if (timeSlotLabels.length === 0) {
+                    timeSlotLabels = ["Không có dữ liệu"];
+                    timeSlotValues = [0];
+                }
+
+                const timeSlotData = {
+                    labels: timeSlotLabels,
+                    datasets: [{
+                        label: 'Số lần đặt',
+                        data: timeSlotValues,
+                        backgroundColor: timeSlotLabels.map((_, index) => fieldColors[index % fieldColors.length]),
+                        borderColor: timeSlotLabels.map((_, index) => fieldColors[index % fieldColors.length].replace('0.6', '0.8')),
+                        borderWidth: 1
+                    }]
+                };
+
+                if (timeSlotChart) {
+                    timeSlotChart.data = timeSlotData;
+                    timeSlotChart.update();
+                } else if (timeSlotCtx) {
+                    timeSlotChart = new Chart(timeSlotCtx, {
+                        type: 'bar',
+                        data: timeSlotData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Số lần đặt' },
+                                    ticks: { stepSize: 5 }
+                                },
+                                x: { title: { display: true, text: 'Khung giờ' } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            let label = context.label || '';
+                                            let value = context.raw || 0;
+                                            return `${label}: ${value} lần`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 4. Biểu đồ Khách hàng thân thiết
+                const customerCounts = {};
+                filteredInvoices.forEach(invoice => {
+                    const idNguoiDung = invoice.IdNguoiDung || 'Không xác định';
+                    customerCounts[idNguoiDung] = (customerCounts[idNguoiDung] || 0) + 1;
+                });
+
+                const topCustomers = Object.entries(customerCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                let customerLabels = topCustomers.map(([id]) => `KH ${id}`);
+                let customerValues = topCustomers.map(([_, count]) => count);
+
+                if (customerLabels.length === 0) {
+                    customerLabels = ["Không có dữ liệu"];
+                    customerValues = [0];
+                }
+
+                const customerData = {
+                    labels: customerLabels,
+                    datasets: [{
+                        label: 'Số lần đặt sân',
+                        data: customerValues,
+                        backgroundColor: customerLabels.map((_, index) => fieldColors[index % fieldColors.length]),
+                        borderColor: customerLabels.map((_, index) => fieldColors[index % fieldColors.length].replace('0.6', '0.8')),
+                        borderWidth: 1
+                    }]
+                };
+
+                if (customerChart) {
+                    customerChart.data = customerData;
+                    customerChart.update();
+                } else if (customerCtx) {
+                    customerChart = new Chart(customerCtx, {
+                        type: 'bar',
+                        data: customerData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Số lần đặt sân' },
+                                    ticks: { stepSize: 5 }
+                                },
+                                x: { title: { display: true, text: 'Khách hàng' } }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            let label = context.label || '';
+                                            let value = context.raw || 0;
+                                            return `${label}: ${value} lần`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Lỗi khi cập nhật biểu đồ:', error);
+                alert('Lỗi khi hiển thị biểu đồ: ' + error.message + '. Vui lòng kiểm tra dữ liệu từ Flask.');
+            }
+        }
+
+        document.querySelector('#applyFilter')?.addEventListener('click', function () {
+            const startDate = document.querySelector('.date-filter input[type="date"]:first-of-type')?.value;
+            const endDate = document.querySelector('.date-filter input[type="date"]:last-of-type')?.value;
+
+            if (!startDate || !endDate) {
+                alert('Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.');
+                return;
+            }
+
+            updateCharts(startDate, endDate);
+            alert(`Đã áp dụng bộ lọc:\nTừ ${startDate} đến ${endDate}`);
+        });
+
+        document.querySelector('#exportReport')?.addEventListener('click', async function () {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 10;
+                let yOffset = margin;
+
+                // Sử dụng font Times để hỗ trợ tiếng Việt
+                doc.setFont('Times', 'normal');
+                doc.setFont('Times', 'bold');
+
+                // Thêm tiêu đề báo cáo
+                doc.setFontSize(18);
+                doc.setFont('Times', 'bold');
+                doc.text('BÁO CÁO QUẢN LÝ SÂN BÓNG', pageWidth / 2, yOffset, { align: 'center', charSpace: 0 });
+                yOffset += 10;
+                doc.setLineWidth(0.5);
+                doc.line(margin, yOffset, pageWidth - margin, yOffset); // Đường kẻ ngang
+                yOffset += 5;
+
+                // Thêm thông tin báo cáo
+                const currentDate = '2025-05-22 02:16 AM';
+                const reportIssuer = 'Quản lý sân bóng';
+                const startDate = document.querySelector('.date-filter input[type="date"]:first-of-type')?.value || 'N/A';
+                const endDate = document.querySelector('.date-filter input[type="date"]:last-of-type')?.value || 'N/A';
+                const totalRevenue = document.getElementById('totalRevenue')?.textContent || '0đ';
+                const totalOrders = document.getElementById('totalOrders')?.textContent || '0';
+
+                doc.setFontSize(12);
+                doc.setFont('Times', 'normal');
+                doc.text('THÔNG TIN BÁO CÁO', margin, yOffset);
+                yOffset += 7;
+                doc.setLineWidth(0.2);
+                doc.line(margin, yOffset, pageWidth - margin, yOffset); // Đường kẻ ngang
+                yOffset += 5;
+                doc.text(`Ngày xuất báo cáo: ${currentDate}`, margin + 5, yOffset);
+                yOffset += 7;
+                doc.text(`Người xuất báo cáo: ${reportIssuer}`, margin + 5, yOffset);
+                yOffset += 7;
+                doc.text(`Thời gian: Từ ${startDate} đến ${endDate}`, margin + 5, yOffset);
+                yOffset += 7;
+                doc.text(`Tổng doanh thu: ${totalRevenue}`, margin + 5, yOffset);
+                yOffset += 7;
+                doc.text(`Tổng số đặt sân: ${totalOrders}`, margin + 5, yOffset);
+                yOffset += 10;
+
+                // Thêm phần biểu đồ
+                doc.setFontSize(14);
+                doc.setFont('Times', 'bold');
+                doc.text('BIỂU ĐỒ THỐNG KÊ', margin, yOffset);
+                yOffset += 7;
+                doc.setLineWidth(0.2);
+                doc.line(margin, yOffset, pageWidth - margin, yOffset); // Đường kẻ ngang
+                yOffset += 5;
+
+                // Chụp và thêm các biểu đồ
+                const chartHeight = 80; // Chiều cao biểu đồ 80mm
+                const charts = [
+                    { canvas: document.getElementById('revenuePieChart'), title: 'Tổng doanh thu' },
+                    { canvas: document.getElementById('fieldUsageBarChart'), title: 'Số lần thuê theo sân' },
+                    { canvas: document.getElementById('timeSlotBarChart'), title: 'Đặt sân theo khung giờ' },
+                    { canvas: document.getElementById('loyalCustomerBarChart'), title: 'Khách hàng thân thiết' }
+                ];
+
+                for (const chart of charts) {
+                    if (!chart.canvas) {
+                        console.error(`Không tìm thấy canvas cho biểu đồ: ${chart.title}`);
+                        continue;
+                    }
+                    if (yOffset + chartHeight + 10 > pageHeight - margin) {
+                        doc.addPage();
+                        yOffset = margin;
+                    }
+                    doc.setFontSize(12);
+                    doc.setFont('Times', 'bold');
+                    doc.text(chart.title, margin + 5, yOffset);
+                    yOffset += 7;
+                    try {
+                        const imgData = await new Promise(resolve =>
+                            setTimeout(() =>
+                                html2canvas(chart.canvas, { scale: 3 }).then(canvas =>
+                                    resolve(canvas.toDataURL('image/png'))
+                                ).catch(err => {
+                                    console.error(`Lỗi html2canvas cho ${chart.title}:`, err);
+                                    resolve(null);
+                                }), 1000)
+                        );
+                        if (imgData) {
+                            doc.addImage(imgData, 'PNG', margin, yOffset, pageWidth - 2 * margin, chartHeight);
+                            yOffset += chartHeight + 5;
+                        } else {
+                            doc.setFontSize(10);
+                            doc.setFont('Times', 'normal');
+                            doc.text(`Không thể tải biểu đồ ${chart.title}`, margin + 5, yOffset);
+                            yOffset += 10;
+                        }
+                    } catch (imgError) {
+                        console.error(`Lỗi khi chụp biểu đồ ${chart.title}:`, imgError);
+                        alert(`Lỗi khi chụp biểu đồ "${chart.title}": ${imgError.message}`);
+                        return;
                     }
                 }
+
+                // Thêm số trang
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.setFont('Times', 'normal');
+                    doc.text(`Trang ${i} / ${pageCount}`, pageWidth - margin - 20, pageHeight - margin);
+                }
+
+                // Lưu file PDF
+                doc.save(`BaoCao_SanBong_${startDate}_to_${endDate}.pdf`);
+            } catch (error) {
+                console.error('Lỗi khi xuất báo cáo:', error);
+                alert('Có lỗi xảy ra khi xuất báo cáo: ' + error.message + '. Vui lòng kiểm tra kết nối mạng hoặc dữ liệu.');
             }
         });
 
-        // 4. Vẽ biểu đồ cột (Bar Chart)
-        const fieldCtx = document.getElementById('fieldUsageBarChart').getContext('2d');
-        new Chart(fieldCtx, {
-            type: 'bar',
-            data: fieldData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Số lần thuê'
-                        },
-                        ticks: {
-                            stepSize: 5
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Sân'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                let label = context.label || '';
-                                let value = context.raw || 0;
-                                return `${label}: ${value} lần`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        // Xử lý sự kiện cho nút Xuất báo cáo
-        document.querySelector('.dashboard-header .btn-primary').addEventListener('click', function () {
-            alert('Chức năng xuất báo cáo đang được phát triển');
-            // Trong thực tế, bạn có thể thêm code để xuất file PDF hoặc Excel ở đây
-        });
-
-        // Xử lý sự kiện cho nút Áp dụng bộ lọc
-        document.querySelector('.filter-group .btn-primary').addEventListener('click', function () {
-            const startDate = document.querySelector('.date-filter input[type="date"]:first-of-type').value;
-            const endDate = document.querySelector('.date-filter input[type="date"]:last-of-type').value;
-            const fieldSelect = document.querySelector('.filter-group select:first-of-type');
-            const reportTypeSelect = document.querySelector('.filter-group select:last-of-type');
-
-            const selectedField = fieldSelect.options[fieldSelect.selectedIndex].text;
-            const selectedReportType = reportTypeSelect.options[reportTypeSelect.selectedIndex].text;
-
-            console.log('Áp dụng bộ lọc:', {
-                startDate,
-                endDate,
-                selectedField,
-                selectedReportType
-            });
-
-            // Trong thực tế, bạn sẽ gửi yêu cầu AJAX đến server để lấy dữ liệu mới
-            alert(`Đã áp dụng bộ lọc:\nTừ ${startDate} đến ${endDate}\nSân: ${selectedField}\nLoại báo cáo: ${selectedReportType}`);
-        });
-
-        // Xử lý sự kiện cho menu điều hướng
         document.querySelectorAll('.left-menu li').forEach(item => {
             item.addEventListener('click', function () {
-                // Loại bỏ class active khỏi tất cả các mục menu
                 document.querySelectorAll('.left-menu li').forEach(li => {
                     li.classList.remove('active');
                 });
-
-                // Thêm class active vào mục menu được chọn
                 this.classList.add('active');
-
-                // Trong thực tế, bạn có thể chuyển hướng trang tại đây
-                // window.location.href = this.querySelector('a').href;
             });
         });
 
-        // Đặt ngày mặc định là ngày hiện tại
+        // Khởi tạo ngày mặc định
         const today = new Date().toISOString().split('T')[0];
-        document.querySelector('.date-filter input[type="date"]:last-of-type').value = today;
+        const endDateInput = document.querySelector('.date-filter input[type="date"]:last-of-type');
+        const startDateInput = document.querySelector('.date-filter input[type="date"]:first-of-type');
+        if (endDateInput) endDateInput.value = today;
+        if (startDateInput) {
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            startDateInput.value = oneMonthAgo.toISOString().split('T')[0];
+        }
 
-        // Đặt ngày bắt đầu mặc định là 1 tháng trước
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        document.querySelector('.date-filter input[type="date"]:first-of-type').value = oneMonthAgo.toISOString().split('T')[0];
+        // Khởi tạo biểu đồ
+        updateCharts(null, null);
     </script>
 </body>
 
