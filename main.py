@@ -34,8 +34,8 @@ hoa_don_dao = HoaDonDAO(conn)
 hoa_don_bus = HoaDonBUS(hoa_don_dao)
 
 # Sân
-@app.route('/san')
-def quan_ly_san():
+@app.route('/<role>/san')
+def quan_ly_san(role):
     danh_sach_san = san_bus.lay_danh_sach_san()
     for san in danh_sach_san:
         if isinstance(san, dict):
@@ -47,10 +47,10 @@ def quan_ly_san():
                     san['HinhAnh'] = url_for('static', filename=hinh_anh)
                 else:
                     san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
-    return render_template('san.html', danh_sach_san=danh_sach_san)
+    return render_template('san.html', danh_sach_san=danh_sach_san, role=role)
 
-@app.route('/them-san', methods=['POST'])
-def them_san():
+@app.route('/<role>/them-san', methods=['POST'])
+def them_san(role):
     try:
         co_san = request.form.get('CoSan')
         dia_chi = request.form.get('DiaChi')
@@ -105,13 +105,13 @@ def them_san():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
 
-@app.route('/xoa-san/<int:id_san>')
-def xoa_san(id_san):
-    san_bus.xoa_san(id_san)
-    return redirect(url_for('quan_ly_san'))
+@app.route('/<role>/xoa-san/<int:id_san>')
+def xoa_san(role ,id_san):
+    print(san_bus.xoa_san(id_san),flush=True)
+    return redirect(url_for('quan_ly_san',role=role))
 
-@app.route('/sua-san/<int:id>', methods=['POST'])
-def sua_san(id):
+@app.route('/<role>/sua-san/<int:id>', methods=['POST'])
+def sua_san(role, id):
     try:
         co_san = request.form.get('CoSan')
         dia_chi = request.form.get('DiaChi')
@@ -167,8 +167,8 @@ def sua_san(id):
 # Nhân viên
 nhanvien_bus = NhanVienBus()
 
-@app.route('/nhanvien')
-def quan_ly_nhan_vien():
+@app.route('/<role>/nhanvien')
+def quan_ly_nhan_vien(role):
     danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
     tong_nhan_vien = len(danh_sach_nhan_vien)
     so_luong_hd = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Hoạt động')
@@ -184,8 +184,8 @@ def quan_ly_nhan_vien():
     )
     return render_template('quanlinhanvien.html', danh_sach_nhan_vien=danh_sach_nhan_vien, soluongnv=tong_nhan_vien, slhd=so_luong_hd, nvm=so_nv_moi, nvnp=so_luong_np)
 
-@app.route('/them-nhan-vien', methods=['POST'])
-def them_nhan_vien():
+@app.route('/<role>/them-nhan-vien', methods=['POST'])
+def them_nhan_vien(role):
     ho_ten = request.form.get('HoTen')
     ngay_sinh = request.form.get('NgaySinh')
     sdt = request.form.get('SDT')
@@ -222,7 +222,7 @@ def them_nhan_vien():
     else:
         print(f"Thêm nhân viên thất bại: {result_nhanvien.get('error', 'Không có thông tin lỗi')}")
         taikhoan.xoaTaiKhoan(id_tai_khoan)
-    return redirect(url_for('quan_ly_nhan_vien'))
+    return redirect(url_for('quan_ly_nhan_vien',role))
 
 @app.route('/xoa-nhan-vien/<int:id_nhan_vien>', methods=['POST'])
 def xoa_nhan_vien(id_nhan_vien):
@@ -400,14 +400,14 @@ def datsan(userID: int, sanID: int, date, khung_gio, gia):
 def dangNhap():
     return render_template('dangnhap_dangki.html')
 
-def render_index_template(context=None):
+def render_index_template(context=None, AccType=None):
     default_context = {
         'pg': [], 'san': [], 'today_date': datetime.now().strftime("%Y-%m-%d"),
         'today_revenue': 0, 'booked_fields': 0, 'total_fields': 0
     }
     if context:
         default_context.update(context)
-    return render_template('quanlitaichinh.html', **default_context)
+    return render_template('quanlitaichinh.html', **default_context, AccType=AccType)
 
 @app.route('/processing', methods=['POST'])
 def xuLiDangNhap():
@@ -417,7 +417,7 @@ def xuLiDangNhap():
         if result.get('AccType') == "user":
             return redirect(url_for('nguoidung', userID=result.get('IdTaiKhoan')))
         else:
-            return render_index_template()
+            return redirect(url_for('quanlitaichinh',role = result.get('AccType')))
     else:
         return redirect('/login')
 
@@ -470,17 +470,17 @@ def sua_hoa_don(id):
         return jsonify({'success': False, 'error': 'Không thể sửa hóa đơn'})
 
 # Quản lý khách hàng
-@app.route('/khachhang')
-def quanlikhachhang():
+@app.route('/<role>/khachhang')
+def quanlikhachhang(role):
     return render_template('quanlikhachhang.html')
 
-@app.route('/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
-def xoa_khachhang(IdNguoiDung: int):
+@app.route('/<role>/khachhang/xoa_id/<int:IdNguoiDung>', methods=['POST'])
+def xoa_khachhang(role, IdNguoiDung: int):
     result = khachhang.xoaNguoiDung(IdNguoiDung)
     return jsonify(result)
 
-@app.route('/khachhang/timkiem/<key>/<type>', methods=['POST'])
-def tim_khachhang(key: str, type: str):
+@app.route('/<role>/khachhang/timkiem/<key>/<type>', methods=['POST'])
+def tim_khachhang(role, key: str, type: str):
     total = khachhang.timKhachHang("")
     listGuest = khachhang.timKhachHang(key, type)
     today = datetime.today().date()
@@ -493,8 +493,8 @@ def tim_khachhang(key: str, type: str):
         x['TongTien'] = khachhang.getTongTien(x['IdNguoiDung'])
     return jsonify(data)
 
-@app.route('/khachhang/load/<type>', methods=['POST'])
-def load_khachhang(type: str):
+@app.route('/<role>/khachhang/load/<type>', methods=['POST'])
+def load_khachhang(role, type: str):
     total = khachhang.timKhachHang("")
     listGuest = khachhang.timKhachHang("", type)
     print("1", flush=True)
@@ -511,30 +511,30 @@ def load_khachhang(type: str):
     print(listGuest, flush=True)
     return jsonify(data)
 
-@app.route('/khachhang/sua', methods=['POST'])
-def editKhachHang():
+@app.route('/<role>/khachhang/sua', methods=['POST'])
+def editKhachHang(role):
     adjDatas = request.form.to_dict()
     adjDatas['NgaySinh'] = None
     print(adjDatas, flush=True)
     return jsonify(khachhang.suaNguoiDung(adjDatas))
 
-@app.route('/khachhang/them', methods=['POST'])
-def addKhachHang():
+@app.route('/<role>/khachhang/them', methods=['POST'])
+def addKhachHang(role):
     adjDatas = request.form.to_dict()
     adjDatas['NgaySinh'] = None
     adjDatas['NgayTao'] = datetime.today().date()
     print(adjDatas, flush=True)
     return jsonify(khachhang.themNguoiDung(adjDatas))
 
-@app.route('/khachhang/status', methods=['POST'])
-def statusUpdate():
+@app.route('/<role>/khachhang/status', methods=['POST'])
+def statusUpdate(role):
     adjDatas = request.get_json()
     print(adjDatas, flush=True)
     return jsonify(taikhoan.status(adjDatas))
 
 # Báo cáo & Thống kê
-@app.route("/baocao")
-def baocao():
+@app.route("/<role>/baocao")
+def baocao(role):
     from collections import defaultdict
     import datetime
     hd = hoa_don_bus.lay_danh_sach_hoa_don() or []
@@ -571,12 +571,12 @@ def baocao():
                            months=[f'Tháng {m}' for m in months])
 
 # Quản lý tài chính
-@app.route('/quanlitaichinh')
-def quanlitaichinh():
-    return render_template('quanlitaichinh.html')
+@app.route('/<role>/quanlitaichinh')
+def quanlitaichinh(role):
+    return render_template('quanlitaichinh.html',role = role)
 
-@app.route('/quanlitaichinh/timkiem/<key>/<type>', methods=['POST'])
-def tim_taichinh(key: str, type: str):
+@app.route('/<role>/quanlitaichinh/timkiem/<key>/<type>', methods=['POST'])
+def tim_taichinh(role, key: str, type: str):
     listHD = hoa_don_bus.timkiemHD(key, type)
     income: Dict = hoa_don_bus.getMonthlyIncome()
     tabs = hoa_don_bus.getTabs()
@@ -587,8 +587,8 @@ def tim_taichinh(key: str, type: str):
     data = {"list": listHD, "income": income, "fees": tabs}
     return jsonify(data)
 
-@app.route('/quanlitaichinh/load/<type>', methods=['POST'])
-def load_taichinh(type: str):
+@app.route('/<role>/quanlitaichinh/load/<type>', methods=['POST'])
+def load_taichinh(role, type: str):
     listHD = hoa_don_bus.timkiemHD("", type)
     for x in listHD:
         x['Ngay'] = str(x['Ngay'])
@@ -601,8 +601,8 @@ def load_taichinh(type: str):
     data = {"list": listHD, "income": income, "fees": tabs}
     return jsonify(data)
 
-@app.route('/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
-def editState(IDHD: int, Status):
+@app.route('/<role>/quanlitaichinh/edit/<int:IDHD>/<Status>', methods=['POST'])
+def editState(role, IDHD: int, Status):
     result = hoa_don_bus.editState(IDHD, Status)
     return jsonify(result)
 

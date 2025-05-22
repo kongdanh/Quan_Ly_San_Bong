@@ -326,12 +326,12 @@
     <!-- Left Menu -->
     <div class="left-menu">
         <h1>Quản Lý Sân Bóng</h1>
-        <ul>
-            <li><a href="/san">Quản lí sân</a></li>
+        <ul  id = "Menu">
+            <!-- <li><a href="/san">Quản lí sân</a></li>
             <li><a href="/khachhang">Quản lí khách hàng</a></li>
             <li class="active"><a href="/quanlitaichinh">Quản lí tài chính</a></li>
             <li><a href="/nhanvien">Quản lí nhân viên</a></li>
-            <li><a href="/baocao">Báo cáo và thống kê</a></li>
+            <li><a href="/baocao">Báo cáo và thống kê</a></li> -->
         </ul>
     </div>
     
@@ -446,13 +446,16 @@
       
 
     <script>
+        const path = window.location.pathname
+        const parts = path.split('/')
+        const role = parts[1]
         var chartLoad = false
         var incomeChart
         async function getData(){
             const key = document.getElementById('search').value;
             const type = document.getElementById('typeSelect').value;
-            const response = key == "" ?await fetch(`/quanlitaichinh/load/${type}`,{method:'POST'}):
-                                        await fetch(`/quanlitaichinh/timkiem/${key}/${type}`,{method:'POST'})
+            const response = key == "" ?await fetch(`/${role}/quanlitaichinh/load/${type}`,{method:'POST'}):
+                                        await fetch(`/${role}/quanlitaichinh/timkiem/${key}/${type}`,{method:'POST'})
             const data = await response.json()
             return data
         }
@@ -601,7 +604,7 @@
         function saveStatus() {
             const newStatus = document.getElementById("statusSelect").value;
 
-            fetch(`/quanlitaichinh/edit/${selectedOrderId}/${newStatus}`,{method:'POST'}).
+            fetch(`/${role}/quanlitaichinh/edit/${selectedOrderId}/${newStatus}`,{method:'POST'}).
             then(response => response.json()).then(data=>{
                 if (data['success']){
                     alert("Đã thành công cập nhật trạng thái hóa đơn!")
@@ -616,6 +619,27 @@
             closePopup();
         }
 
+        function loadMenu(){
+            const menu = document.getElementById('Menu')
+            let content = ``
+            if (role == "staff"){
+                content += `
+                    <li><a href="/${role}/khachhang">Quản lí khách hàng</a></li>
+                    <li class="active"><a href="/${role}/quanlitaichinh">Quản lí tài chính</a></li>
+                `
+            }
+            else{
+                content += `
+                    <li><a href="/${role}/san">Quản lí sân</a></li>
+                    <li><a href="/${role}/khachhang">Quản lí khách hàng</a></li>
+                    <li class="active"><a href="/${role}/quanlitaichinh">Quản lí tài chính</a></li>
+                    <li><a href="/${role}/nhanvien">Quản lí nhân viên</a></li>
+                    <li><a href="/${role}/baocao">Báo cáo và thống kê</a></li>
+                ` 
+            }
+            menu.innerHTML = content
+        }
+        loadMenu()
     </script>
 </body>
 </html>

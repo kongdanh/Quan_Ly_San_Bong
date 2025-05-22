@@ -266,12 +266,12 @@
 <body>
     <div class="left-menu">
         <h1>Quản Lí Sân Bóng</h1>
-        <ul>
-            <li><a href="/san">Quản lí sân</a></li>
+        <ul id = "Menu">
+            <!-- <li><a href="/san">Quản lí sân</a></li>
             <li><a href="/khachhang">Quản lí khách hàng</a></li>
             <li><a href="/quanlitaichinh">Quản lí tài chính</a></li>
             <li><a href="/nhanvien">Quản lí nhân viên</a></li>
-            <li class="active"><a href="/baocao">Báo cáo và thống kê</a></li>
+            <li class="active"><a href="/baocao">Báo cáo và thống kê</a></li> -->
         </ul>
     </div>
 
@@ -327,6 +327,9 @@
     </div>
 
     <script>
+        const path = window.location.pathname
+        const parts = path.split('/')
+        const role = parts[1]
         // Kiểm tra dữ liệu từ Flask
         let originalInvoices = {{ invoices | tojson | default ('[]') | safe }};
         let originalPhieuGhi = {{ phieu_ghi | tojson | default ('[]') | safe }};
@@ -777,6 +780,21 @@
 
         // Khởi tạo biểu đồ
         updateCharts(null, null);
+
+
+        function loadMenu(){
+            let     content = ``
+            const menu = document.getElementById('Menu')
+            content += `
+                <li><a href="/${role}/san">Quản lí sân</a></li>
+                <li><a href="/${role}/khachhang">Quản lí khách hàng</a></li>
+                <li><a href="/${role}/quanlitaichinh">Quản lí tài chính</a></li>
+                <li><a href="/${role}/nhanvien">Quản lí nhân viên</a></li>
+                <li class="active"><a href="/${role}/baocao">Báo cáo và thống kê</a></li>
+            ` 
+            menu.innerHTML = content
+        }
+        loadMenu()
     </script>
 </body>
 

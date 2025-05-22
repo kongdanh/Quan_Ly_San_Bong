@@ -333,11 +333,9 @@
             <div class="logo">
                 <h2>QUẢN LÝ SÂN BÓNG</h2>
             </div>
-            <div class="menu-item active"><a href="/san">Quản lý sân</a></div>
-            <div class="menu-item"><a href="/khachhang">Quản lý Khách hàng</a></div>
-            <div class="menu-item"><a href="/quanlitaichinh">Quản lý tài chính</a></div>
-            <div class="menu-item"><a href="/nhanvien">Quản lý nhân viên</a></div>
-            <div class="menu-item"><a href="/baocao">Báo cáo & Thống kê</a></div>
+            <pageMenu id="Menu">
+                
+            </pageMenu>
         </div>
 
         <!-- Main Content -->
@@ -552,6 +550,9 @@
     </div>
 
     <script>
+        const path = window.location.pathname
+        const parts = path.split('/')
+        const role = parts[1]
         // Hiển thị/ẩn form thêm sân
         function toggleFormThemSan() {
             const form = document.getElementById('formThemSan');
@@ -578,7 +579,7 @@
         // Xóa sân
         function xoaSan(id) {
             if (confirm('Bạn có chắc chắn muốn xóa sân này?')) {
-                window.location.href = `/xoa-san/${id}`;
+                window.location.href = `/${role}/xoa-san/${id}`;
             }
         }
 
@@ -626,7 +627,7 @@
 
             const formData = new FormData(this);
             try {
-                const response = await fetch('/them-san', {
+                const response = await fetch(`/${role}/them-san`, {
                     method: 'POST',
                     body: formData
                 });
@@ -687,7 +688,7 @@
 
             const formData = new FormData(this);
             try {
-                const response = await fetch(`/sua-san/${id}`, {
+                const response = await fetch(`/${role}/sua-san/${id}`, {
                     method: 'POST',
                     body: formData
                 });
@@ -732,6 +733,21 @@
                 row.style.display = quanHuyenMatch && coSanMatch && tenMatch ? '' : 'none';
             });
         }
+
+        function loadMenu(){
+            let content = ``
+            const menu = document.getElementById('Menu')
+            content += `
+                    <div class="menu-item  active"><a href="/${role}/san">Quản lý sân</a></div>
+                    <div class="menu-item"><a href="/${role}/khachhang">Quản lý Khách hàng</a></div>
+                    <div class="menu-item"><a href="/${role}/quanlitaichinh">Quản lý tài chính</a></div>
+                    
+                    <div class="menu-item"><a href="/${role}/nhanvien">Quản lý nhân viên</a></div>
+                    <div class="menu-item"><a href="/${role}/baocao">Báo cáo & Thống kê</a></div>
+                ` 
+            menu.innerHTML = content
+        }
+        loadMenu()
     </script>
 </body>
 
