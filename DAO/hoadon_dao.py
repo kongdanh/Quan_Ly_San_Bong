@@ -29,16 +29,17 @@ class HoaDonDAO:
         try:
             cursor = self.conn.cursor()
             query = """
-            INSERT INTO hoadon (Ngay, TongTien, PhuongThuc, TrangThai, IdNhanVien, IdNguoiDung)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO hoadon (Ngay, TongTien, PhuongThuc, TrangThai, IdNhanVien, IdNguoiDung, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             values = (
                 hd_data['Ngay'],
                 hd_data['TongTien'],
-                hd_data.get('PhuongThuc', 'Tiền mặt'),  # Giá trị mặc định
-                hd_data.get('TrangThai', 0),  # Giá trị mặc định 0
+                hd_data.get('PhuongThuc', 'Tiền mặt'),
+                hd_data.get('TrangThai', 0),
                 hd_data.get('IdNhanVien'),
-                hd_data.get('IdNguoiDung', None)
+                hd_data.get('IdNguoiDung', None),
+                hd_data.get('status', 1)
             )
             cursor.execute(query, values)
             self.conn.commit()
@@ -46,7 +47,6 @@ class HoaDonDAO:
             return {'success': True}
         except Exception as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi thêm hóa đơn: {e}", flush=True)
             return {'success': False, 'error': str(e)}
 
     def editState(self, IdHoaDon: int, State: int) -> Dict:
@@ -237,3 +237,21 @@ class HoaDonDAO:
         finally:
             cursor.close()
             return 0 if result['total'] is None else result['total']
+
+    def getHoaDonByUserId(self, user_id: int) -> List[Dict]:
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            query = """
+                SELECT IdHoaDon, Ngay, TongTien, PhuongThuc, IdNguoiDung, TrangThai, IdNhanVien
+                FROM hoadon
+                WHERE IdNguoiDung = %s AND status = 1
+                ORDER BY Ngay DESC
+            """
+            cursor.execute(query, (user_id,))
+            result = cursor.fetchall()
+            cursor.close()
+            print(f"DEBUG: HoaDonDAO.getHoaDonByUserId returned: {result}")  # Log để debug
+            return result if result else []
+        except Error as e:
+            print(f"[DAO ERROR] Lỗi khi lấy hóa đơn: {e}")
+            return []

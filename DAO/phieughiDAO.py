@@ -1,3 +1,4 @@
+# Trong DAO/phieughiDAO.py
 from DAO.db_config import get_connection
 from typing import List, Dict
 from mysql.connector import Error
@@ -32,7 +33,7 @@ class PhieuGhiDAO:
         except Error as e:
             print(f"Error: {e}")
             return {"success": False, "message": str(e)}    
-        
+
     def updatePhieuGhi(self, Datas: Dict) -> Dict:
         try:
             cursor = self.conn.cursor()
@@ -58,7 +59,7 @@ class PhieuGhiDAO:
                 (Datas['IdSan'], Datas['IdHoaDon'], Datas['Ngay'], Datas['KhungGio'], Datas['GiaTien'])
             )
             self.conn.commit()
-            return {"success": cursor.rowcount > 0}
+            return {"success": True, "IdPhieuGhi": cursor.lastrowid}  # Trả về IdPhieuGhi vừa tạo
         except Error as e:
             self.conn.rollback()
             print(f"Error: {e}")
@@ -66,25 +67,25 @@ class PhieuGhiDAO:
         finally:
             cursor.close()
             
-    def getListByDate(self, date: datetime) -> List[Dict]:
+    def getListByDate(self, date: datetime) -> list:
         try:
             cursor = self.conn.cursor(dictionary=True)
-            start_of_day = datetime.combine(date, time.min)
-            end_of_day = datetime.combine(date, time.max)
             query = """
-                SELECT p.IdPhieuGhi, p.IdSan, p.IdNguoiDung, p.Ngay, p.KhungGio, COALESCE(p.GiaTien, 0) AS Gia, p.TrangThai
-                FROM phieughi p
-                WHERE p.Ngay >= %s AND p.Ngay <= %s
+                SELECT IdPhieuGhi, Ngay, KhungGio, GiaTien, IdSan, IdHoaDon, status
+                FROM phieughi
+                WHERE Ngay = %s AND status = 1
             """
-            cursor.execute(query, (start_of_day, end_of_day))
+            cursor.execute(query, (date,))
             result = cursor.fetchall()
-            print(f"DEBUG: Kết quả truy vấn get_by_date = {result}")
-            return result
+            cursor.close()
+            print(f"DEBUG: Raw result from getListByDate: {result}")
+            return result if result else []
         except Error as e:
             print(f"[DAO ERROR] Lỗi khi lấy phiếu ghi theo ngày: {e}")
             return []
-        finally:
-            cursor.close()
+        except Exception as e:
+            print(f"[DAO ERROR] Lỗi không xác định: {e}")
+            return []
             
     def getReturn(self) -> List[Dict]:
         result = []
@@ -99,7 +100,7 @@ class PhieuGhiDAO:
                             WHERE 
                                 Ngay >= %s
                             GROUP BY 
-                                IdNguoiDung;""",(datetime.today().date()-timedelta(days=30),))
+                                IdNguoiDung;""", (datetime.today().date() - timedelta(days=30),))
             result = cursor.fetchall()
         except Error as e:
             print(f"Error: {e}")

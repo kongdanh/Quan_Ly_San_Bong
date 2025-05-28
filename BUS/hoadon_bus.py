@@ -9,27 +9,20 @@ class HoaDonBUS:
         
     def them_hoa_don(self, hd_data: Dict) -> Dict:
         try:
-            # Gọi DAO để thêm hóa đơn
             result = self.dao.them_hoa_don(hd_data)
             if not result.get('success', False):
-                print(f"[BUS ERROR] Thêm hóa đơn thất bại: {result.get('error', 'Không có thông tin lỗi')}", flush=True)
                 return result
 
-            # Lấy IdHoaDon vừa tạo
             cursor = self.dao.conn.cursor()
             cursor.execute("SELECT LAST_INSERT_ID()")
             id_hoa_don = cursor.fetchone()[0]
             cursor.close()
 
             if not id_hoa_don:
-                print("[BUS ERROR] Không thể lấy IdHoaDon sau khi chèn", flush=True)
                 return {'success': False, 'error': 'Không thể lấy IdHoaDon sau khi chèn'}
 
-            print(f"[BUS INFO] Đã tạo hóa đơn mới với IdHoaDon: {id_hoa_don}", flush=True)
             return {'success': True, 'IdHoaDon': id_hoa_don}
-
         except Exception as e:
-            print(f"[BUS ERROR] Lỗi khi thêm hóa đơn: {e}", flush=True)
             return {'success': False, 'error': str(e)}
     
     def sua_hoa_don(self, id_hoa_don: int, hd_data: Dict) -> Dict:
@@ -110,3 +103,10 @@ class HoaDonBUS:
         data['prev'] = self.getMonthIncome(date.month - 1)
         data['rate'] = str(((data['curr'] / data['prev']) - 1) * 100) + "%" if data['prev'] != 0 else 'Chưa xác định'
         return data
+    
+    def getHoaDonByUserId(self, user_id: int) -> List[Dict]:
+        try:
+            return self.dao.getHoaDonByUserId(user_id)
+        except Exception as e:
+            print(f"[BUS ERROR] Lỗi khi lấy hóa đơn: {e}")
+            return []
