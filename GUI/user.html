@@ -313,101 +313,185 @@
 
             // Hàm hiển thị modal đặt sân
             function showBookingModal(san) {
-                currentSan = san; // Lưu thông tin sân vào biến toàn cục
-                const modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <span class="close-btn" onclick="this.parentElement.parentElement.remove()">×</span>
-                        <img src="${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 200px; object-fit: cover;">
-                        <h3>Sân ${san.IdSan} - ${san.CoSan} người</h3>
-                        <p>Mô tả: ${san.MoTa || 'Chưa có mô tả'}</p>
-                        <label>Thời gian bắt đầu: <input type="time" id="start-time" required></label><br>
-                        <label>Thời gian kết thúc: <input type="time" id="end-time" required></label><br>
-                        <p>Thành tiền: <span id="total-cost">0 VNĐ</span></p>
-                        <button id="confirm-btn">Xác nhận</button>
-                        <button onclick="this.parentElement.parentElement.remove()">Hủy</button>
+        currentSan = san;
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        // Tạo options cho giờ (6-22) và phút (00, 30)
+        let hourOptions = '';
+        for (let h = 6; h <= 22; h++) {
+            hourOptions += `<option value="${h < 10 ? '0' + h : h}">${h} giờ</option>`;
+        }
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-btn" onclick="this.parentElement.parentElement.remove()">×</span>
+                <img src="${san.HinhAnh}" alt="Hình sân ${san.IdSan}" style="width: 100%; height: 200px; object-fit: cover;">
+                <h3>Sân ${san.IdSan} - ${san.CoSan} người</h3>
+                <p>Mô tả: ${san.MoTa || 'Chưa có mô tả'}</p>
+                
+                <div style="display: flex; gap: 10px; margin: 10px 0;">
+                    <div>
+                        <label>Giờ bắt đầu:</label>
+                        <select id="start-hour" style="padding: 5px; width: 80px;">
+                            ${hourOptions}
+                        </select>
+                        <select id="start-minute" style="padding: 5px; width: 80px;">
+                            <option value="00">00 phút</option>
+                            <option value="30">30 phút</option>
+                        </select>
                     </div>
-                `;
-                document.body.appendChild(modal);
+                    
+                    <div>
+                        <label>Giờ kết thúc:</label>
+                        <select id="end-hour" style="padding: 5px; width: 80px;">
+                            ${hourOptions}
+                        </select>
+                        <select id="end-minute" style="padding: 5px; width: 80px;">
+                            <option value="00">00 phút</option>
+                            <option value="30">30 phút</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <p>Thành tiền: <span id="total-cost">0 VNĐ</span></p>
+                <button id="confirm-btn">Xác nhận</button>
+                <button onclick="this.parentElement.parentElement.remove()">Hủy</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
 
-                const startTime = document.getElementById('start-time');
-                const endTime = document.getElementById('end-time');
-                const totalCost = document.getElementById('total-cost');
-                const confirmBtn = document.getElementById('confirm-btn');
+        // Lấy các phần tử mới
+        const startHour = document.getElementById('start-hour');
+        const startMinute = document.getElementById('start-minute');
+        const endHour = document.getElementById('end-hour');
+        const endMinute = document.getElementById('end-minute');
+        const totalCost = document.getElementById('total-cost');
+        const confirmBtn = document.getElementById('confirm-btn');
 
-                // Tính toán tổng chi phí
-                [startTime, endTime].forEach(input => {
-                    input.addEventListener('change', () => {
-                        const start = new Date(`1970-01-01T${startTime.value}:00`);
-                        const end = new Date(`1970-01-01T${endTime.value}:00`);
-                        if (start < end) {
-                            const diffMs = end - start;
-                            const diffHours = diffMs / (1000 * 60 * 60);
-                            const cost = diffHours * san.GiaSan;
-                            totalCost.textContent = `${cost.toFixed(0)} VNĐ`;
-                        } else {
-                            totalCost.textContent = '0 VNĐ';
-                        }
-                    });
-                });
-
-                // Gắn sự kiện cho nút Xác nhận
-                confirmBtn.addEventListener('click', submitBooking);
+        // Hàm tính toán giá
+        function calculateCost() {
+            const startTime = `${startHour.value}:${startMinute.value}`;
+            const endTime = `${endHour.value}:${endMinute.value}`;
+            
+            const start = new Date(`1970-01-01T${startTime}:00`);
+            const end = new Date(`1970-01-01T${endTime}:00`);
+            
+            if (start < end) {
+                const diffMs = end - start;
+                const diffHours = diffMs / (1000 * 60 * 60);
+                const cost = diffHours * san.GiaSan;
+                totalCost.textContent = `${cost.toFixed(0)} VNĐ`;
+            } else {
+                totalCost.textContent = '0 VNĐ';
             }
+        }
 
+        // Gắn sự kiện khi thay đổi giờ/phút
+        [startHour, startMinute, endHour, endMinute].forEach(el => {
+            el.addEventListener('change', calculateCost);
+        });
+
+        // Tính toán lần đầu
+        calculateCost();
+
+        // Gắn sự kiện cho nút Xác nhận
+        confirmBtn.addEventListener('click', submitBooking);
+    }
             // Hàm gửi yêu cầu tạo phiếu ghi
             async function submitBooking() {
-                console.log('submitBooking called');
+        console.log('submitBooking called');
 
-                // Lấy các giá trị từ modal và biến toàn cục
-                const sanId = currentSan.IdSan;
-                const userId = PID;
-                const startTime = document.getElementById('start-time').value;
-                const endTime = document.getElementById('end-time').value;
-                const ngayDat = document.getElementById('ngay-dat').value;
-                const totalCost = parseFloat(document.getElementById('total-cost').textContent.replace(' VNĐ', '')) || 0;
+        // 1. Đảm bảo có currentSan
+        if (!currentSan) {
+            alert('Không có thông tin sân. Vui lòng chọn lại sân.');
+            return;
+        }
 
-                console.log('Values:', { sanId, userId, startTime, endTime, ngayDat, totalCost });
+        // 2. Đảm bảo có PID
+        const userId = PID;
+        if (!userId) {
+            alert('Vui lòng đăng nhập lại.');
+            return;
+        }
 
-                // Kiểm tra dữ liệu cơ bản
-                if (!startTime || !endTime || !ngayDat || totalCost === 0) {
-                    alert('Vui lòng nhập đầy đủ thông tin.');
-                    return;
-                }
+        // Lấy giá trị giờ/phút
+        const startHour = document.getElementById('start-hour').value;
+        const startMinute = document.getElementById('start-minute').value;
+        const endHour = document.getElementById('end-hour').value;
+        const endMinute = document.getElementById('end-minute').value;
+        
+        const startTime = `${startHour}:${startMinute}`;
+        const endTime = `${endHour}:${endMinute}`;
+        
+        // Validate khung giờ
+        const start = new Date(`1970-01-01T${startTime}:00`);
+        const end = new Date(`1970-01-01T${endTime}:00`);
+        const minTime = new Date(`1970-01-01T06:00:00`);
+        const maxTime = new Date(`1970-01-01T22:00:00`);
+        
+        if (start < minTime || end > maxTime) {
+            alert('Thời gian đặt sân phải trong khoảng 6h00 đến 22h00');
+            return;
+        }
+        
+        if (start >= end) {
+            alert('Thời gian kết thúc phải sau thời gian bắt đầu');
+            return;
+        }
+        const paymentMethod = prompt("Chọn phương thức thanh toán:\n1. Tiền mặt\n2. Chuyển khoản\n3. Ví điện tử", "1");
+        const methodMap = {
+            "1": "Tiền mặt",
+            "2": "Chuyển khoản",
+            "3": "Ví điện tử"
+        };
+        const phuongThuc = methodMap[paymentMethod] || "Tiền mặt";
+        // Tính toán lại tổng chi phí (đảm bảo chính xác)
+        const diffMs = end - start;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        const totalCost = diffHours * currentSan.GiaSan;
 
-                const start = new Date(`1970-01-01T${startTime}:00`);
-                const end = new Date(`1970-01-01T${endTime}:00`);
-                if (start >= end) {
-                    alert('Thời gian kết thúc phải sau thời gian bắt đầu.');
-                    return;
-                }
+        // Lấy ngày đặt
+        const ngayDat = document.getElementById('ngay-dat').value;
 
-                // Chuẩn bị dữ liệu gửi đi
-                const khungGio = `${startTime}-${endTime}`;
+        // 3. Mã hóa khung giờ cho URL
+        const khungGio = encodeURIComponent(`${startTime}-${endTime}`);
 
-                // Gửi yêu cầu POST
-                try {
-                    const response = await fetch(`/user/${userId}/dat_san/${sanId}/ngay/${ngayDat}/khung_gio/${khungGio}/gia/${totalCost}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
-                    });
-                    const data = await response.json();
-                    console.log('Server response:', data);
-                    if (data.success) {
-                        alert('Đặt sân thành công! Phiếu ghi đã được tạo với trạng thái Chờ xác nhận. ID Hóa đơn: ' + data.IdHoaDon);
-                        document.querySelector('.modal').remove();
-                        createSanList();
-                    } else {
-                        alert(`Lỗi khi đặt sân: ${data.error || 'Không xác định'}`);
-                    }
-                } catch (error) {
-                    console.error('Lỗi khi gửi yêu cầu:', error);
-                    alert(`Lỗi khi gửi yêu cầu đặt sân: ${error.message}. Chi tiết: ${error.response ? await error.response.text() : 'Không có chi tiết'}`);
-                }
-            }
-
+        // Gửi yêu cầu POST
+        try {
+        const response = await fetch(`/user/${userId}/dat_san/${currentSan.IdSan}/ngay/${ngayDat}/khung_gio/${khungGio}/gia/${totalCost}/phuongthuc/${phuongThuc}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+        
+        // Xử lý response
+        if (!response.ok) {
+            const errorDetail = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorDetail}`);
+        }
+        
+        const data = await response.json();
+        console.log('Server response:', data);
+        
+        if (data.success) {
+            alert('Đặt sân thành công! Phiếu ghi đã được tạo với trạng thái Chờ xác nhận. ID Hóa đơn: ' + data.IdHoaDon);
+            document.querySelector('.modal').remove();
+            
+            // Cập nhật trạng thái sân ngay lập tức
+            currentSan.TrangThai = 0; // Đánh dấu sân đã được đặt
+            createSanList();
+        } else {
+            alert(`Lỗi: ${data.error || 'Không xác định'}`);
+        }
+    } catch (error) {
+        console.error('Lỗi khi gửi yêu cầu:', error);
+        alert(`Lỗi: ${error.message}`);
+    }
+}
             // Khởi tạo giao diện
             createSanList();
 
@@ -418,4 +502,4 @@
     </script>
 </body>
 
-</html>
+</html> 
