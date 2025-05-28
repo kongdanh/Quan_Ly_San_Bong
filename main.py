@@ -37,16 +37,17 @@ hoa_don_bus = HoaDonBUS(hoa_don_dao)
 @app.route('/<role>/san')
 def quan_ly_san(role):
     danh_sach_san = san_bus.lay_danh_sach_san()
+    # Filter only items where status == 1
+    danh_sach_san = [san for san in danh_sach_san if isinstance(san, dict) and san.get('status') == 1]
     for san in danh_sach_san:
-        if isinstance(san, dict):
-            hinh_anh = san.get('HinhAnh')
-            if hinh_anh is None or not hinh_anh:
-                san['HinhAnh'] = url_for('static', filename='asset/default.jpg')
+        hinh_anh = san.get('HinhAnh')
+        if hinh_anh is None or not hinh_anh:
+            san['HinhAnh'] = url_for('static', filename='asset/default.jpg')
+        else:
+            if 'asset/' in hinh_anh:
+                san['HinhAnh'] = url_for('static', filename=hinh_anh)
             else:
-                if 'asset/' in hinh_anh:
-                    san['HinhAnh'] = url_for('static', filename=hinh_anh)
-                else:
-                    san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
     return render_template('san.html', danh_sach_san=danh_sach_san, role=role)
 
 @app.route('/<role>/them-san', methods=['POST'])
@@ -170,6 +171,8 @@ nhanvien_bus = NhanVienBus()
 @app.route('/<role>/nhanvien')
 def quan_ly_nhan_vien(role):
     danh_sach_nhan_vien = nhanvien_bus.lay_danh_sach_nhan_vien()
+    # Filter only items where status == 1
+    danh_sach_nhan_vien = [nv for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('status') == 1]
     tong_nhan_vien = len(danh_sach_nhan_vien)
     so_luong_hd = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Hoạt động')
     so_luong_np = sum(1 for nv in danh_sach_nhan_vien if isinstance(nv, dict) and nv.get('hoatdong') == 'Nghỉ phép')
@@ -276,13 +279,14 @@ def get_asset_path():
 def nguoidung(userID: int):
     PhieuGhiBUS.danhSachPhieuGhi = phieughi.getListByDate(datetime.now().date())
     danh_sach_san = san_bus.lay_danh_sach_san()
+    # Filter only items where status == 1
+    danh_sach_san = [san for san in danh_sach_san if isinstance(san, dict) and san.get('status') == 1]
     for san in danh_sach_san:
-        if isinstance(san, dict):
-            hinh_anh = san.get('HinhAnh', 'default.jpg') or 'default.jpg'
-            if 'asset/' in hinh_anh:
-                san['HinhAnh'] = url_for('static', filename=hinh_anh)
-            else:
-                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+        hinh_anh = san.get('HinhAnh', 'default.jpg') or 'default.jpg'
+        if 'asset/' in hinh_anh:
+            san['HinhAnh'] = url_for('static', filename=hinh_anh)
+        else:
+            san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
     return render_template('user.html', userID=userID, san=danh_sach_san)
 
 @app.route('/user/<int:userID>/render-date/<date>', methods=['POST'])
@@ -433,6 +437,8 @@ def xuliDangKi():
 @app.route('/hoa-don')
 def quan_ly_hoa_don():
     danh_sach_hoa_don = hoa_don_bus.lay_danh_sach_hoa_don()
+    # Filter only items where status == 1
+    danh_sach_hoa_don = [hd for hd in danh_sach_hoa_don if isinstance(hd, dict) and hd.get('status') == 1]
     return render_template('hoadon.html', danh_sach_hoa_don=danh_sach_hoa_don)
 
 @app.route('/them-hoa-don', methods=['POST'])
@@ -441,7 +447,14 @@ def them_hoa_don():
     ngay = data.get('Ngay')
     tong_tien = data.get('TongTien')
     id_nhan_vien = data.get('IdNhanVien')
-    du_lieu_hoa_don = {'Ngay': ngay, 'TongTien': tong_tien, 'IdNhanVien': id_nhan_vien}
+    du_lieu_hoa_don = {
+        'Ngay': ngay,
+        'TongTien': tong_tien,
+        'PhuongThuc': data.get('PhuongThuc', 'Tiền mặt'),
+        'TrangThai': data.get('TrangThai', 0),  # Giá trị mặc định 0
+        'IdNhanVien': id_nhan_vien,
+        'IdNguoiDung': data.get('IdNguoiDung')
+    }
     result = hoa_don_bus.them_hoa_don(du_lieu_hoa_don)
     if isinstance(result, dict) and 'IdHoaDon' in result:
         return jsonify({'success': True})
@@ -538,6 +551,8 @@ def baocao(role):
     from collections import defaultdict
     import datetime
     hd = hoa_don_bus.lay_danh_sach_hoa_don() or []
+    # Filter only items where status == 1
+    hd = [invoice for invoice in hd if isinstance(invoice, dict) and invoice.get('status') == 1]
     monthly_revenue = defaultdict(float)
     for invoice in hd:
         ngay_value = invoice.get('Ngay')
@@ -550,6 +565,8 @@ def baocao(role):
                 month = ngay.month
                 monthly_revenue[month] += float(invoice.get('TongTien', 0))
     phieu_ghi = phieughi.getListPhieuGhi(None)
+    # Filter only items where status == 1
+    phieu_ghi = [pg for pg in phieu_ghi if isinstance(pg, dict) and pg.get('status') == 1]
     print("phieu_ghi in main.py:", phieu_ghi)
     field_counts = defaultdict(int)
     for item in phieu_ghi:
@@ -637,13 +654,14 @@ def themphieughi():
 @app.route('/')
 def index():
     danh_sach_san = san_bus.lay_danh_sach_san()
+    # Filter only items where status == 1
+    danh_sach_san = [san for san in danh_sach_san if isinstance(san, dict) and san.get('status') == 1]
     for san in danh_sach_san:
-        if isinstance(san, dict):
-            hinh_anh = san.get('HinhAnh', 'default.jpg') or 'default.jpg'
-            if 'asset/' in hinh_anh:
-                san['HinhAnh'] = url_for('static', filename=hinh_anh)
-            else:
-                san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
+        hinh_anh = san.get('HinhAnh', 'default.jpg') or 'default.jpg'
+        if 'asset/' in hinh_anh:
+            san['HinhAnh'] = url_for('static', filename=hinh_anh)
+        else:
+            san['HinhAnh'] = url_for('static', filename=f'asset/{hinh_anh}')
     return render_template('dangnhap_dangki.html', san=danh_sach_san)
 
 

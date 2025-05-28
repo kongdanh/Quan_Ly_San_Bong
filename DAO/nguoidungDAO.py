@@ -67,7 +67,7 @@ class NguoiDungDAO:
         """Xóa người dùng (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM nguoidung WHERE idNguoiDung = %s", (userID,))
+            cursor.execute("UPDATE nguoidung SET status = 0 WHERE IdNguoiDung = %s", (userID,))
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
         except Error as e:

@@ -58,7 +58,7 @@ class TaiKhoanDAO:
     def xoa_TaiKhoan(self, accID: int) -> Dict:
         try:
             cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM taikhoan WHERE idTaiKhoan = %s", (accID,))
+            cursor.execute("UPDATE taikhoan SET status = 0 WHERE IdTaiKhoan = %s", (accID,))
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
         except Error as e:

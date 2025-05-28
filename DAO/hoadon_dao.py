@@ -8,19 +8,19 @@ class HoaDonDAO:
     def __init__(self, conn=None):
         self.conn = conn if conn is not None else get_connection()
         
-    def lay_danh_sach_hoa_don(self,UID:int = None) -> List[Dict]:
-        # lay ds tu dtb
+    def lay_danh_sach_hoa_don(self, UID: int = None) -> List[Dict]:
+        # Lấy danh sách từ database
         conn = get_connection()
         list = []
         try:
             cursor = conn.cursor(dictionary=True)
-            if UID :
-                cursor.execute("SELECT * FROM hoadon Where IdNguoiDung = %s",(UID,))
+            if UID:
+                cursor.execute("SELECT * FROM hoadon WHERE IdNguoiDung = %s AND status = 1", (UID,))
             else:
-                cursor.execute("SELECT * FROM hoadon")
+                cursor.execute("SELECT * FROM hoadon WHERE status = 1")
             list = cursor.fetchall()
         except Error as e:
-            print(f"[DAO ERROR] lỗi khi lấy danh sách {e}")
+            print(f"[DAO ERROR] Lỗi khi lấy danh sách: {e}")
         finally:
             conn.close()
             return list
@@ -35,10 +35,10 @@ class HoaDonDAO:
             values = (
                 hd_data['Ngay'],
                 hd_data['TongTien'],
-                hd_data['PhuongThuc'],
-                hd_data['TrangThai'],
+                hd_data.get('PhuongThuc', 'Tiền mặt'),  # Giá trị mặc định
+                hd_data.get('TrangThai', 0),  # Giá trị mặc định 0
                 hd_data.get('IdNhanVien'),
-                hd_data['IdNguoiDung']
+                hd_data.get('IdNguoiDung', None)
             )
             cursor.execute(query, values)
             self.conn.commit()
@@ -49,7 +49,7 @@ class HoaDonDAO:
             print(f"[DAO ERROR] Lỗi khi thêm hóa đơn: {e}", flush=True)
             return {'success': False, 'error': str(e)}
 
-    def editState(self, IdHoaDon: int, State: str) -> Dict:
+    def editState(self, IdHoaDon: int, State: int) -> Dict:
         try:
             cursor = self.conn.cursor()
             query = """
@@ -66,7 +66,7 @@ class HoaDonDAO:
             print(f"[DAO ERROR] Lỗi khi cập nhật trạng thái hóa đơn: {e}", flush=True)
             return {'success': False, 'error': str(e)}
             
-    def sua_hoa_don(self, id_hoa_don: int, hd_data:Dict) -> Dict:
+    def sua_hoa_don(self, id_hoa_don: int, hd_data: Dict) -> Dict:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
@@ -94,7 +94,7 @@ class HoaDonDAO:
     def xoa_hoa_don(self, id_hoa_don: int) -> Dict:
         try:
             cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM hoadon WHERE IdHoaDon = %s", (id_hoa_don,))
+            cursor.execute("UPDATE hoadon SET status = 0 WHERE IdHoaDon = %s", (id_hoa_don,))
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
         except Error as e:
@@ -113,7 +113,7 @@ class HoaDonDAO:
             except Error as e:
                 print(f"Lỗi khi đóng kết nối: {e}")
                 
-    def update(self,data: Dict):
+    def update(self, data: Dict):
         try:
             cursor = self.conn.cursor()
             cursor.execute(
@@ -141,90 +141,99 @@ class HoaDonDAO:
         finally:
             cursor.close()
             
-    def timkiemHD(self, key:str, type:str) -> List[Dict]:
-        if type == "all":
-            type = ""
-        type = "%" + type + "%"
+    def timkiemHD(self, key: str, type: str) -> List[Dict]:
         try:
             cursor = self.conn.cursor(dictionary=True)
+            if type == "":
+                type_condition = ""
+            else:
+                type_condition = "AND TrangThai = %s"
+            
             try:
                 key = int(key)
-                sql="""SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE IdHoaDon = %s AND TrangThai LIKE %s ORDER BY Ngay DESC"""
-                cursor.execute(sql,(key,type))
+                sql = f"""
+                SELECT * FROM hoadon 
+                LEFT JOIN NguoiDung ON hoadon.IdNguoiDung = NguoiDung.IdNguoiDung 
+                WHERE IdHoaDon = %s {type_condition} AND hoadon.status = 1
+                ORDER BY Ngay DESC
+                """
+                params = [key] if type == "" else [key, int(type)]  # Chuyển type sang int
+                cursor.execute(sql, params)
             except ValueError:
                 if key == "":
-                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE TrangThai LIKE %s ORDER BY Ngay DESC"""
-                    cursor.execute(sql,(type,))
+                    sql = f"""
+                    SELECT * FROM hoadon 
+                    LEFT JOIN NguoiDung ON hoadon.IdNguoiDung = NguoiDung.IdNguoiDung 
+                    WHERE hoadon.status = 1 {type_condition}
+                    ORDER BY Ngay DESC
+                    """
+                    params = [] if type == "" else [int(type)]
+                    cursor.execute(sql, params)
                 else:
                     key = "%" + key + "%"
-                    sql = """SELECT * FROM HOADON LEFT JOIN NguoiDung ON HOADON.IdNguoiDung = NguoiDung.IdNguoiDung WHERE HoTen LIKE %s AND TrangThai LIKE %s ORDER BY Ngay DESC"""
-                    cursor.execute(sql,(key,type))
+                    sql = f"""
+                    SELECT * FROM hoadon 
+                    LEFT JOIN NguoiDung ON hoadon.IdNguoiDung = NguoiDung.IdNguoiDung 
+                    WHERE HoTen LIKE %s {type_condition} AND hoadon.status = 1
+                    ORDER BY Ngay DESC
+                    """
+                    params = [key] if type == "" else [key, int(type)]
+                    cursor.execute(sql, params)
             return cursor.fetchall()
         except Error as e:
-            print(f"[DAO ERROR] lỗi khi lấy danh sách {e}")
+            print(f"[DAO ERROR] Lỗi khi lấy danh sách: {e}")
             return []
         
-    def editState(self, IdHoaDon:int, State:str) -> Dict:
+    def add(self, Data: Dict) -> Dict:
         try:
             cursor = self.conn.cursor()
-            cursor.execute("UPDATE hoadon SET TrangThai = %s WHERE IdHoaDon = %s", (State,IdHoaDon))
+            cursor.execute(
+                """
+                INSERT INTO hoadon (Ngay, TongTien, PhuongThuc, TrangThai, IdNhanVien, IdNguoiDung)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    Data['Ngay'],
+                    Data['TongTien'],
+                    Data['PhuongThuc'],
+                    Data['TrangThai'],
+                    Data['IdNhanVien'],
+                    Data['IdNguoiDung']
+                )
+            )
             self.conn.commit()
-            return {"success": True}
+            return {"success": True, 'IdHoaDon': cursor.lastrowid}
         except Error as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi thay đổi hóa đơn: {e}")
-            return {"success": False, "error": str(e)}
-        finally:
-            cursor.close()
-            
-    def add(self,Data:Dict)->Dict:
-        try:
-            cursor = self.conn.cursor()
-            cursor.execute("""INSERT INTO hoadon (Ngay, 
-                                                TongTien, 
-                                                PhuongThuc, 
-                                                TrangThai, 
-                                                IdNhanVien, 
-                                                IdNguoiDung)
-                            VALUES( %s, %s, %s, %s, %s, %s)""",
-                            (Data['Ngay'],
-                             Data['TongTien'],
-                             Data['PhuongThuc'],
-                             Data['TrangThai'],
-                             Data['IdNhanVien'],
-                             Data['IdNguoiDung'],))
-            self.conn.commit()
-            return {"success": True,'IdHoaDon':cursor.lastrowid}
-        except Error as e:
-            self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi thay đổi hóa đơn: {e}")
+            print(f"[DAO ERROR] Lỗi khi thêm hóa đơn: {e}")
             return {"success": False, "error": str(e)}
         finally:
             cursor.close()
     
-    def getMonthly(self, month:int) -> float:
+    def getMonthly(self, month: int) -> float:
         result = {}
         date = datetime.today().date()
         if month != 0:
-            date1 = date.replace(day = 1,month = month)
-            date2 = date.replace(day = 1,month = month + 1) if month < 12 else date.replace(day=1,
-                                                                                month=1,
-                                                                                year=(date.year + 1))
+            date1 = date.replace(day=1, month=month)
+            date2 = date.replace(day=1, month=month + 1) if month < 12 else date.replace(day=1, month=1, year=date.year + 1)
         else:
-            date1 = date.replace(day = 1,month = 12, year = date.year - 1)
-            date2 = date.replace(day = 1,month = 1) 
+            date1 = date.replace(day=1, month=12, year=date.year - 1)
+            date2 = date.replace(day=1, month=1)
             
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("""SELECT sum(TongTien) as total from hoadon 
-                           WHERE TrangThai = "Đã thanh toán"
-                           AND Ngay >= %s AND Ngay < %s""",
-                            (date1,date2))
+            cursor.execute(
+                """
+                SELECT SUM(TongTien) as total FROM hoadon 
+                WHERE TrangThai = 2 AND Ngay >= %s AND Ngay < %s AND status = 1
+                """,
+                (date1, date2)
+            )
             result = cursor.fetchone()
         except Error as e:
             self.conn.rollback()
-            print(f"[DAO ERROR] Lỗi khi thay đổi hóa đơn: {e}")
+            print(f"[DAO ERROR] Lỗi khi lấy tổng doanh thu: {e}")
             result = 0
         finally:
             cursor.close()
-            return 0 if result['total'] == None else result['total']
+            return 0 if result['total'] is None else result['total']

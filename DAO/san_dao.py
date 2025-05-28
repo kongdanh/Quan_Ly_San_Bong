@@ -107,7 +107,7 @@ class SanDAO:
         """Xóa sân (phù hợp với bus)"""
         try:
             cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM san WHERE idSan = %s", (id_san,))
+            cursor.execute("UPDATE san SET status = 0 WHERE IdSan = %s", (id_san,))
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
         except Error as e:

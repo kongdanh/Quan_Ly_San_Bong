@@ -130,7 +130,7 @@ class NhanVienDAO:
     def xoa_nhan_vien(self, id_nhan_vien: int) -> Dict:
         try:
             cursor = self.conn.cursor()
-            cursor.execute("DELETE FROM nhanvien WHERE IdNhanVien = %s", (id_nhan_vien,))
+            cursor.execute("UPDATE nhanvien SET status = 0 WHERE IdNhanVien = %s", (id_nhan_vien,))
             self.conn.commit()
             return {"success": cursor.rowcount > 0}
         except Error as e:

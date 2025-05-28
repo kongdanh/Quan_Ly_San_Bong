@@ -53,21 +53,31 @@ class HoaDonBUS:
         return self.dao.update(data)
     
     def timkiemHD(self, key: str, type: str) -> List[Dict]:
+        # Map string 'all' to empty string for DAO, keep numeric types as is
+        if type == "all":
+            type = ""
         return self.dao.timkiemHD(key, type)
     
     def editState(self, IdHoaDon: int, State: str) -> Dict:
         try:
-            # Cập nhật trạng thái hóa đơn
-            result = self.dao.editState(IdHoaDon, State)
+            state_map = {
+                '0': 0,
+                '1': 1,
+                '2': 2
+            }
+            if State not in state_map:
+                return {'success': False, 'error': 'Trạng thái không hợp lệ'}
+            db_state = state_map[State]
+
+            result = self.dao.editState(IdHoaDon, db_state)
             if not result.get('success', False):
                 return result
 
-            # Đồng bộ trạng thái phiếu ghi
-            if State == 'Đã thanh toán':
+            if db_state == 2:  # 'Đã thanh toán'
                 cursor = self.dao.conn.cursor()
                 query = """
-                UPDATE phieughi 
-                SET TrangThai = 'Đã xác nhận'
+                UPDATE hoadon
+                SET TrangThai = 2
                 WHERE IdHoaDon = %s
                 """
                 cursor.execute(query, (IdHoaDon,))

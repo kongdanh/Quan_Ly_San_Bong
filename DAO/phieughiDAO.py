@@ -26,7 +26,7 @@ class PhieuGhiDAO:
     def xoaPhieuGhi(self, idPhieuGhi: int) -> Dict:
         try:
             cursor = self.conn.cursor(dictionary=True)
-            cursor.execute("DELETE FROM phieughi WHERE IdPhieuGhi = %s", (idPhieuGhi,))
+            cursor.execute("UPDATE phieughi SET status = 0 WHERE IdPhieuGhi = %s", (idPhieuGhi,))
             self.conn.commit()
             return {"success": True}
         except Error as e:
