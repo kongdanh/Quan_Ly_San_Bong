@@ -127,3 +127,24 @@ class PhieuGhiDAO:
             if conn and conn.is_connected():
                 cursor.close()
                 conn.close()
+    
+    def get_phieu_ghi_by_hoa_don_id(self, id_hoa_don: int) -> List[Dict]:
+        cursor = None
+        try:
+            cursor = self.conn.cursor(dictionary=True)
+            query = """
+                SELECT pg.IdPhieuGhi, pg.Ngay, pg.KhungGio, pg.GiaTien, pg.IdSan, 
+                       pg.IdHoaDon, pg.status, s.CoSan
+                FROM PhieuGhi pg
+                JOIN San s ON pg.IdSan = s.IdSan
+                WHERE pg.IdHoaDon = %s AND pg.status = 1
+            """
+            cursor.execute(query, (id_hoa_don,))
+            results = cursor.fetchall()
+            return results
+        except Exception as e:
+            print(f"[DAO ERROR] Lỗi khi lấy phiếu ghi theo IdHoaDon: {e}", flush=True)
+            return []
+        finally:
+            if cursor:
+                cursor.close()

@@ -110,5 +110,5 @@ class HoaDonBUS:
         except Exception as e:
             print(f"[BUS ERROR] Lỗi khi lấy hóa đơn: {e}")
             return []
-def get_by_id(self, id_hoa_don):
-    return self.dao.get_by_id(id_hoa_don)
+    def get_by_id(self, id_hoa_don):
+        return self.dao.get_by_id(id_hoa_don)

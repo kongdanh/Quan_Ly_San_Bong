@@ -330,17 +330,20 @@
         .chart-placeholder {
             height: 350px;
         }
+
         .detail-row {
-        display: flex;
-        margin-bottom: 10px;
-    }
-    .detail-label {
-        font-weight: bold;
-        width: 150px;
-    }
-    .detail-value {
-        flex: 1;
-    }
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            width: 150px;
+        }
+
+        .detail-value {
+            flex: 1;
+        }
     </style>
 </head>
 
@@ -348,17 +351,14 @@
     <!-- Left Menu -->
     <div class="left-menu">
         <h1>Quản Lý Sân Bóng</h1>
-        <ul  id = "Menu">
-            <!-- <li><a href="/san">Quản lí sân</a></li>
+        <ul id="Menu">
+            <li><a href="/san">Quản lí sân</a></li>
             <li><a href="/khachhang">Quản lí khách hàng</a></li>
             <li class="active"><a href="/quanlitaichinh">Quản lí tài chính</a></li>
             <li><a href="/nhanvien">Quản lí nhân viên</a></li>
-<<<<<<< HEAD
             <li><a href="/baocao">Báo cáo và thống kê</a></li>
             <li><a href="/login" onclick="logout()">Đăng xuất</a></li>
-=======
-            <li><a href="/baocao">Báo cáo và thống kê</a></li> -->
->>>>>>> 507ea5ae209f4e92bcbadbc9e57676a155db091d
+            <li><a href="/baocao">Báo cáo và thống kê</a></li>
         </ul>
     </div>
 
@@ -456,7 +456,7 @@
             </div>
         </div>
     </div>
-    
+
 
     <script>
         const path = window.location.pathname;
@@ -495,14 +495,14 @@
             } else {
                 listBills.forEach(x => {
                     const trangThai = trangThaiMap[x.TrangThai] || { display: 'Không xác định', class: 'status-pending' };
-                   content += `
+                    content += `
                         <tr>
                             <td>${x.IdHoaDon}</td>
                             <td>${x.Ngay}</td>
                             <td>Thu tiền sân</td>
-                            ${x.HoTen != null ? 
-                                `<td>${x.HoTen}</td>` : 
-                                `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
+                            ${x.HoTen != null ?
+                            `<td>${x.HoTen}</td>` :
+                            `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
                             <td>${Intl.NumberFormat('vi-VN').format(x.TongTien)}đ</td>
                             <td>${x.PhuongThuc == null ? "Chưa xác nhận" : x.PhuongThuc}</td>
                             <td><span class="status ${trangThai.class}">${trangThai.display}</span></td>
@@ -554,84 +554,95 @@
                 });
             closePopup();
         }
-        // Hàm hiển thị modal chi tiết
-async function viewDetails(orderId) {
-    const response = await fetch(`/${role}/quanlitaichinh/details/${orderId}`, {
-        method: 'POST'
-    });
-    
-    if (!response.ok) {
-        alert('Lỗi khi lấy thông tin chi tiết');
-        return;
-    }
-    
-    const data = await response.json();
-    if (!data.success) {
-        alert(data.error || 'Không có dữ liệu chi tiết');
-        return;
-    }
-    
-    // Hiển thị thông tin chi tiết
-    let content = `
-        <div class="detail-row">
-            <div class="detail-label">ID Hóa đơn:</div>
-            <div class="detail-value">${data.hoaDon.IdHoaDon}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Ngày đặt:</div>
-            <div class="detail-value">${data.hoaDon.Ngay}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Khách hàng:</div>
-            <div class="detail-value">${data.hoaDon.HoTen || 'Không có thông tin'}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Tổng tiền:</div>
-            <div class="detail-value">${Intl.NumberFormat('vi-VN').format(data.hoaDon.TongTien)}đ</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Phương thức:</div>
-            <div class="detail-value">${data.hoaDon.PhuongThuc || 'Chưa xác định'}</div>
-        </div>
-        <hr>
-        <h4>Chi tiết đặt sân:</h4>
-    `;
-    
-    data.phieuGhiList.forEach(pg => {
-        content += `
-        <div class="detail-row">
-            <div class="detail-label">Sân:</div>
-            <div class="detail-value">Sân ${pg.IdSan} (${pg.CoSan} người)</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Ngày:</div>
-            <div class="detail-value">${pg.Ngay.split('T')[0]}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Khung giờ:</div>
-            <div class="detail-value">${pg.KhungGio}</div>
-        </div>
-        <div class="detail-row">
-            <div class="detail-label">Giá tiền:</div>
-            <div class="detail-value">${Intl.NumberFormat('vi-VN').format(pg.GiaTien)}đ</div>
-        </div>
-        <hr>
+        async function viewDetails(orderId) {
+            try {
+                const response = await fetch(`/${role}/quanlitaichinh/details/${orderId}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    console.error('Lỗi response:', response.status, response.statusText);
+                    alert('Lỗi khi lấy thông tin chi tiết');
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('Dữ liệu chi tiết:', data); // Debug dữ liệu trả về
+
+                if (!data.success) {
+                    console.error('Lỗi từ server:', data.error);
+                    alert(data.error || 'Không có dữ liệu chi tiết');
+                    return;
+                }
+
+                let content = `
+            <div class="detail-row">
+                <div class="detail-label">ID Hóa đơn:</div>
+                <div class="detail-value">${data.hoaDon.IdHoaDon}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Ngày đặt:</div>
+                <div class="detail-value">${data.hoaDon.Ngay}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Khách hàng:</div>
+                <div class="detail-value">${data.hoaDon.HoTen || 'Không có thông tin'}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Tổng tiền:</div>
+                <div class="detail-value">${Intl.NumberFormat('vi-VN').format(data.hoaDon.TongTien)}đ</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Phương thức:</div>
+                <div class="detail-value">${data.hoaDon.PhuongThuc || 'Chưa xác định'}</div>
+            </div>
+            <hr>
+            <h4>Chi tiết đặt sân:</h4>
         `;
-    });
-    
-    document.getElementById('detailContent').innerHTML = content;
-    document.getElementById('detailPopup').classList.remove('hidden');
-}
 
-// Hàm đóng modal chi tiết
-function closeDetailPopup() {
-    document.getElementById('detailPopup').classList.add('hidden');
-}
+                if (data.phieuGhiList && data.phieuGhiList.length > 0) {
+                    data.phieuGhiList.forEach(pg => {
+                        content += `
+                    <div class="detail-row">
+                        <div class="detail-label">Sân:</div>
+                        <div class="detail-value">Sân ${pg.IdSan} (${pg.CoSan} người)</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Ngày:</div>
+                        <div class="detail-value">${pg.Ngay.split('T')[0]}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Khung giờ:</div>
+                        <div class="detail-value">${pg.KhungGio}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Giá tiền:</div>
+                        <div class="detail-value">${Intl.NumberFormat('vi-VN').format(pg.GiaTien)}đ</div>
+                    </div>
+                    <hr>
+                `;
+                    });
+                } else {
+                    content += `<div>Không có phiếu ghi liên quan.</div>`;
+                }
 
-// Hàm đóng modal chi tiết
-function closeDetailPopup() {
-    document.getElementById('detailPopup').classList.add('hidden');
-}
+                document.getElementById('detailContent').innerHTML = content;
+                document.getElementById('detailPopup').classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi trong viewDetails:', error);
+                alert('Lỗi khi xử lý yêu cầu: ' + error.message);
+            }
+        }
+
+        // Hàm đóng modal chi tiết
+        function closeDetailPopup() {
+            document.getElementById('detailPopup').classList.add('hidden');
+        }
+
+        // Hàm đóng modal chi tiết
+        function closeDetailPopup() {
+            document.getElementById('detailPopup').classList.add('hidden');
+        }
         function loadMenu() {
             const menu = document.getElementById('Menu');
             let content = '';
@@ -659,7 +670,7 @@ function closeDetailPopup() {
             sessionStorage.clear();
             localStorage.clear();
             window.location.href = "/login";
-            }
+        }
         let selectedOrderId = null;
     </script>
 </body>

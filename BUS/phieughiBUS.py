@@ -117,3 +117,10 @@ class PhieuGhiBUS:
             return {'success': False, 'error': str(e)}
     def get_by_hoa_don(self, id_hoa_don):
         return self.phieuGhiDAO.get_by_hoa_don(id_hoa_don)
+    
+    def getPhieuGhiByHoaDonId(self, id_hoa_don: int) -> List[Dict]:
+        try:
+            return self.phieuGhiDAO.get_phieu_ghi_by_hoa_don_id(id_hoa_don)
+        except Exception as e:
+            print(f"[BUS ERROR] Lỗi khi lấy phiếu ghi theo IdHoaDon: {e}", flush=True)
+            return []

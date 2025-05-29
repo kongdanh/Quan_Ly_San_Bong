@@ -663,6 +663,43 @@ def editState(role, IDHD: int, Status):
     result = hoa_don_bus.editState(IDHD, Status)
     return jsonify(result)
 
+@app.route('/<role>/quanlitaichinh/details/<int:orderId>', methods=['POST'])
+def get_hoa_don_details(role, orderId):
+    try:
+        print(f"[DEBUG] Gọi endpoint /<role>/quanlitaichinh/details/{orderId} với role={role}", flush=True)
+        # Khởi tạo HoaDonBUS và PhieuGhiBUS
+        hoa_don_bus = HoaDonBUS()
+        phieu_ghi_bus = PhieuGhiBUS()
+
+        # Lấy chi tiết hóa đơn
+        hoa_don = hoa_don_bus.get_by_id(orderId)
+        print(f"[DEBUG] Kết quả hoa_don_bus.get_by_id({orderId}): {hoa_don}", flush=True)
+        if not hoa_don or hoa_don.get('status') != 1:
+            print(f"[DEBUG] Không tìm thấy hóa đơn hoặc status != 1 cho IdHoaDon={orderId}", flush=True)
+            return jsonify({'success': False, 'error': 'Không tìm thấy hóa đơn'}), 404
+
+        # Lấy danh sách phiếu ghi
+        phieu_ghi_list = phieu_ghi_bus.getPhieuGhiByHoaDonId(orderId)
+        print(f"[DEBUG] Kết quả phieu_ghi_bus.getPhieuGhiByHoaDonId({orderId}): {phieu_ghi_list}", flush=True)
+        phieu_ghi_list = [pg for pg in phieu_ghi_list if pg.get('status') == 1]
+
+        # Chuyển đổi định dạng ngày tháng
+        if isinstance(hoa_don.get('Ngay'), (datetime, date)):
+            hoa_don['Ngay'] = hoa_don['Ngay'].strftime('%Y-%m-%d')
+        for pg in phieu_ghi_list:
+            if isinstance(pg.get('Ngay'), (datetime, date)):
+                pg['Ngay'] = pg['Ngay'].strftime('%Y-%m-%d')
+
+        # Trả về dữ liệu
+        return jsonify({
+            'success': True,
+            'hoaDon': hoa_don,
+            'phieuGhiList': phieu_ghi_list
+        })
+    except Exception as e:
+        print(f"[MAIN ERROR] Lỗi khi lấy chi tiết hóa đơn: {e}", flush=True)
+        return jsonify({'success': False, 'error': f'Lỗi server: {str(e)}'}), 500
+
 @app.route('/them-phieu-ghi', methods=['POST'])
 def themphieughi():
     try:
