@@ -330,6 +330,17 @@
         .chart-placeholder {
             height: 350px;
         }
+        .detail-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    .detail-label {
+        font-weight: bold;
+        width: 150px;
+    }
+    .detail-value {
+        flex: 1;
+    }
     </style>
 </head>
 
@@ -436,6 +447,16 @@
             </div>
         </div>
     </div>
+    <div id="detailPopup" class="popup hidden">
+        <div class="popup-content" style="width: 600px;">
+            <span style="float:right;cursor:pointer" onclick="closeDetailPopup()">✖</span>
+            <h3>Chi tiết đặt sân</h3>
+            <div id="detailContent">
+                <!-- Nội dung chi tiết sẽ được hiển thị ở đây -->
+            </div>
+        </div>
+    </div>
+    
 
     <script>
         const path = window.location.pathname;
@@ -474,19 +495,20 @@
             } else {
                 listBills.forEach(x => {
                     const trangThai = trangThaiMap[x.TrangThai] || { display: 'Không xác định', class: 'status-pending' };
-                    content += `
+                   content += `
                         <tr>
                             <td>${x.IdHoaDon}</td>
                             <td>${x.Ngay}</td>
                             <td>Thu tiền sân</td>
-                            ${x.HoTen != null ?
-                            `<td>${x.HoTen}</td>` :
-                            `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
+                            ${x.HoTen != null ? 
+                                `<td>${x.HoTen}</td>` : 
+                                `<td style="color: rgb(245, 160, 160);">Không có dữ liệu</td>`}
                             <td>${Intl.NumberFormat('vi-VN').format(x.TongTien)}đ</td>
                             <td>${x.PhuongThuc == null ? "Chưa xác nhận" : x.PhuongThuc}</td>
                             <td><span class="status ${trangThai.class}">${trangThai.display}</span></td>
                             <td>
                                 <div class="action-icons">
+                                    <span onclick="viewDetails(${x.IdHoaDon})">👁️</span> <!-- Thêm nút mắt -->
                                     <span onclick="stateChange(${x.IdHoaDon}, '${x.TrangThai}')">✏️</span>
                                 </div>
                             </td>
@@ -532,7 +554,84 @@
                 });
             closePopup();
         }
+        // Hàm hiển thị modal chi tiết
+async function viewDetails(orderId) {
+    const response = await fetch(`/${role}/quanlitaichinh/details/${orderId}`, {
+        method: 'POST'
+    });
+    
+    if (!response.ok) {
+        alert('Lỗi khi lấy thông tin chi tiết');
+        return;
+    }
+    
+    const data = await response.json();
+    if (!data.success) {
+        alert(data.error || 'Không có dữ liệu chi tiết');
+        return;
+    }
+    
+    // Hiển thị thông tin chi tiết
+    let content = `
+        <div class="detail-row">
+            <div class="detail-label">ID Hóa đơn:</div>
+            <div class="detail-value">${data.hoaDon.IdHoaDon}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Ngày đặt:</div>
+            <div class="detail-value">${data.hoaDon.Ngay}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Khách hàng:</div>
+            <div class="detail-value">${data.hoaDon.HoTen || 'Không có thông tin'}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Tổng tiền:</div>
+            <div class="detail-value">${Intl.NumberFormat('vi-VN').format(data.hoaDon.TongTien)}đ</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Phương thức:</div>
+            <div class="detail-value">${data.hoaDon.PhuongThuc || 'Chưa xác định'}</div>
+        </div>
+        <hr>
+        <h4>Chi tiết đặt sân:</h4>
+    `;
+    
+    data.phieuGhiList.forEach(pg => {
+        content += `
+        <div class="detail-row">
+            <div class="detail-label">Sân:</div>
+            <div class="detail-value">Sân ${pg.IdSan} (${pg.CoSan} người)</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Ngày:</div>
+            <div class="detail-value">${pg.Ngay.split('T')[0]}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Khung giờ:</div>
+            <div class="detail-value">${pg.KhungGio}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Giá tiền:</div>
+            <div class="detail-value">${Intl.NumberFormat('vi-VN').format(pg.GiaTien)}đ</div>
+        </div>
+        <hr>
+        `;
+    });
+    
+    document.getElementById('detailContent').innerHTML = content;
+    document.getElementById('detailPopup').classList.remove('hidden');
+}
 
+// Hàm đóng modal chi tiết
+function closeDetailPopup() {
+    document.getElementById('detailPopup').classList.add('hidden');
+}
+
+// Hàm đóng modal chi tiết
+function closeDetailPopup() {
+    document.getElementById('detailPopup').classList.add('hidden');
+}
         function loadMenu() {
             const menu = document.getElementById('Menu');
             let content = '';
@@ -550,11 +649,17 @@
                     <li><a href="/${role}/baocao">Báo cáo và thống kê</a></li>
                 `;
             }
+            content += `<li><a href="#" onclick="logout()">Đăng xuất</a></li>`;
             menu.innerHTML = content;
         }
 
         loadMenu();
         loadData();
+        function logout() {
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = "/login";
+            }
         let selectedOrderId = null;
     </script>
 </body>

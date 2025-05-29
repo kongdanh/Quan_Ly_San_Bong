@@ -750,24 +750,25 @@
         statusClose()
 
         async function statusUpdate() {
-            const status = document.getElementById('status').value
-            console.log(UID, status)
-            const sendData = { 'IdTaiKhoan': UID, 'AccType': status }
-            const response = await fetch(`/khachhang/status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify(sendData)
-            })
-            const data = await response.json()
-            console.log(data)
-            if (data['success']) {
-                alert("Đã thành công cập nhật trạng thái")
-                loadData()
-            }
-            else {
-                alert("Đã xảy ra lỗi khi cập nhật trạng thái")
-            }
-            statusClose()
+    const status = document.getElementById('status').value
+    const sendData = { 'IdTaiKhoan': UID, 'AccType': status }
+    
+    // Sửa endpoint bằng cách thêm ${role} vào URL
+    const response = await fetch(`/${role}/khachhang/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', },
+        body: JSON.stringify(sendData)
+    })
+    
+    const data = await response.json()
+    if (data['success']) {
+        alert("Đã thành công cập nhật trạng thái")
+        loadData()
+    }
+    else {
+        alert("Đã xảy ra lỗi khi cập nhật trạng thái")
+    }
+    statusClose()
         }
 
         function loadMenu(){
@@ -789,9 +790,18 @@
                     <div class="menu-item"><a href="/${role}/baocao">Báo cáo & Thống kê</a></div>
                 ` 
             }
+            content += `<div class="menu-item"><a href="#" onclick="logout()">Đăng xuất</a></div>`;
             menu.innerHTML = content
         }
         loadMenu()
+        function logout() {
+    // Xóa dữ liệu session (nếu có)
+    sessionStorage.clear();
+    localStorage.clear();
+    
+    // Chuyển hướng về trang đăng nhập
+    window.location.href = "/login";
+}
     </script>
 </body>
 

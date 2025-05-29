@@ -115,3 +115,5 @@ class PhieuGhiBUS:
         except Exception as e:
             print(f"Lỗi trong themPhieuGhi: {e}")
             return {'success': False, 'error': str(e)}
+    def get_by_hoa_don(self, id_hoa_don):
+        return self.phieuGhiDAO.get_by_hoa_don(id_hoa_don)

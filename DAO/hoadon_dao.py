@@ -255,3 +255,8 @@ class HoaDonDAO:
         except Error as e:
             print(f"[DAO ERROR] Lỗi khi lấy hóa đơn: {e}")
             return []
+def get_by_id(self, id_hoa_don):
+        query = "SELECT * FROM hoadon WHERE IdHoaDon = %s"
+        self.cursor.execute(query, (id_hoa_don,))
+        result = self.cursor.fetchone()
+        return result if result else None

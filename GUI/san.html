@@ -745,9 +745,15 @@
                     <div class="menu-item"><a href="/${role}/nhanvien">Quản lý nhân viên</a></div>
                     <div class="menu-item"><a href="/${role}/baocao">Báo cáo & Thống kê</a></div>
                 ` 
+            content += `<div class="menu-item"><a href="#" onclick="logout()">Đăng xuất</a></div>`;
             menu.innerHTML = content
         }
         loadMenu()
+        function logout() {
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = "/login";
+        }
     </script>
 </body>
 

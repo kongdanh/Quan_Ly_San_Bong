@@ -107,3 +107,23 @@ class PhieuGhiDAO:
         finally:
             cursor.close()
             return result
+    def get_by_hoa_don(self, id_hoa_don):
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            query = """
+                SELECT pg.*, s.CoSan 
+                FROM phieughi pg
+                JOIN san s ON pg.IdSan = s.IdSan
+                WHERE pg.IdHoaDon = %s
+            """
+            cursor.execute(query, (id_hoa_don,))
+            results = cursor.fetchall()
+            return results
+        except Error as e:
+            print(f"Error in get_by_hoa_don: {e}")
+            return []
+        finally:
+            if conn and conn.is_connected():
+                cursor.close()
+                conn.close()
